@@ -15,7 +15,7 @@ import {
   type IndexedChunk,
 } from './upload';
 
-const DOCS_ROOT = path.resolve(import.meta.dirname, '..', '..', '..', 'mux-website', 'docs');
+const DOCS_ROOT = path.resolve(import.meta.dirname, '..', '..', '..', 'docs');
 
 async function main(): Promise<void> {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;

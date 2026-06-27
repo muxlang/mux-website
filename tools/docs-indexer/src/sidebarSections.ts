@@ -1,6 +1,6 @@
 /**
  * Maps a doc id (e.g. "tour/enums") to the section label shown in the
- * Docusaurus sidebar (mux-website/sidebars.ts). Mirrors that file's manually
+ * Docusaurus sidebar (sidebars.ts). Mirrors that file's manually
  * curated structure rather than inferring from folder names, since the
  * sidebar itself is hand-curated and doesn't always match the directory
  * layout 1:1.

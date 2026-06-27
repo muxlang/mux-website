@@ -28,9 +28,9 @@ Browse the [Code Examples](/docs/examples) page for more real-world examples.
 
 ## Get Involved
 
-- [GitHub Repository](https://github.com/DerekCorniello/mux-lang) - Star, fork, and contribute
-- [Discussions](https://github.com/DerekCorniello/mux-lang/discussions) - Ask questions and share ideas
-- [Issue Tracker](https://github.com/DerekCorniello/mux-lang/issues) - Report bugs and request features
+- [GitHub Repository](https://github.com/muxlang/mux-compiler) - Star, fork, and contribute
+- [Discussions](https://github.com/muxlang/mux-compiler/discussions) - Ask questions and share ideas
+- [Issue Tracker](https://github.com/muxlang/mux-compiler/issues) - Report bugs and request features
 
 ## What's Next?
 

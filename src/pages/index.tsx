@@ -12,8 +12,8 @@ import styles from './index.module.css';
 type Platform = 'unix' | 'windows';
 
 const installCommands: Record<Platform, string> = {
-  unix: 'curl -fsSL https://raw.githubusercontent.com/DerekCorniello/mux-lang/main/scripts/install.sh | sh',
-  windows: 'iwr -useb https://raw.githubusercontent.com/DerekCorniello/mux-lang/main/scripts/install.ps1 | iex',
+  unix: 'curl -fsSL https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.sh | sh',
+  windows: 'iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.ps1 | iex',
 };
 
 function detectPlatform(): Platform {
@@ -191,7 +191,7 @@ function HomepageHeader() {
             </Link>
             <Link
               className={clsx('button', 'button--secondary', 'button--lg', styles.secondaryButton)}
-              to="https://github.com/DerekCorniello/mux-lang">
+              to="https://github.com/muxlang/mux-compiler">
               View on GitHub
             </Link>
                       <Link
@@ -398,11 +398,11 @@ function CTASection() {
             </Link>
           </div>
           <div className={styles.ctaLinks}>
-            <Link to="https://github.com/DerekCorniello/mux-lang">Star on GitHub</Link>
+            <Link to="https://github.com/muxlang/mux-compiler">Star on GitHub</Link>
             <span className={styles.linkSeparator}>•</span>
-            <Link to="https://github.com/DerekCorniello/mux-lang/discussions">Join Discussions</Link>
+            <Link to="https://github.com/muxlang/mux-compiler/discussions">Join Discussions</Link>
             <span className={styles.linkSeparator}>•</span>
-            <Link to="https://github.com/DerekCorniello/mux-lang/issues">Report Issues</Link>
+            <Link to="https://github.com/muxlang/mux-compiler/issues">Report Issues</Link>
           </div>
         </div>
       </div>

@@ -4,5 +4,5 @@
     "baseUrl": ".",
     "resolveJsonModule": true
   },
-  "exclude": [".docusaurus", "build"]
+  "exclude": [".docusaurus", "build", "workers", "tools"]
 }

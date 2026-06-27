@@ -10,12 +10,12 @@ Use the prebuilt installer to get the runtime without Rust or LLVM.
 
 **Linux and macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DerekCorniello/mux-lang/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.sh | sh
 ```
 
 **Windows (PowerShell):**
 ```powershell
-iwr -useb https://raw.githubusercontent.com/DerekCorniello/mux-lang/main/scripts/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.ps1 | iex
 ```
 
 **Custom install directories:**
@@ -28,8 +28,8 @@ MUX_INSTALL_DIR=/usr/local/bin MUX_LIB_DIR=/usr/local/lib sh install.sh
 For compiler development or source builds, you need LLVM 22 and clang. The bootstrap script installs the toolchain automatically.
 
 ```bash
-git clone https://github.com/DerekCorniello/mux-lang
-cd mux-lang
+git clone https://github.com/muxlang/mux-compiler
+cd mux-compiler
 ./scripts/bootstrap-dev.sh
 ./scripts/dev-cargo.sh build
 ```
@@ -101,8 +101,8 @@ node scripts/generate-syntax.js
    local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
    parser_config.mux = {
      install_info = {
-       url = "https://github.com/DerekCorniello/mux-lang",
-       files = {"mux-syntax-highlighting/tree-sitter-mux/grammar.js"},
+       url = "https://github.com/muxlang/tree-sitter-mux",
+       files = {"src/parser.c"},
        branch = "main"
      },
      filetype = "mux",

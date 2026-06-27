@@ -5,17 +5,10 @@ import {load as loadYaml} from 'js-yaml';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const versionFilePath = path.resolve(__dirname, '..', 'VERSION');
-let siteVersion = 'unknown';
-
-try {
-  siteVersion = fs.readFileSync(versionFilePath, 'utf8').trim();
-} catch (error) {
-  throw new Error(
-    `Failed to read VERSION file at ${versionFilePath}. Ensure the root VERSION file exists before building the website.`,
-    {cause: error},
-  );
-}
+// The website versions independently of the compiler; its version lives in this
+// repo's own package.json (the old monorepo root VERSION file is gone).
+const pkgPath = path.resolve(__dirname, 'package.json');
+const siteVersion = (JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as {version: string}).version;
 
 function parseFrontMatter(fileContent: string): {
   frontMatter: Record<string, unknown>;
@@ -77,8 +70,8 @@ const config: Config = {
   baseUrl: '/',
   trailingSlash: true,
 
-  organizationName: 'DerekCorniello',
-  projectName: 'mux-lang',
+  organizationName: 'muxlang',
+  projectName: 'mux-website',
 
   onBrokenLinks: 'throw',
 
