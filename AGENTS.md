@@ -4,6 +4,9 @@ This repo is the Docusaurus docs site for Mux (served at mux-lang.dev), plus the
 docs AI worker (`workers/mux-ai/`) and the docs indexer (`tools/docs-indexer/`).
 It is part of the multi-repo [muxlang](https://github.com/muxlang) ecosystem.
 
+> Cross-repo architecture, design rationale, the feature map, and the release
+> process live in [muxlang/context](https://github.com/muxlang/context).
+
 ## Critical Rules
 
 - **No special characters** - avoid em-dashes, emojis, or other non-ASCII in code,
