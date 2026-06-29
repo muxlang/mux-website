@@ -42,7 +42,7 @@ are documented in `workers/mux-ai/README.md`.
 - [mux-website-api](https://github.com/muxlang/mux-website-api) - the playground compile/run API
 - [mux-syntax-highlighting](https://github.com/muxlang/mux-syntax-highlighting) - canonical syntax spec (source for the site's Shiki grammar)
 - [tree-sitter-mux](https://github.com/muxlang/tree-sitter-mux) - tree-sitter grammar
-- [context](https://github.com/muxlang/context) - cross-repo architecture, design notes, glossary, releases
+- [mux-context](https://github.com/muxlang/mux-context) - cross-repo architecture, design notes, glossary, releases
 
 ## License
 

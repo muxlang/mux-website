@@ -5,7 +5,7 @@ docs AI worker (`workers/mux-ai/`) and the docs indexer (`tools/docs-indexer/`).
 It is part of the multi-repo [muxlang](https://github.com/muxlang) ecosystem.
 
 > Cross-repo architecture, design rationale, the feature map, and the release
-> process live in [muxlang/context](https://github.com/muxlang/context).
+> process live in [muxlang/mux-context](https://github.com/muxlang/mux-context).
 
 ## Critical Rules
 
