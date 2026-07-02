@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import PlaygroundOutput from './PlaygroundOutput';
 import MonacoEditorComponent from './MonacoEditor';
 import useMuxExecutor from '../hooks/useMuxExecutor';
+import useModifierKeyLabel from '../hooks/useModifierKeyLabel';
 
 interface MuxTerminalProps {
   initialCode: string;
@@ -16,6 +17,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
   title = DEFAULT_TITLE,
   className,
 }) => {
+  const modifierKey = useModifierKeyLabel();
   const [code, setCode] = useState(initialCode);
   const [output, setOutput] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +115,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
 
       <div className="embedded-playground-footer">
         <span className="shortcut-hint">
-          <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run
+          <kbd>{modifierKey}</kbd> + <kbd>Enter</kbd> to run
         </span>
       </div>
 
