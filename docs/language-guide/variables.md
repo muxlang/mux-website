@@ -71,6 +71,7 @@ class Config {
     func increment() returns void {
         self.current_retry++  // OK - mutable field
         // self.MAX_RETRIES++  // ERROR: Cannot modify const field
+        return
     }
 }
 
@@ -149,6 +150,7 @@ func example() returns void {
     }
     
     // print(y.to_string())  // ERROR: y is out of scope
+    return
 }
 ```
 

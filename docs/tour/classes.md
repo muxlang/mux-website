@@ -26,6 +26,7 @@ Classes encapsulate data and behavior into single units.
     
     func increment() returns void {
         self.value = self.value + 1
+        return
     }
     
     func getValue() returns int {
@@ -38,6 +39,7 @@ func main() returns void {
     counter.increment()
     counter.increment()
     print("Count: " + counter.getValue().to_string())
+    return
 }`} />
 
 ## Class Methods
@@ -56,6 +58,7 @@ func main() returns void {
     Calculator calc = Calculator.new()
     print("5 + 3 = " + calc.add(5, 3).to_string())
     print("5 * 3 = " + calc.multiply(5, 3).to_string())
+    return
 }`} />
 
 ---

@@ -20,6 +20,7 @@ func main() returns void {
     for int num in numbers {
         print(num.to_string())
     }
+    return
 }
 ```
 

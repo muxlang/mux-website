@@ -126,6 +126,7 @@ Create a new file called `hello.mux`:
 ```mux title="hello.mux"
 func main() returns void {
     print("Hello, Mux!")
+    return
 }
 ```
 
@@ -154,6 +155,7 @@ func main() returns void {
         auto squared = num * num
         print("Square of " + num.to_string() + " is " + squared.to_string())
     }
+    return
 }
 ```
 

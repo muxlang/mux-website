@@ -13,6 +13,7 @@ import std.datetime
 func main() returns void {
     auto roll = random.next_range(1, 7)
     print("You rolled: " + roll.to_string())
+    return
 }
 ```
 

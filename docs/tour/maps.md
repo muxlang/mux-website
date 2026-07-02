@@ -19,6 +19,7 @@ Maps store key-value pairs, allowing fast lookup by key.
     map<string, int> scores = {"Alice": 90, "Bob": 85}
     
     print("Scores: " + scores.to_string())
+    return
 }`} />
 
 ## Accessing Values
@@ -28,6 +29,7 @@ Maps store key-value pairs, allowing fast lookup by key.
     
     print("Alice: " + scores["Alice"].to_string())
     print("Bob: " + scores["Bob"].to_string())
+    return
 }`} />
 
 ## Modifying Maps
@@ -39,6 +41,7 @@ Maps store key-value pairs, allowing fast lookup by key.
     scores.put("Charlie", 88)
     
     print("After changes: " + scores.to_string())
+    return
 }`} />
 
 ## Map Methods
@@ -50,6 +53,7 @@ Maps store key-value pairs, allowing fast lookup by key.
     print("Values: " + scores.get_values().to_string())
     print("Size: " + scores.size().to_string())
     print("Has Alice: " + scores.contains("Alice").to_string())
+    return
 }`} />
 
 ---

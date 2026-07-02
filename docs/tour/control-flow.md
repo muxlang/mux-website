@@ -27,6 +27,7 @@ Control flow statements determine the order in which code executes.
     } else {
         print("Grade: F")
     }
+    return
 }`} />
 
 ## For Loops
@@ -37,6 +38,7 @@ Iterate a specific number of times:
     for int i in range(0, 5) {
         print("Count: " + i.to_string())
     }
+    return
 }`} />
 
 ## While Loops
@@ -50,6 +52,7 @@ Repeat while a condition is true:
         print("Count: " + count.to_string())
         count = count + 1
     }
+    return
 }`} />
 
 ## Pattern Matching with Match
@@ -67,6 +70,7 @@ Powerful pattern matching with enums and optionals:
             print("Got nothing")
         }
     }
+    return
 }`} />
 
 ---

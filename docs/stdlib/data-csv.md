@@ -27,5 +27,6 @@ func main() returns void {
         }
         err(e) { print("csv parse failed: " + e) }
     }
+    return
 }
 ```

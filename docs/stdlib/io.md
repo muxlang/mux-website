@@ -47,5 +47,6 @@ func main() returns void {
             print("read failed: " + err)
         }
     }
+    return
 }
 ```

@@ -73,6 +73,7 @@ class Circle is Drawable, Measurable {
     func draw() returns void {
         auto message = "Circle radius=" + self.radius.to_string()
         print(message)
+        return
     }
     
     func area() returns float {
@@ -92,6 +93,7 @@ class Rectangle is Drawable, Measurable {
     
     func draw() returns void {
         print("Rectangle " + self.width.to_string() + "x" + self.height.to_string())
+        return
     }
     
     func area() returns float {
@@ -118,10 +120,12 @@ class Counter {
     
     func increment() returns void {
         self.value = self.value + 1
+        return
     }
     
     func reset() returns void {
         self.value = 0
+        return
     }
     
     func get() returns int {
@@ -143,6 +147,7 @@ class Config {
     
     func update(string newName, string _) returns void {
         self.name = newName  // second parameter ignored
+        return
     }
 }
 ```
@@ -158,6 +163,7 @@ class Stack<T> {
     // Instance method - operates on self
     func push(T item) returns void {
         self.items.push_back(item)
+        return
     }
     
     // Static method - no self, called on class
@@ -207,6 +213,7 @@ class Config {
     func increment() returns void {
         self.current_retry++  // OK - mutable field
         // self.MAX_RETRIES++  // ERROR: Cannot modify const field
+        return
     }
 }
 
@@ -263,6 +270,7 @@ func drawAll(list<Drawable> shapes) returns void {
     for Shape shape in shapes {
         shape.draw()  // Resolved at compile time
     }
+    return
 }
 ```
 

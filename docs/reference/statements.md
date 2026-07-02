@@ -45,6 +45,7 @@ class Config {
 func process() returns void {
     const float TAX_RATE = 0.08
     auto total = amount * TAX_RATE
+    return
 }
 ```
 
@@ -278,6 +279,7 @@ func max(int a, int b) returns int {
 func greet(string name) returns void {
     print("Hello, " + name)
     return  // Required in void functions
+    return
 }
 ```
 

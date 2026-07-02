@@ -23,6 +23,7 @@ Every Mux program starts with a `main` function. This simple example demonstrate
 ```mux title="hello.mux"
 func main() returns void {
     print("Hello, World!")
+    return
 }
 ```
 
@@ -58,6 +59,7 @@ func greet(string name, int times = 1) returns void {
     for int i in range(0, times) {
         print("Hello " + name)
     }
+    return
 }
 
 func create_message(string greeting, string name = "friend", string punctuation = "!") returns string {
@@ -120,6 +122,7 @@ func describe_optional(optional<int> opt) returns void {
             print("Got nothing")
         }
     }
+    return
 }
 
 describe_optional(some(42))
@@ -232,6 +235,7 @@ class Counter {
     
     func increment() returns void {
         self.value = self.value + 1
+        return
     }
     
     func get_value() returns int {
@@ -261,6 +265,7 @@ class Stack<T> {
     
     func push(T item) returns void {
         self.items.push_back(item)
+        return
     }
     
     func pop() returns optional<T> {
@@ -300,6 +305,7 @@ func safe_divide(int a, int b) returns void {
             print("Error: " + message)
         }
     }
+    return
 }
 
 safe_divide(10, 2)
@@ -395,12 +401,14 @@ Functions can accept references to modify the original value or avoid copying la
 ```mux title="references.mux"
 func increment(&int n) returns void {
     n = n + 1
+    return
 }
 
 func swap(&int a, &int b) returns void {
     int temp = a
     a = b
     b = temp
+    return
 }
 
 int num = 5

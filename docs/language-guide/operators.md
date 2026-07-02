@@ -284,6 +284,7 @@ auto value = *r  // 10
 // Function with reference parameter
 func update(&int ref) returns void {
     *ref = *ref + 1
+    return
 }
 
 update(&x)

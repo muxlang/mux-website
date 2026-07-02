@@ -12,6 +12,7 @@ func add(int a, int b) returns int {
 
 func greet(string name) returns void {
     print("Hello, " + name)
+    return
 }
 
 // Function with no parameters
@@ -33,6 +34,7 @@ func greet(string name, int times = 1) returns void {
     for int i in range(0, times) {
         print("Hello, " + name)
     }
+    return
 }
 
 // Call with default
@@ -56,6 +58,7 @@ func square(int n) returns int {
 func printSquare(int n) returns void {
     auto result = n * n
     print(result.to_string())
+    return
 }
 
 // Returns complex types
@@ -96,6 +99,7 @@ func processFirst(int first, int _) returns int {
 // Callback with unused parameters
 func callback(string event, int timestamp, string _) returns void {
     print("Event: " + event + " at " + timestamp.to_string())
+    return
 }
 ```
 
@@ -248,6 +252,7 @@ Mux allows explicit calls to `main()` from user code.
 ```mux title="main_call.mux"
 func main() returns void {
     print("main body")
+    return
 }
 
 main()

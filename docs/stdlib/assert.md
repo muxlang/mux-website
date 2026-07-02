@@ -66,6 +66,7 @@ func main() returns void {
     assert.assert_err(err_val)
     
     print("All assertions passed!")
+    return
 }
 ```
 

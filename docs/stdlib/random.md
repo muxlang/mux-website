@@ -33,6 +33,7 @@ func main() returns void {
     
     // a and b will be equal
     print(a.to_string())
+    return
 }
 ```
 
@@ -57,6 +58,7 @@ func roll_die() returns int {
 func main() returns void {
     auto roll = roll_die()
     print("You rolled a " + roll.to_string())
+    return
 }
 ```
 
@@ -91,6 +93,7 @@ func main() returns void {
     for num in lotto {
         print(num.to_string())
     }
+    return
 }
 ```
 
@@ -119,6 +122,7 @@ func main() returns void {
     } else {
         print("Nothing special happened.")
     }
+    return
 }
 ```
 
@@ -143,6 +147,7 @@ func flip_coin() returns string {
 func main() returns void {
     auto result = flip_coin()
     print("Coin flip result: " + result)
+    return
 }
 ```
 
@@ -184,6 +189,7 @@ func main() returns void {
         auto b = random.next_bool()
         print(b.to_string())
     }
+    return
 }
 ```
 

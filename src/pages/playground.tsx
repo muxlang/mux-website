@@ -4,6 +4,7 @@ import MuxTerminal from '../components/MuxTerminal';
 
 const DEFAULT_PLAYGROUND_CODE = `func main() returns void {
     print("Hello from Mux Playground")
+    return
 }`;
 
 function getCodeFromQuery(): string {

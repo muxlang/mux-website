@@ -7,6 +7,7 @@ This page provides quick reference examples for common Mux patterns.
 ```mux title="hello.mux"
 func main() returns void {
     print("Hello, World!")
+    return
 }
 ```
 
@@ -26,6 +27,7 @@ func main() returns void {
     auto greeting = "Hello"
 
     print("Age: " + age.to_string())
+    return
 }
 ```
 
@@ -36,6 +38,7 @@ func greet(string name, int times = 1) returns void {
     for int i in range(0, times) {
         print("Hello, " + name + "!")
     }
+    return
 }
 
 func add(int a, int b) returns int {
@@ -46,6 +49,7 @@ func main() returns void {
     greet("World", 3)
     auto sum = add(5, 10)
     print("Sum: " + sum.to_string())
+    return
 }
 ```
 
@@ -82,6 +86,7 @@ func main() returns void {
         print("Countdown: " + n.to_string())
         n--
     }
+    return
 }
 ```
 
@@ -100,6 +105,7 @@ func main() returns void {
 
     // Sets
     auto unique = {1, 2, 3, 2, 1}  // {1, 2, 3}
+    return
 }
 ```
 
@@ -121,6 +127,7 @@ func area(Shape s) returns float {
 func main() returns void {
     auto c = Shape.Circle(5.0)
     print("Area: " + area(c).to_string())
+    return
 }
 ```
 
@@ -138,6 +145,7 @@ class Counter {
 
     func increment() returns void {
         self.value++
+        return
     }
 
     func get_value() returns int {
@@ -150,6 +158,7 @@ func main() returns void {
     c.increment()
     c.increment()
     print("Count: " + c.get_value().to_string())
+    return
 }
 ```
 
@@ -180,6 +189,7 @@ func main() returns void {
 
     print("Int: " + intBox.get().to_string())
     print("String: " + strBox.get())
+    return
 }
 ```
 
@@ -212,6 +222,7 @@ func main() returns void {
         some(val) { print("Found: " + val.to_string()) }
         none { print("Not found") }
     }
+    return
 }
 ```
 
@@ -220,12 +231,14 @@ func main() returns void {
 ```mux title="references.mux"
 func increment(&int ref) returns void {
     *ref = *ref + 1
+    return
 }
 
 func main() returns void {
     auto num = 10
     increment(&num)
     print("Incremented: " + num.to_string())
+    return
 }
 ```
 
@@ -245,6 +258,7 @@ import math
 func main() returns void {
     auto area = math.circle_area(5.0)
     print("Circle area: " + area.to_string())
+    return
 }
 ```
 
@@ -269,6 +283,7 @@ class Stack<T> {
 
     func push(T item) returns void {
         self.items.push_back(item)
+        return
     }
 
     func pop() returns optional<T> {
@@ -289,6 +304,7 @@ func main() returns void {
         some(val) { print("Popped: " + val.to_string()) }
         none { print("Empty") }
     }
+    return
 }
 ```
 

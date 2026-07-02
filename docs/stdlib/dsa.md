@@ -203,5 +203,6 @@ func main() returns void {
         ok(idx) { print("Found 3 at index: " + idx.to_string()) }
         err(_) { print("Not found") }
     }
+    return
 }
 ```

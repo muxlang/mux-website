@@ -83,6 +83,7 @@ The underscore `_` is a special identifier used as a placeholder:
 ```mux
 func process(int data, int _) returns void {
     // Second parameter is unused
+    return
 }
 
 // Pattern matching wildcard

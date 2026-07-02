@@ -30,6 +30,7 @@ Mux has explicit typing with type inference. You can declare variables with expl
     print("Age: " + age.to_string())
     print("Temp: " + temperature.to_string())
     print("Active: " + isActive.to_string())
+    return
 }`} />
 
 ## When to Use Explicit Types
@@ -58,6 +59,7 @@ Some cases require an explicit type because the type can't be inferred:
     print("Name: " + name)
     print("Count: " + count.to_string())
     print("Numbers: " + numbers.to_string())
+    return
 }`} />
 
 ## Constants
@@ -72,6 +74,7 @@ Use `const` to declare values that never change:
     print("Max: " + MAX_COUNT.to_string())
     print("App: " + APP_NAME)
     print("Pi: " + PI.to_string())
+    return
 }`} />
 
 ## Incrementing and Decrementing
@@ -88,6 +91,7 @@ Variables can be incremented or decremented using `++` and `--`:
     
     count--
     print("After --: " + count.to_string())
+    return
 }`} />
 
 ---

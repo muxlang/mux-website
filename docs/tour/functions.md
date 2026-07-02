@@ -18,6 +18,7 @@ Functions are reusable blocks of code that perform specific tasks.
 <EmbeddedPlayground initialCode={`func main() returns void {
     int result = add(5, 3)
     print("5 + 3 = " + result.to_string())
+    return
 }
 
 func add(int a, int b) returns int {
@@ -28,6 +29,7 @@ func add(int a, int b) returns int {
 
 <EmbeddedPlayground initialCode={`func main() returns void {
     print("Area: " + calculateArea(5.0, 3.0).to_string())
+    return
 }
 
 func calculateArea(float width, float height) returns float {
@@ -41,12 +43,14 @@ Functions can have default parameter values:
 <EmbeddedPlayground initialCode={`func main() returns void {
     greet("World")
     greet("Mux", 3)
+    return
 }
 
 func greet(string name, int times = 1) returns void {
     for int i in range(0, times) {
         print("Hello " + name)
     }
+    return
 }`} />
 
 ## Lambda Functions
@@ -59,6 +63,7 @@ Anonymous functions assigned to variables:
     }
     
     print("Square of 5: " + square(5).to_string())
+    return
 }`} />
 
 ---

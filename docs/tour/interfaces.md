@@ -30,12 +30,14 @@ class Circle is Drawable {
     
     func draw() returns void {
         print("Drawing circle with radius " + self.radius.to_string())
+        return
     }
 }
 
 func main() returns void {
     Circle c = Circle.from_radius(5.0)
     c.draw()
+    return
 }`} />
 
 ## Interface with Fields
@@ -62,6 +64,7 @@ class Person is Named {
 func main() returns void {
     Person p = Person.from_name("Alice")
     print("Name: " + p.getName())
+    return
 }`} />
 
 ---

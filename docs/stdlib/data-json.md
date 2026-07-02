@@ -30,5 +30,6 @@ func main() returns void {
         }
         err(e) { print("parse failed: " + e) }
     }
+    return
 }
 ```

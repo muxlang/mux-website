@@ -62,6 +62,7 @@ Decrements the reference count when a reference goes out of scope:
 func example() returns void {
     auto obj = create_object()  // ref_count = 1
     // ... use obj ...
+    return
 }  // obj goes out of scope, ref_count decremented to 0, object freed
 ```
 
@@ -98,6 +99,7 @@ func process() returns void {
     // b cleaned up here if condition false
     auto c = create_obj()    // Track: a, c
     // Cleanup c, then a
+    return
 }
 // Cleanup a
 ```
@@ -115,6 +117,7 @@ func early_return(bool flag) returns void {
 
     use(resource)
     // Resource cleaned up here
+    return
 }
 ```
 
@@ -180,6 +183,7 @@ auto r = &x       // r: &int, points to x
 ```mux
 func update(&int ref) returns void {
     *ref = *ref + 1  // Must dereference to read or write
+    return
 }
 ```
 

@@ -25,6 +25,7 @@ Whole numbers without decimal points:
     print("Positive: " + positive.to_string())
     print("Negative: " + negative.to_string())
     print("Zero: " + zero.to_string())
+    return
 }`} />
 
 ## Floating-Point (float)
@@ -39,6 +40,7 @@ Numbers with decimal points:
     print("Price: " + price.to_string())
     print("Temp: " + temperature.to_string())
     print("Pi: " + pi.to_string())
+    return
 }`} />
 
 ## Booleans (bool)
@@ -51,6 +53,7 @@ True or false values:
     
     print("Ready: " + isReady.to_string())
     print("Empty: " + isEmpty.to_string())
+    return
 }`} />
 
 ## Strings
@@ -62,6 +65,7 @@ Text data:
     string name = "Mux"
     
     print(greeting + ", " + name + "!")
+    return
 }`} />
 
 ## Type Conversions
@@ -76,6 +80,7 @@ Convert between types using `.to_string()`:
     print("Num: " + num.to_string())
     print("Float: " + f.to_string())
     print("Bool: " + b.to_string())
+    return
 }`} />
 
 ---

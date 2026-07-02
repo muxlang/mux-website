@@ -258,6 +258,7 @@ func main() returns void {
             print("Error: " + error)
         }
     }
+    return
 }`}
             </CodeBlock>
           </div>
@@ -312,6 +313,7 @@ function CodeExamplesSection() {
 
     func push(T item) returns void {
         self.items.push_back(item)
+        return
     }
 
     func pop() returns optional<T> {
@@ -361,6 +363,7 @@ func main() returns void {
     for Shape s in shapes {
         print(area(s).to_string())
     }
+    return
 }`}
             </CodeBlock>
           </div>

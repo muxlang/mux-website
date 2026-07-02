@@ -20,5 +20,6 @@ func main() returns void {
         }
         none { print("PATH not set") }
     }
+    return
 }
 ```

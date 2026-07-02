@@ -23,6 +23,7 @@ The `main` function is special - it's where your program starts:
 
 <EmbeddedPlayground initialCode={`func main() returns void {
     print("Hello, World!")
+    return
 }`} />
 
 ## Adding Comments
@@ -38,6 +39,7 @@ Comments explain your code and are ignored by the compiler:
     */
     
     print("Comments are ignored!")
+    return
 }`} />
 
 ## Running Your Program

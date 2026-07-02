@@ -92,6 +92,7 @@ func example() returns void {
     }  // temp goes out of scope (refcount = 1)
     
     print(nums.size().to_string())
+    return
 }  // nums goes out of scope (refcount = 0, freed)
 ```
 
@@ -290,6 +291,7 @@ print("x is now: " + x.to_string())  // 20
 // Function taking a reference
 func update(&int ref) returns void {
     *ref = *ref + 1  // Must explicitly dereference to modify
+    return
 }
 
 update(&x)
