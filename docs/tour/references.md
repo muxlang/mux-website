@@ -19,6 +19,7 @@ Use `ref` to pass a variable by reference:
 
 <EmbeddedPlayground initialCode={`func increment(int ref n) returns void {
     n = n + 1
+    return
 }
 
 func main() returns void {
@@ -26,6 +27,7 @@ func main() returns void {
     print("Before: " + num.to_string())
     increment(num)
     print("After: " + num.to_string())
+    return
 }`} />
 
 ## Swap Function
@@ -34,6 +36,7 @@ func main() returns void {
     int temp = a
     a = b
     b = temp
+    return
 }
 
 func main() returns void {
@@ -43,6 +46,7 @@ func main() returns void {
     print("Before: x = " + x.to_string() + ", y = " + y.to_string())
     swap(x, y)
     print("After: x = " + x.to_string() + ", y = " + y.to_string())
+    return
 }`} />
 
 ## When to Use References
@@ -51,12 +55,14 @@ References are useful when you need to modify the original value, avoid copying 
 
 <EmbeddedPlayground initialCode={`func double(int ref n) returns void {
     n = n * 2
+    return
 }
 
 func main() returns void {
     int value = 10
     double(value)
     print("Doubled: " + value.to_string())
+    return
 }`} />
 
 ---

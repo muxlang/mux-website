@@ -34,6 +34,7 @@ func main() returns void {
         ok(v) { print("Result: " + v.to_string()) }
         err(e) { print("Error: " + e) }
     }
+    return
 }`} />
 
 ## Optional Types
@@ -57,6 +58,7 @@ func main() returns void {
         some(v) { print("Found even: " + v.to_string()) }
         none { print("No even number") }
     }
+    return
 }`} />
 
 ## Combining with Pattern Matching
@@ -77,6 +79,7 @@ func main() returns void {
             err(e) { print("100 / " + n.to_string() + " = Error: " + e) }
         }
     }
+    return
 }`} />
 
 ---

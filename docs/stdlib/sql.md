@@ -116,5 +116,6 @@ func main() returns void {
         }
         err(e) { assert.assert(false, e) }
     }
+    return
 }
 ```

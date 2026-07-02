@@ -106,6 +106,7 @@ func main() returns void {
         }
         err(e) { print("invalid request json: " + e) }
     }
+    return
 }
 ```
 
@@ -136,5 +137,6 @@ func main() returns void {
         }
         err(e) { assert.assert(false, e) }
     }
+    return
 }
 ```

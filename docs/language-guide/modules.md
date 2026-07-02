@@ -88,6 +88,7 @@ func main() returns void {
     
     print(sum.to_string())
     print(product.to_string())
+    return
 }
 ```
 
@@ -102,6 +103,7 @@ import utils.logger as log
 func main() returns void {
     auto c = circle.from_radius(5.0)
     log.info("Created circle")
+    return
 }
 ```
 
@@ -134,6 +136,7 @@ import math
 func main() returns void {
     auto result = math.fibonacci(10)  // Calls math_fibonacci
     print(result.to_string())
+    return
 }
 ```
 
@@ -153,6 +156,7 @@ auto initialized = false
 func initialize() returns void {
     initialized = true
     print("Config initialized")
+    return
 }
 
 // Top-level code runs on import
@@ -175,6 +179,7 @@ import b
 
 func useB() returns void {
     b.doSomething()
+    return
 }
 ```
 
@@ -184,6 +189,7 @@ import c
 
 func doSomething() returns void {
     c.helper()
+    return
 }
 ```
 
@@ -191,6 +197,7 @@ func doSomething() returns void {
 // c.mux
 func helper() returns void {
     print("helper called")
+    return
 }
 ```
 
@@ -220,6 +227,7 @@ auto request_count = 0
 
 func increment_requests() returns void {
     request_count++
+    return
 }
 
 func get_request_count() returns int {
@@ -235,6 +243,7 @@ func main() returns void {
     print("Version: " + config.VERSION)
     config.increment_requests()
     print(config.get_request_count().to_string())
+    return
 }
 ```
 
@@ -248,6 +257,7 @@ import b  // ERROR: a imports b, b imports a
 
 func useB() returns void {
     b.doSomething()
+    return
 }
 ```
 
@@ -257,6 +267,7 @@ import a  // ERROR: circular dependency
 
 func doSomething() returns void {
     a.useB()
+    return
 }
 ```
 
@@ -425,6 +436,7 @@ func main() returns void {
     
     auto powered = advanced.power(2, 10)
     print(fmt.format_result(powered))
+    return
 }
 ```
 

@@ -69,6 +69,7 @@ mux doctor
 ```mux
 func main() returns void {
     print("Hello, World!")
+    return
 }
 ```
 
@@ -100,6 +101,7 @@ func greet(string name, int times = 1) returns void {
     for int i in range(0, times) {
         print("Hello, " + name + "!")
     }
+    return
 }
 
 func add(int a, int b) returns int {
@@ -205,6 +207,7 @@ class Stack<T> {
 
     func push(T item) returns void {
         items.push_back(item)
+        return
     }
 
     func pop() returns Optional<T> {
@@ -291,6 +294,7 @@ import math
 func main() returns void {
     auto area = math.circle_area(5.0)
     print("Circle area: " + area.to_string())
+    return
 }
 ```
 
@@ -299,12 +303,14 @@ func main() returns void {
 ```mux
 func increment(&int ref) returns void {
     *ref = *ref + 1
+    return
 }
 
 func main() returns void {
     auto num = 10
     increment(&num)
     print("Incremented: " + num.to_string())
+    return
 }
 ```
 

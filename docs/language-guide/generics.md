@@ -78,6 +78,7 @@ class Stack<T> {
     
     func push(T item) returns void {
         self.items.push_back(item)
+        return
     }
     
     func pop() returns optional<T> {
@@ -311,6 +312,7 @@ func process<T is Stringable>(list<T> items) returns void {
     for item in items {
         print(item.to_string())
     }
+    return
 }
 ```
 

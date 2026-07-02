@@ -167,6 +167,7 @@ print("first element: " + (*first).to_string())  // 1
 // Function taking a reference
 func update(&int ref) returns void {
     *ref = *ref + 1  // Must explicitly dereference to modify
+    return
 }
 
 update(&x)

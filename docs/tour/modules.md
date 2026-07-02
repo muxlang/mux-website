@@ -21,6 +21,7 @@ Import items from other files:
 
 func main() returns void {
     print("Using std::io module")
+    return
 }`} />
 
 ## Using Standard Library
@@ -29,6 +30,7 @@ func main() returns void {
 
 func main() returns void {
     print("Pi from math: " + std::math.PI.to_string())
+    return
 }`} />
 
 ## Creating Your Own Modules

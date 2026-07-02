@@ -58,5 +58,6 @@ func main() returns void {
     print("area: " + area.to_string())
     print("angle: " + angle.to_string())
     print("rounded: " + rounded.to_string())
+    return
 }
 ```

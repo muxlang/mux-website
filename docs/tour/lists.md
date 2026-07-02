@@ -21,6 +21,7 @@ Lists are ordered, growable collections of elements.
     
     print("Numbers: " + numbers.to_string())
     print("Names: " + names.to_string())
+    return
 }`} />
 
 ## Accessing Elements
@@ -31,6 +32,7 @@ Lists are ordered, growable collections of elements.
     print("First: " + nums[0].to_string())
     print("Third: " + nums[2].to_string())
     print("Last: " + nums[4].to_string())
+    return
 }`} />
 
 ## Modifying Lists
@@ -44,6 +46,7 @@ Lists are ordered, growable collections of elements.
     auto removed = nums.pop_back()
     print("Popped: " + removed.to_string())
     print("After pop: " + nums.to_string())
+    return
 }`} />
 
 ## List Properties
@@ -53,6 +56,7 @@ Lists are ordered, growable collections of elements.
     
     print("Size: " + nums.size().to_string())
     print("Empty: " + nums.is_empty().to_string())
+    return
 }`} />
 
 ---

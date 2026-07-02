@@ -37,11 +37,11 @@ auto numbers = [1, 2, 3]
 // auto x  // ERROR: cannot infer type without initializer
 
 // Function parameters must be explicitly typed
-// func process(auto item) returns void { }  // ERROR
-func process(int item) returns void { }   // Valid
+// func process(auto item) returns void { ... }  // ERROR
+func process(int item) returns void { ... }   // Valid
 
 // Unused parameter
-func process(int item, int _) returns void { }  // second parameter unused
+func process(int item, int _) returns void { ... }  // second parameter unused
 ```
 
 All declarations require either an explicit type or `auto` with an initializer. Semicolons are not used.
@@ -71,6 +71,7 @@ class Config {
     func increment() returns void {
         self.current_retry++  // OK - mutable field
         // self.MAX_RETRIES++  // ERROR: Cannot modify const field
+        return
     }
 }
 
@@ -107,7 +108,7 @@ auto nonempty = [1, 2, 3]      // or explicit values
 result<int, string> pending    // explicit type needed
 
 // Function parameters (required)
-func process(int data) returns void { }
+func process(int data) returns void { ... }
 
 // Generic instantiation when ambiguous
 Stack<int> stack = Stack<int>.new()
@@ -119,7 +120,7 @@ The underscore `_` is a placeholder for values you don't need:
 
 ```mux title="underscore.mux"
 // Unused function parameters
-func process(int data, string _) returns void { }
+func process(int data, string _) returns void { ... }
 
 // Unused loop counters
 for int _ in range(0, 10) { // still need a type annotation
@@ -149,6 +150,7 @@ func example() returns void {
     }
     
     // print(y.to_string())  // ERROR: y is out of scope
+    return
 }
 ```
 

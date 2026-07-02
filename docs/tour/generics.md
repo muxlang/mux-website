@@ -25,6 +25,7 @@ Generics allow you to write flexible, reusable code that works with any type whi
 func main() returns void {
     print("Max of 5 and 3: " + max(5, 3).to_string())
     print("Max of 1.5 and 2.7: " + max(1.5, 2.7).to_string())
+    return
 }`} />
 
 ## Generic Classes
@@ -49,6 +50,7 @@ func main() returns void {
     
     print("Int: " + intContainer.get().to_string())
     print("String: " + strContainer.get())
+    return
 }`} />
 
 ## Generic Stack Example
@@ -58,6 +60,7 @@ func main() returns void {
     
     func push(T item) returns void {
         self.items.push_back(item)
+        return
     }
     
     func pop() returns optional<T> {
@@ -76,6 +79,7 @@ func main() returns void {
         some(v) { print("Popped: " + v.to_string()) }
         none { print("Empty") }
     }
+    return
 }`} />
 
 ---

@@ -31,6 +31,7 @@ func main() returns void {
         East { print("Heading East") }
         West { print("Heading West") }
     }
+    return
 }`} />
 
 ## Enum with Data
@@ -51,6 +52,7 @@ func main() returns void {
             print("Rectangle: " + w.to_string() + "x" + h.to_string())
         }
     }
+    return
 }`} />
 
 ## Matching Enums
@@ -71,6 +73,7 @@ func main() returns void {
             print("Error: " + msg)
         }
     }
+    return
 }`} />
 
 ---

@@ -71,5 +71,6 @@ func main() returns void {
         }
         err(msg) { print("now error: " + msg) }
     }
+    return
 }
 ```

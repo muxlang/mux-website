@@ -45,6 +45,7 @@ class Config {
 func process() returns void {
     const float TAX_RATE = 0.08
     auto total = amount * TAX_RATE
+    return
 }
 ```
 

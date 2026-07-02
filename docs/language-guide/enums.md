@@ -221,6 +221,7 @@ func handleConnection(Connection conn) returns void {
             print("Connection failed: " + err)
         }
     }
+    return
 }
 ```
 

@@ -21,6 +21,7 @@ Sets are unordered collections of unique elements.
     
     print("Numbers: " + numbers.to_string())
     print("Tags: " + tags.to_string())
+    return
 }`} />
 
 ## Set Operations
@@ -37,6 +38,7 @@ Sets are unordered collections of unique elements.
     auto removed = nums.remove(2)
     print("Removed 2: " + removed.to_string())
     print("After remove: " + nums.to_string())
+    return
 }`} />
 
 ## Set Size
@@ -46,6 +48,7 @@ Sets are unordered collections of unique elements.
     
     print("Size: " + nums.size().to_string())
     print("Empty: " + nums.is_empty().to_string())
+    return
 }`} />
 
 ---
