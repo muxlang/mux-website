@@ -21,7 +21,7 @@
 
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, sep } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
@@ -44,13 +44,20 @@ const ALLOWED_EXTRA = {
   'shiki:types': new Set(),
 };
 
-const IDENT = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+const IDENT = /^[a-zA-Z_]\w*$/;
 
 async function loadCanonical() {
   const source = process.argv[2] || process.env.MUX_SYNTAX_MATRIX;
   if (source && !/^https?:\/\//.test(source)) {
-    const raw = await readFile(resolve(source), 'utf8');
-    return { matrix: JSON.parse(raw), from: source };
+    // A local override path is a maintainer convenience for offline testing.
+    // Validate the canonicalized path stays inside the repo so a stray or
+    // traversal path can never read arbitrary files off disk.
+    const resolved = resolve(REPO_ROOT, source);
+    if (resolved !== REPO_ROOT && !resolved.startsWith(REPO_ROOT + sep)) {
+      throw new Error(`local canonical path must be inside the repo: ${source}`);
+    }
+    const raw = await readFile(resolved, 'utf8');
+    return { matrix: JSON.parse(raw), from: resolved };
   }
   const url = source || CANONICAL_URL;
   const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
@@ -82,7 +89,7 @@ function canonicalTypes(matrix) {
 // e.g. `keywords: [ 'auto', 'func', ... ]`. Anchored on a newline + indentation
 // so `keywords` does not also match `typeKeywords`/`builtinTypes`.
 function monacoArray(src, name) {
-  const re = new RegExp(`\\n\\s*${name}:\\s*\\[([\\s\\S]*?)\\]`);
+  const re = new RegExp(String.raw`\n\s*${name}:\s*\[([\s\S]*?)\]`);
   const m = src.match(re);
   if (!m) throw new Error(`could not find "${name}" array in muxLanguage.ts`);
   const set = new Set();
@@ -97,7 +104,7 @@ function monacoArray(src, name) {
 // dropped: we only compare literal keyword/type words.
 function wordsFromRegex(pattern) {
   const words = new Set();
-  const cleaned = pattern.replace(/\\b/g, '');
+  const cleaned = pattern.replaceAll('\\b', '');
   for (const group of cleaned.matchAll(/\((?:\?:)?([^()]*)\)/g)) {
     for (const alt of group[1].split('|')) {
       const token = alt.trim();
@@ -134,7 +141,7 @@ function shikiTypes(grammar) {
 }
 
 function sorted(set) {
-  return [...set].sort();
+  return [...set].sort((a, b) => a.localeCompare(b));
 }
 
 // Compare one website set against canonical. Missing canonical tokens always
@@ -151,8 +158,10 @@ function compare(label, canonical, actual, errors) {
   const lines = [`FAIL ${label}`];
   if (missing.length) lines.push(`    missing from website (present in canonical): ${missing.join(', ')}`);
   if (extra.length) {
-    lines.push(`    unexpected website-only tokens (not canonical, not allowlisted): ${extra.join(', ')}`);
-    lines.push('    -> add them to canonical syntax-matrix.json, or to ALLOWED_EXTRA with a reason.');
+    lines.push(
+      `    unexpected website-only tokens (not canonical, not allowlisted): ${extra.join(', ')}`,
+      '    -> add them to canonical syntax-matrix.json, or to ALLOWED_EXTRA with a reason.',
+    );
   }
   errors.push(lines.join('\n'));
 }
@@ -182,7 +191,9 @@ async function main() {
   console.log('\nSyntax parity check passed: Monaco and Shiki are in sync with canonical.');
 }
 
-main().catch((err) => {
+try {
+  await main();
+} catch (err) {
   console.error(`syntax parity check errored: ${err.message}`);
   process.exit(1);
-});
+}
