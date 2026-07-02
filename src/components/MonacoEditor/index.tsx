@@ -90,6 +90,8 @@ const MonacoEditorComponent: React.FC<MonacoEditorComponentProps> = ({ value, on
           options={{
             minimap: { enabled: false },
             fontSize: 14,
+            // Render operators as literal characters, not fused ligatures (issue #5).
+            fontLigatures: false,
             lineNumbers: 'on',
             scrollBeyondLastLine: false,
             automaticLayout: true,

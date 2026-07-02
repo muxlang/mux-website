@@ -167,6 +167,20 @@ pre code {
   background: transparent;
 }
 
+/* Disable programming-font ligatures (JetBrains Mono) so operators like
+   <=, >=, !=, == and -> render as their literal characters instead of being
+   fused into a single glyph (issue #5). */
+code,
+pre,
+kbd,
+.shiki,
+.shiki-pre,
+.terminal-code,
+.mux-chat-code-block {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
 /* Shiki code block styling */
 .shiki-pre {
   font-size: 0.875rem;
