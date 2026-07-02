@@ -279,7 +279,6 @@ func max(int a, int b) returns int {
 func greet(string name) returns void {
     print("Hello, " + name)
     return  // Required in void functions
-    return
 }
 ```
 
