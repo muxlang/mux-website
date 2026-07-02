@@ -1324,6 +1324,10 @@ hr {
   position: fixed;
   bottom: 24px;
   right: 24px;
+  /* Native <dialog open> gets `left: 0` from the UA stylesheet; without
+     resetting it the element is over-constrained (left + right + width) and
+     browsers keep `left`, pinning the panel to the bottom-left. */
+  left: auto;
   z-index: 200;
   width: 360px;
   max-height: 70vh;
@@ -1473,6 +1477,33 @@ hr {
   margin: 0 0 8px;
   max-width: 100%;
   font-size: 0.8rem;
+}
+
+/* Static (non-interactive) code block used inside assistant chat messages. */
+.mux-chat-code-block {
+  margin: 0 0 8px;
+  max-width: 100%;
+  border: 1px solid var(--terminal-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mux-chat-code-block pre,
+.mux-chat-code-block.mux-chat-code-block-plain {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.mux-chat-code-block.mux-chat-code-block-plain {
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+.mux-chat-code-block code {
+  font-family: var(--ifm-font-family-monospace);
+  white-space: pre;
 }
 
 .mux-chat-inline-code {

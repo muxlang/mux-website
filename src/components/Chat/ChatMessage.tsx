@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
-import CodeBlock from '@theme/CodeBlock';
+import ChatCodeBlock from './ChatCodeBlock';
 import type { ChatMessage as ChatMessageType } from '../../lib/chatTypes';
 
 interface ChatMessageProps {
@@ -10,17 +10,18 @@ interface ChatMessageProps {
 
 const SITE_BASE = 'https://mux-lang.dev';
 
-// Render assistant markdown through Docusaurus' own CodeBlock so fenced code is
-// highlighted with the same theme as the rest of the site. react-markdown wraps
-// block code in <pre>; we make <pre> a passthrough so CodeBlock provides its own
-// instead of being nested inside a second <pre>.
+// Render assistant markdown with a static, non-interactive code block. Using the
+// site-wide @theme/CodeBlock would turn fenced `mux` snippets into the runnable
+// MuxTerminal, which overflows the narrow chat drawer and lets users execute
+// code from inside the chat (issue #4). react-markdown wraps block code in
+// <pre>; we make <pre> a passthrough so ChatCodeBlock provides its own.
 const markdownComponents: Components = {
   pre: ({ children }) => <>{children}</>,
   code({ className, children }) {
     const match = /language-(\w+)/.exec(className ?? '');
     if (match) {
       return (
-        <CodeBlock language={match[1]}>{String(children).replace(/\n$/, '')}</CodeBlock>
+        <ChatCodeBlock language={match[1]} code={String(children).replace(/\n$/, '')} />
       );
     }
     return <code className="mux-chat-inline-code">{children}</code>;
