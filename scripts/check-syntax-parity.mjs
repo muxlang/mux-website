@@ -53,7 +53,7 @@ async function loadCanonical() {
     return { matrix: JSON.parse(raw), from: source };
   }
   const url = source || CANONICAL_URL;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
   if (!res.ok) {
     throw new Error(`failed to fetch canonical spec: ${res.status} ${res.statusText} (${url})`);
   }
@@ -86,7 +86,9 @@ function monacoArray(src, name) {
   const m = src.match(re);
   if (!m) throw new Error(`could not find "${name}" array in muxLanguage.ts`);
   const set = new Set();
-  for (const lit of m[1].matchAll(/'([^']+)'/g)) set.add(lit[1]);
+  // Match single- or double-quoted string literals so a future reformat of
+  // muxLanguage.ts to double quotes does not silently empty the set.
+  for (const lit of m[1].matchAll(/['"]([^'"]+)['"]/g)) set.add(lit[1]);
   return set;
 }
 
