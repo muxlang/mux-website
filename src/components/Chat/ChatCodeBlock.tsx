@@ -1,20 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import useIsBrowser from '@docusaurus/useIsBrowser';
+import { useColorMode } from '@docusaurus/theme-common';
 import { highlightCode } from '../../shiki/highlighter';
 
 interface ChatCodeBlockProps {
   code: string;
   language?: string;
-}
-
-function getThemeFromBody(): 'github-dark' | 'github-light' {
-  if (typeof document !== 'undefined') {
-    return document.documentElement.dataset.theme === 'dark' ||
-      document.body.classList.contains('theme-dark')
-      ? 'github-dark'
-      : 'github-light';
-  }
-  return 'github-light';
 }
 
 /**
@@ -25,6 +16,9 @@ function getThemeFromBody(): 'github-dark' | 'github-light' {
  */
 const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
   const isBrowser = useIsBrowser();
+  // Shiki bakes the theme's colors into inline styles, so we must re-highlight
+  // when the site's color mode changes rather than snapshot it once.
+  const { colorMode } = useColorMode();
   const [html, setHtml] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,10 +26,11 @@ const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
       return;
     }
     let cancelled = false;
+    const theme = colorMode === 'dark' ? 'github-dark' : 'github-light';
 
     const render = async () => {
       try {
-        const result = await highlightCode(code, language ?? 'mux', getThemeFromBody());
+        const result = await highlightCode(code, language ?? 'mux', theme);
         if (!cancelled) {
           // highlightCode returns the raw code unchanged when the language is
           // unsupported; only treat it as highlighted markup when it produced
@@ -53,7 +48,7 @@ const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
     return () => {
       cancelled = true;
     };
-  }, [code, language, isBrowser]);
+  }, [code, language, isBrowser, colorMode]);
 
   if (html) {
     return (
