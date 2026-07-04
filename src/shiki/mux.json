@@ -61,7 +61,7 @@
         },
         {
           "name": "keyword.declaration",
-          "match": "\\b(?:auto|func|returns|return|const|class|interface|enum|import|common)\\b"
+          "match": "\\b(?:auto|func|returns|return|const|class|interface|enum|import|common|where)\\b"
         },
         {
           "name": "storage.type",
