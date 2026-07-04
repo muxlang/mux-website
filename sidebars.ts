@@ -80,6 +80,7 @@ const docsSidebar: NonNullable<SidebarsConfig['docsSidebar']> = [
       'language-guide/control-flow',
       'language-guide/classes',
       'language-guide/enums',
+      'language-guide/where-clauses',
       'language-guide/generics',
       'language-guide/collections',
       'language-guide/error-handling',

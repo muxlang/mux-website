@@ -37,7 +37,7 @@ export const language: Monaco.languages.IMonarchLanguage = {
   keywords: [
     'auto', 'func', 'returns', 'return', 'const', 'class', 'interface', 'enum',
     'import', 'common', 'if', 'else', 'for', 'while', 'match', 'break',
-    'continue', 'is', 'as', 'in', 'ref', 'true', 'false', 'none', 'ok', 'err', 'some',
+    'continue', 'is', 'as', 'in', 'ref', 'where', 'true', 'false', 'none', 'ok', 'err', 'some',
   ],
   typeKeywords: [
     'string', 'bool', 'void', 'int', 'float', 'char', 'optional', 'result',
