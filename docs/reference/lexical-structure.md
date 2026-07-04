@@ -118,6 +118,7 @@ The following words are reserved keywords and cannot be used as identifiers:
 | `interface` | Interface declaration |
 | `enum` | Enum declaration |
 | `common` | Static/class method |
+| `where` | Runtime constraint clause on declarations |
 
 ### Control Flow Keywords
 

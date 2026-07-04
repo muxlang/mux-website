@@ -89,7 +89,7 @@ Explore the detailed language documentation:
 
 ### Keywords
 
-`func`, `returns`, `const`, `auto`, `class`, `interface`, `enum`, `match`, `if`, `else`, `for`, `while`, `break`, `continue`, `return`, `import`, `is`, `as`, `in`, `true`, `false`, `common`, `none`, `some`, `result`, `optional`, `ok`, `err`
+`func`, `returns`, `const`, `auto`, `class`, `interface`, `enum`, `match`, `if`, `else`, `for`, `while`, `break`, `continue`, `return`, `import`, `is`, `as`, `in`, `true`, `false`, `common`, `where`, `none`, `some`, `result`, `optional`, `ok`, `err`
 
 ## Type System Principles
 
