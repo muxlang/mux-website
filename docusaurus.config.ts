@@ -97,17 +97,19 @@ const config: Config = {
     ],
   ],
 
-  themes: [],
-
-  plugins: [
+  themes: [
     [
-      require.resolve('@cmfcmf/docusaurus-search-local'),
+      '@easyops-cn/docusaurus-search-local',
       {
-        language: 'en',
+        hashed: true,
+        language: ['en'],
         indexBlog: false,
+        highlightSearchTermsOnTargetPage: true,
       },
     ],
   ],
+
+  plugins: [],
 
   themeConfig: {
     image: 'img/mux-social-card.jpg',
