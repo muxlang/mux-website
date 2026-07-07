@@ -3,6 +3,7 @@ import PlaygroundOutput from './PlaygroundOutput';
 import MonacoEditorComponent from './MonacoEditor';
 import useMuxExecutor from '../hooks/useMuxExecutor';
 import useModifierKeyLabel from '../hooks/useModifierKeyLabel';
+import useApiWarmup from '../hooks/useApiWarmup';
 
 interface MuxTerminalProps {
   initialCode: string;
@@ -23,6 +24,8 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const { executeCode, loading } = useMuxExecutor();
+
+  useApiWarmup();
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
