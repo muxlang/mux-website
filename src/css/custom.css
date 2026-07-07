@@ -1024,14 +1024,6 @@ hr {
   min-height: 0;
 }
 
-.playground-root-terminal .embedded-playground-editor .monaco-editor {
-  min-height: 100%;
-}
-
-.playground-root-terminal .embedded-playground-editor .monaco-editor .overflow-guard {
-  min-height: 100% !important;
-}
-
 .playground-root-terminal .embedded-playground-output {
   max-height: 25vh;
   overflow-y: auto;
