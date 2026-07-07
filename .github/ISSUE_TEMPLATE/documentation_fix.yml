@@ -1,0 +1,21 @@
+name: Documentation fix
+description: Report incorrect or missing content on mux-lang.dev
+labels: ["documentation", "needs triage"]
+assignees: ["DerekCorniello"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What is wrong
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected content
