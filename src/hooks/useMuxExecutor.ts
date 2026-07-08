@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import type { ExecuteResponse } from '../lib/executeTypes';
+import { resolveApiUrl } from '../lib/apiUrl';
 
 async function readExecuteResponse(res: Response): Promise<ExecuteResponse> {
   const contentType = res.headers.get('content-type') || '';
@@ -29,11 +30,7 @@ const useMuxExecutor = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { siteConfig } = useDocusaurusContext();
-  const customFields = siteConfig.customFields;
-  const apiUrl =
-    typeof customFields?.apiUrl === 'string'
-      ? customFields.apiUrl
-      : 'https://mux-lang-api.fly.dev';
+  const apiUrl = resolveApiUrl(siteConfig.customFields);
 
   const executeCode = useCallback(async (source: string): Promise<ExecuteResponse> => {
     setLoading(true);

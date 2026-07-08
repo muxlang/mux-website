@@ -1,4 +1,5 @@
 import React from 'react';
+import useLoadingStage from '../hooks/useLoadingStage';
 
 interface PlaygroundOutputProps {
   value: string;
@@ -7,6 +8,8 @@ interface PlaygroundOutputProps {
 }
 
 const PlaygroundOutput: React.FC<PlaygroundOutputProps> = ({ value, loading, error }) => {
+  const stage = useLoadingStage(loading);
+
   return (
     <div className="playground-output">
       <div className="playground-output-header">
@@ -14,7 +17,12 @@ const PlaygroundOutput: React.FC<PlaygroundOutputProps> = ({ value, loading, err
       </div>
       <div className="playground-output-content">
         {loading ? (
-          <span className="playground-output-loading">Executing...</span>
+          <span className="playground-output-loading">
+            <span className="playground-output-spinner" aria-hidden="true" />
+            {stage === 'running'
+              ? 'Running...'
+              : 'Starting the server, this can take up to a minute...'}
+          </span>
         ) : (
           <>
             {error && (
