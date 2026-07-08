@@ -163,9 +163,11 @@ function HomepageHeader() {
               )}
             </div>
             <div className={styles.installCommandRow}>
-              <code className={styles.installCommand}>
-                {installCommands[platform]}
-              </code>
+              <div className={styles.installCommandScroll}>
+                <code className={styles.installCommand}>
+                  {installCommands[platform]}
+                </code>
+              </div>
               <button
                 className={styles.copyButton}
                 onClick={handleCopy}
