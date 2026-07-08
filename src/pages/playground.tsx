@@ -28,7 +28,12 @@ const PlaygroundPage: React.FC = () => {
           </div>
         </header>
         <main>
-          <MuxTerminal initialCode={initialCode} title="playground.mux" className="playground-root-terminal" />
+          <MuxTerminal
+            initialCode={initialCode}
+            title="playground.mux"
+            className="playground-root-terminal"
+            sizing="fill"
+          />
         </main>
       </div>
     </Layout>
