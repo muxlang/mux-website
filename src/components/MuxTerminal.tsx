@@ -8,6 +8,13 @@ interface MuxTerminalProps {
   initialCode: string;
   title?: string;
   className?: string;
+  /**
+   * 'auto' (default): editor grows to fit its content, used by editors
+   * embedded inline in docs/homepage.
+   * 'fill': editor stretches to fill its container's height, used on the
+   * full playground page where the container manages available space.
+   */
+  sizing?: 'auto' | 'fill';
 }
 
 const DEFAULT_TITLE = 'snippet.mux';
@@ -16,6 +23,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
   initialCode,
   title = DEFAULT_TITLE,
   className,
+  sizing = 'auto',
 }) => {
   const modifierKey = useModifierKeyLabel();
   const [code, setCode] = useState(initialCode);
@@ -110,7 +118,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
       </div>
 
       <div className="embedded-playground-editor">
-        <MonacoEditorComponent value={code} onChange={setCode} onRun={handleRun} />
+        <MonacoEditorComponent value={code} onChange={setCode} onRun={handleRun} sizing={sizing} />
       </div>
 
       <div className="embedded-playground-footer">
