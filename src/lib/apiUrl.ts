@@ -11,9 +11,12 @@ export const DEFAULT_MUX_API_URL = 'https://mux-lang-api.fly.dev';
  * configured URL ends in a slash.
  */
 export function resolveApiUrl(customFields: Record<string, unknown> | undefined): string {
-  const apiUrl =
+  let apiUrl =
     typeof customFields?.apiUrl === 'string'
       ? customFields.apiUrl
       : DEFAULT_MUX_API_URL;
-  return apiUrl.replace(/\/+$/, '');
+  while (apiUrl.endsWith('/')) {
+    apiUrl = apiUrl.slice(0, -1);
+  }
+  return apiUrl;
 }
