@@ -1019,7 +1019,22 @@ hr {
   margin: 0;
 }
 
+/*
+ * Fill mode height chain: .playground-container only has a min-height, so
+ * percentage heights cannot resolve below it. Instead of percentages, make
+ * each level a flex container and stretch children with flex: 1. The
+ * "> section" child is the wrapper element rendered by @monaco-editor/react
+ * around the editor; its inline height: 100% resolves to auto here, so it
+ * needs flex sizing to receive the wrapper's real height.
+ */
 .playground-root-terminal .embedded-playground-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.playground-root-terminal .embedded-playground-editor > section {
   flex: 1;
   min-height: 0;
 }
