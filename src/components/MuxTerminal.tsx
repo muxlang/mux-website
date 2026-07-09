@@ -3,11 +3,19 @@ import PlaygroundOutput from './PlaygroundOutput';
 import MonacoEditorComponent from './MonacoEditor';
 import useMuxExecutor from '../hooks/useMuxExecutor';
 import useModifierKeyLabel from '../hooks/useModifierKeyLabel';
+import useApiWarmup from '../hooks/useApiWarmup';
 
 interface MuxTerminalProps {
   initialCode: string;
   title?: string;
   className?: string;
+  /**
+   * 'auto' (default): editor grows to fit its content, used by editors
+   * embedded inline in docs/homepage.
+   * 'fill': editor stretches to fill its container's height, used on the
+   * full playground page where the container manages available space.
+   */
+  sizing?: 'auto' | 'fill';
 }
 
 const DEFAULT_TITLE = 'snippet.mux';
@@ -16,6 +24,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
   initialCode,
   title = DEFAULT_TITLE,
   className,
+  sizing = 'auto',
 }) => {
   const modifierKey = useModifierKeyLabel();
   const [code, setCode] = useState(initialCode);
@@ -23,6 +32,8 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const { executeCode, loading } = useMuxExecutor();
+
+  useApiWarmup();
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -110,7 +121,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
       </div>
 
       <div className="embedded-playground-editor">
-        <MonacoEditorComponent value={code} onChange={setCode} onRun={handleRun} />
+        <MonacoEditorComponent value={code} onChange={setCode} onRun={handleRun} sizing={sizing} />
       </div>
 
       <div className="embedded-playground-footer">

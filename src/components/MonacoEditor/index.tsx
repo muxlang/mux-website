@@ -7,6 +7,14 @@ interface MonacoEditorComponentProps {
   value: string;
   onChange: (value: string) => void;
   onRun?: () => void;
+  /**
+   * 'auto' (default): grow to fit the content's line count, with a 150px
+   * floor and no maximum, for editors embedded inline in docs/homepage.
+   * 'fill': stretch to 100% of the container's height and rely on
+   * automaticLayout for resizes, for editors that live in a container that
+   * already manages its own height (e.g. the full playground page).
+   */
+  sizing?: 'auto' | 'fill';
 }
 
 function getTheme(): 'vs-dark' | 'vs' {
@@ -27,7 +35,7 @@ function EditorFallback() {
   );
 }
 
-const MonacoEditorComponent: React.FC<MonacoEditorComponentProps> = ({ value, onChange, onRun }) => {
+const MonacoEditorComponent: React.FC<MonacoEditorComponentProps> = ({ value, onChange, onRun, sizing = 'auto' }) => {
   const [theme, setTheme] = useState(getTheme);
   const [height, setHeight] = useState('200px');
   const observerRef = useRef<MutationObserver | null>(null);
@@ -38,14 +46,16 @@ const MonacoEditorComponent: React.FC<MonacoEditorComponentProps> = ({ value, on
   }, [onRun]);
 
   const handleEditorMount: OnMount = useCallback((editor, monaco) => {
-    const updateHeight = () => {
-      const lineCount = editor.getModel()?.getLineCount() || 10;
-      const newHeight = Math.max(150, Math.min(lineCount * 21 + 24, 400));
-      setHeight(`${newHeight}px`);
-    };
+    if (sizing === 'auto') {
+      const updateHeight = () => {
+        const lineCount = editor.getModel()?.getLineCount() || 10;
+        const newHeight = Math.max(150, lineCount * 21 + 24);
+        setHeight(`${newHeight}px`);
+      };
 
-    updateHeight();
-    editor.onDidChangeModelContent(updateHeight);
+      updateHeight();
+      editor.onDidChangeModelContent(updateHeight);
+    }
 
     editor.addAction({
       id: 'run-mux',
@@ -72,13 +82,13 @@ const MonacoEditorComponent: React.FC<MonacoEditorComponentProps> = ({ value, on
       attributeFilter: ['data-theme'],
     });
     observerRef.current = observer;
-  }, []);
+  }, [sizing]);
 
   return (
     <BrowserOnly fallback={<EditorFallback />}>
       {() => (
         <MonacoEditor
-          height={height}
+          height={sizing === 'fill' ? '100%' : height}
           language="mux"
           value={value}
           onChange={(v) => onChange(v || '')}

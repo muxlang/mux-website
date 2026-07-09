@@ -767,48 +767,6 @@ hr {
   z-index: 1000;
 }
 
-/* Search bar - responsive centered */
-.navbar__items:not(.navbar__items--right):has(.dsla-search-wrapper) {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.dsla-search-wrapper {
-  position: relative;
-  left: auto;
-  top: auto;
-  transform: none;
-  width: 100%;
-  max-width: 320px;
-  margin: 0 auto;
-}
-
-.navbar__items--right .dsla-search-wrapper {
-  margin: 0;
-  max-width: none;
-}
-
-.navbar__items--right .dsla-search-wrapper .aa-DetachedSearchButton {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border-radius: 8px;
-  justify-content: center;
-}
-
-.navbar__items--right .dsla-search-wrapper .aa-DetachedSearchButtonPlaceholder {
-  display: none;
-}
-
-.navbar__items--right .dsla-search-wrapper .aa-DetachedSearchButtonIcon {
-  margin: 0;
-}
-
-.dsla-search-field {
-  width: 100%;
-}
-
 @media (max-width: 996px) {
   .navbar__title {
     display: none;
@@ -826,20 +784,12 @@ hr {
     display: none;
   }
 
-  .navbar__items:not(.navbar__items--right) .dsla-search-wrapper {
-    display: none;
-  }
-
   .navbar__items--right {
     gap: 0.5rem;
   }
 
   .navbar__items:not(.navbar__items--right) {
     justify-content: flex-start;
-  }
-  
-  .dsla-search-wrapper {
-    max-width: 280px;
   }
 }
 
@@ -877,16 +827,6 @@ hr {
     flex: 1;
     min-width: 0;
   }
-  
-  .dsla-search-wrapper {
-    max-width: none;
-    width: calc(100% - 80px);
-  }
-
-  .navbar-sidebar__search .dsla-search-wrapper {
-    display: block;
-    width: 100%;
-  }
 }
 
 @media (max-width: 480px) {
@@ -909,53 +849,6 @@ hr {
   .hero__subtitle {
     font-size: 0.9375rem;
   }
-  
-  .dsla-search-wrapper {
-    width: 100%;
-    max-width: none;
-  }
-}
-
-/* Search bar color overrides - match site theme */
-.dsla-search-wrapper .aa-DetachedSearchButton,
-.dsla-search-wrapper .aa-Form,
-.dsla-search-wrapper .aa-InputWrapper {
-  background-color: var(--ifm-background-surface-color);
-  border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 6px;
-}
-
-.dsla-search-wrapper .aa-DetachedSearchButton {
-  color: var(--ifm-color-emphasis-700);
-}
-
-.dsla-search-wrapper .aa-DetachedSearchButton:focus,
-.dsla-search-wrapper .aa-DetachedSearchButton:hover {
-  border-color: var(--ifm-color-primary);
-  color: var(--ifm-color-primary);
-}
-
-.dsla-search-wrapper .aa-Input {
-  color: var(--ifm-color-emphasis-800);
-}
-
-.dsla-search-wrapper .aa-DetachedSearchButtonIcon {
-  color: var(--ifm-color-primary);
-}
-
-[data-theme='dark'] .dsla-search-wrapper .aa-DetachedSearchButton,
-[data-theme='dark'] .dsla-search-wrapper .aa-Form,
-[data-theme='dark'] .dsla-search-wrapper .aa-InputWrapper {
-  background-color: var(--ifm-background-surface-color);
-  border-color: var(--ifm-color-emphasis-200);
-}
-
-[data-theme='dark'] .dsla-search-wrapper .aa-Input {
-  color: var(--ifm-color-emphasis-800);
-}
-
-[data-theme='dark'] .dsla-search-wrapper .aa-DetachedSearchButtonIcon {
-  color: var(--ifm-color-primary);
 }
 
 /* Playground styles */
@@ -1019,17 +912,24 @@ hr {
   margin: 0;
 }
 
+/*
+ * Fill mode height chain: .playground-container only has a min-height, so
+ * percentage heights cannot resolve below it. Instead of percentages, make
+ * each level a flex container and stretch children with flex: 1. The
+ * "> section" child is the wrapper element rendered by @monaco-editor/react
+ * around the editor; its inline height: 100% resolves to auto here, so it
+ * needs flex sizing to receive the wrapper's real height.
+ */
 .playground-root-terminal .embedded-playground-editor {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.playground-root-terminal .embedded-playground-editor .monaco-editor {
-  min-height: 100%;
-}
-
-.playground-root-terminal .embedded-playground-editor .monaco-editor .overflow-guard {
-  min-height: 100% !important;
+.playground-root-terminal .embedded-playground-editor > section {
+  flex: 1;
+  min-height: 0;
 }
 
 .playground-root-terminal .embedded-playground-output {
@@ -1079,8 +979,27 @@ hr {
 }
 
 .playground-output-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--ifm-color-emphasis-500);
   font-style: italic;
+}
+
+.playground-output-spinner {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border: 2px solid var(--ifm-color-emphasis-300);
+  border-top-color: var(--ifm-color-primary);
+  border-radius: 50%;
+  animation: mux-playground-spin 0.7s linear infinite;
+}
+
+@keyframes mux-playground-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .playground-output-error {
