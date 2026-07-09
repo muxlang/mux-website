@@ -1,6 +1,6 @@
 name: Documentation fix
 description: Report incorrect or missing content on mux-lang.dev
-labels: ["documentation", "needs triage"]
+labels: ["needs triage"]
 assignees: ["DerekCorniello"]
 body:
   - type: input
