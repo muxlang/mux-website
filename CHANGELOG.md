@@ -35,12 +35,13 @@ is shown in the footer; it tracks the docs site, not the compiler.
 - **Popup and terminal behavior** in the chat widget (#7).
 - **Missing returns** across documentation examples (#6).
 
-<!-- ===========================================================
-     Independent multi-repo versioning begins at 0.5.0.
-     Entries below are inherited from the pre-split (monorepo-era)
-     compiler changelog and are shared history, not specific to
-     mux-website.
-     =========================================================== -->
+---
+
+> **Independent multi-repo versioning begins at 0.5.0.** Entries below are inherited
+> from the pre-split (monorepo-era) compiler changelog and are shared history, not
+> specific to `mux-website`.
+
+---
 
 ## [0.4.1] - 2026-06-27
 
