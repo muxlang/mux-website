@@ -1,21 +1,20 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Mirrors mux-website CI (.github/workflows/ci.yml) Website Checks, minus the
 # slow production build which stays CI-only. Assumes node_modules is already
 # installed (it does not run `npm ci`). Reports every failure in one pass.
 
 HAS_WEB=false
-# Read staged paths line by line (IFS= read) so a path containing spaces is not
-# word-split and mis-skipped. A here-doc (not a pipe) keeps the loop in this
-# shell so HAS_WEB persists.
-while IFS= read -r file; do
+# Read staged paths NUL-delimited (-z) so paths with spaces, tabs, quotes,
+# backslashes, newlines, or non-ASCII bytes are matched literally instead of
+# word-split or read in Git's quoted/escaped form. Process substitution keeps
+# the loop in this shell so HAS_WEB persists.
+while IFS= read -r -d '' file; do
   case "$file" in
     src/*|scripts/*|*.ts|*.tsx|*.js|*.jsx|*.mjs|package.json|package-lock.json|tsconfig.json|docusaurus.config.*|.eslintrc*|eslint.config.*)
       HAS_WEB=true
       ;;
   esac
-done <<EOF
-$(git diff --cached --name-only)
-EOF
+done < <(git diff --cached --name-only -z)
 
 if [ "$HAS_WEB" = false ]; then
   echo "No website source changed, skipping checks."
@@ -29,8 +28,9 @@ if ! npm run lint; then
   echo ""
   echo "Lint failed. Fix the reported problems before committing."
   FAILED=1
+else
+  echo "Lint OK"
 fi
-echo "Lint OK"
 
 echo ""
 echo "Type-checking (tsc)..."
@@ -38,8 +38,9 @@ if ! npm run typecheck; then
   echo ""
   echo "Type check failed. Fix the type errors before committing."
   FAILED=1
+else
+  echo "Typecheck OK"
 fi
-echo "Typecheck OK"
 
 echo ""
 echo "Checking syntax-highlighting parity..."
@@ -47,8 +48,9 @@ if ! npm run check:syntax-parity; then
   echo ""
   echo "Syntax parity check failed."
   FAILED=1
+else
+  echo "Syntax parity OK"
 fi
-echo "Syntax parity OK"
 
 if [ "$FAILED" -ne 0 ]; then
   exit 1
