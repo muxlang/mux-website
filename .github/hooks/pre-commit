@@ -3,16 +3,19 @@
 # slow production build which stays CI-only. Assumes node_modules is already
 # installed (it does not run `npm ci`). Reports every failure in one pass.
 
-STAGED_FILES=$(git diff --cached --name-only)
-
 HAS_WEB=false
-for file in $STAGED_FILES; do
+# Read staged paths line by line (IFS= read) so a path containing spaces is not
+# word-split and mis-skipped. A here-doc (not a pipe) keeps the loop in this
+# shell so HAS_WEB persists.
+while IFS= read -r file; do
   case "$file" in
     src/*|scripts/*|*.ts|*.tsx|*.js|*.jsx|*.mjs|package.json|package-lock.json|tsconfig.json|docusaurus.config.*|.eslintrc*|eslint.config.*)
       HAS_WEB=true
       ;;
   esac
-done
+done <<EOF
+$(git diff --cached --name-only)
+EOF
 
 if [ "$HAS_WEB" = false ]; then
   echo "No website source changed, skipping checks."
