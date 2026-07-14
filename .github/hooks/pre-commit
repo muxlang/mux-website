@@ -1,0 +1,52 @@
+#!/bin/sh
+# Mirrors mux-website CI (.github/workflows/ci.yml) Website Checks, minus the
+# slow production build which stays CI-only. Assumes node_modules is already
+# installed (it does not run `npm ci`). Reports every failure in one pass.
+
+STAGED_FILES=$(git diff --cached --name-only)
+
+HAS_WEB=false
+for file in $STAGED_FILES; do
+  case "$file" in
+    src/*|scripts/*|*.ts|*.tsx|*.js|*.jsx|*.mjs|package.json|package-lock.json|tsconfig.json|docusaurus.config.*|.eslintrc*|eslint.config.*)
+      HAS_WEB=true
+      ;;
+  esac
+done
+
+if [ "$HAS_WEB" = false ]; then
+  echo "No website source changed, skipping checks."
+  exit 0
+fi
+
+FAILED=0
+
+echo "Running ESLint..."
+if ! npm run lint; then
+  echo ""
+  echo "Lint failed. Fix the reported problems before committing."
+  FAILED=1
+fi
+echo "Lint OK"
+
+echo ""
+echo "Type-checking (tsc)..."
+if ! npm run typecheck; then
+  echo ""
+  echo "Type check failed. Fix the type errors before committing."
+  FAILED=1
+fi
+echo "Typecheck OK"
+
+echo ""
+echo "Checking syntax-highlighting parity..."
+if ! npm run check:syntax-parity; then
+  echo ""
+  echo "Syntax parity check failed."
+  FAILED=1
+fi
+echo "Syntax parity OK"
+
+if [ "$FAILED" -ne 0 ]; then
+  exit 1
+fi
