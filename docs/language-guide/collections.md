@@ -104,8 +104,8 @@ map<string, int> scores = {"Alice": 90, "Bob": 85}
 // With type inference
 auto ages = {"Alice": 30, "Bob": 25}  // map<string, int>
 
-// Empty map requires explicit type
-map<string, int> empty = {}
+// Empty map is `{:}` and requires an explicit type
+map<string, int> empty = {:}
 
 // Nested maps
 map<string, map<string, int>> data = {
@@ -322,7 +322,7 @@ auto tags = {"urgent", "important"}
 
 // Explicit type with literal (empty collections)
 list<int> nums = []
-map<string, int> scores = {}
+map<string, int> scores = {:}
 set<string> tags = {}
 ```
 

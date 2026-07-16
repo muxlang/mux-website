@@ -22,6 +22,26 @@ Maps store key-value pairs, allowing fast lookup by key.
     return
 }`} />
 
+## Empty Maps
+
+An empty map is written `{:}`, not `{}`. Braces on their own are the empty
+**set**, so the colon is what tells the two apart. An empty map also needs an
+explicit type, since there are no entries to infer the key and value types from.
+
+<EmbeddedPlayground initialCode={`func main() returns void {
+    map<string, int> scores = {:}
+    set<string> names = {}
+
+    scores["Alice"] = 90
+    names.add("Alice")
+
+    print("Scores: " + scores.to_string())
+    print("Names: " + names.to_string())
+    return
+}`} />
+
+Writing `{}` where a map is expected is a compile error that points you at `{:}`.
+
 ## Accessing Values
 
 <EmbeddedPlayground initialCode={`func main() returns void {
