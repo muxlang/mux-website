@@ -44,7 +44,7 @@ The `auto` keyword works well when the type is obvious from the value:
 Some cases require an explicit type because the type can't be inferred:
 
 - Empty collections: `auto empty = []` (error - can't infer element type)
-- Use explicit types: `List<int> numbers = []`, `Map<string, int> ages = {}`
+- Use explicit types: `list<int> numbers = []`, `map<string, int> ages = {:}`, `set<int> ids = {}`
 
 <EmbeddedPlayground initialCode={`func main() returns void {
     // These work with auto
@@ -53,8 +53,8 @@ Some cases require an explicit type because the type can't be inferred:
     auto numbers = [1, 2, 3]
 
     // These require explicit types
-    List<int> emptyNums = []
-    Map<string, int> ages = {}
+    list<int> emptyNums = []
+    map<string, int> ages = {:}
     
     print("Name: " + name)
     print("Count: " + count.to_string())
