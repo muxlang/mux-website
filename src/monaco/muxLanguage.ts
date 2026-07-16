@@ -75,9 +75,21 @@ export const language: Monaco.languages.IMonarchLanguage = {
           '@default': '',
         },
       }],
+      // Floats first: monarch takes the first match, so `\d[\d_]*` would
+      // otherwise claim the `42` of `42.0` and leave `.0` as a separate token.
+      // The fraction is required - `42.` is not a float, it is `42` then a field
+      // access, which is what makes `42.to_string()` work.
+      //
+      // `(?=(\d[\d_]*))\1` is an atomic group, which JS lacks natively: the
+      // lookahead matches the digit run greedily and the backreference replays
+      // it, so the engine cannot backtrack into it. Written as a plain
+      // `\d[\d_]*` before the required `.` or `e`, every non-float integer walks
+      // the run back one character at a time looking for a match that a digit
+      // can never satisfy.
+      [/(?=(\d[\d_]*))\1\.\d[\d_]*([eE][-+]?\d[\d_]*)?/, 'number.float'],
+      [/\.\d[\d_]*([eE][-+]?\d[\d_]*)?/, 'number.float'],
+      [/(?=(\d[\d_]*))\1[eE][-+]?\d[\d_]*/, 'number.float'],
       [/\d[\d_]*/, 'number.integer'],
-      [/\d\.\d*([eE][-+]?\d+)?/, 'number.float'],
-      [/\.\d+([eE][-+]?\d+)?/, 'number.float'],
       [/"/, 'string', '@string_double'],
       [/'/, 'string', '@string_single'],
     ],
