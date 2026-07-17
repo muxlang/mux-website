@@ -81,7 +81,11 @@ function muxBlocks(source) {
     }
   }
 
-  for (const m of source.matchAll(/<EmbeddedPlayground\s+initialCode=\{`([\s\S]*?)`\}/g)) {
+  // `initialCode` need not be the first attribute (e.g. `<EmbeddedPlayground
+  // height={400} initialCode={`...`}>`), so match it regardless of position.
+  // Skipping such a block would be exactly the silent-omission failure this
+  // tool exists to catch.
+  for (const m of source.matchAll(/<EmbeddedPlayground\b[\s\S]*?initialCode=\{`([\s\S]*?)`\}/g)) {
     const line = source.slice(0, m.index).split('\n').length;
     // Template literals escape backticks and interpolation starts.
     const body = m[1].replaceAll('\\`', '`').replaceAll('\\${', '${');
@@ -104,63 +108,85 @@ async function compile(snippetPath, outPath) {
   }
 }
 
+// Classify a block into what the checker should do with it: skip it (an
+// intentional error example or an illustrative fragment), write it as an
+// importable module without compiling, or compile it as a complete program.
+function classifyBlock(block) {
+  if (/\bno-compile\b/.test(block.meta)) return { action: 'opt-out' };
+  const title = block.meta.match(FENCE_TITLE_RE)?.[1];
+  const isProgram = block.kind === 'playground' || MAIN_RE.test(block.body);
+  if (!title && !isProgram) return { action: 'fragment' };
+  return { action: isProgram ? 'compile' : 'module', title };
+}
+
+// Compile every complete example in one docs file, writing titled fences as
+// importable modules first so a later example on the same page can import them.
+// Returns per-file tallies and any compile failures.
+async function checkFile(file, workRoot) {
+  const rel = relative(REPO_ROOT, file);
+  const workDir = join(workRoot, rel.replaceAll('/', '__'));
+  await mkdir(workDir, { recursive: true });
+
+  const result = { compiled: 0, fragments: 0, optedOut: 0, failures: [] };
+  let n = 0;
+  for (const block of muxBlocks(await readFile(file, 'utf8'))) {
+    const { action, title } = classifyBlock(block);
+    if (action === 'opt-out') {
+      result.optedOut++;
+      continue;
+    }
+    if (action === 'fragment') {
+      result.fragments++;
+      continue;
+    }
+    const snippetPath = join(workDir, title ?? `snippet_${n}.mux`);
+    await mkdir(dirname(snippetPath), { recursive: true });
+    await writeFile(snippetPath, block.body + '\n');
+    if (action === 'module') continue; // importable definition, not a program
+    const error = await compile(snippetPath, join(workDir, `snippet_${n}.out`));
+    n++;
+    result.compiled++;
+    if (error) result.failures.push({ rel, line: block.line, error });
+  }
+  return result;
+}
+
+function reportFailures(failures) {
+  console.error(`\nDocs snippet check FAILED (${failures.length} snippet(s)):\n`);
+  for (const f of failures) {
+    console.error(`--- ${f.rel}:${f.line}\n${f.error}\n`);
+  }
+  console.error(
+    'These examples do not compile with the released compiler the playground runs.\n' +
+      'If the docs are ahead of the release, hold this change until the release ships\n' +
+      '(see mux-context docs/release-process.md). An intentional error example opts\n' +
+      'out with `no-compile` in the fence meta.',
+  );
+}
+
 async function main() {
   const version = await execFileP(MUX_BIN, ['version'], { timeout: 15_000 });
   console.log(`compiler: ${version.stdout.trim()}`);
 
   const workRoot = await mkdtemp(join(tmpdir(), 'mux-docs-snippets-'));
-  const failures = [];
-  let compiled = 0;
-  let fragments = 0;
-  let optedOut = 0;
-
+  const totals = { compiled: 0, fragments: 0, optedOut: 0, failures: [] };
   try {
     for (const file of (await docsFiles(DOCS_ROOT)).sort()) {
-      const rel = relative(REPO_ROOT, file);
-      // One directory per docs file so titled fences (importable modules)
-      // are visible to later examples on the same page and nowhere else.
-      const workDir = join(workRoot, rel.replaceAll('/', '__'));
-      await mkdir(workDir, { recursive: true });
-      let n = 0;
-      for (const block of muxBlocks(await readFile(file, 'utf8'))) {
-        if (/\bno-compile\b/.test(block.meta)) {
-          optedOut++;
-          continue;
-        }
-        const title = block.meta.match(FENCE_TITLE_RE)?.[1];
-        const isProgram = block.kind === 'playground' || MAIN_RE.test(block.body);
-        if (!title && !isProgram) {
-          fragments++;
-          continue;
-        }
-        const snippetPath = join(workDir, title ?? `snippet_${n}.mux`);
-        await mkdir(dirname(snippetPath), { recursive: true });
-        await writeFile(snippetPath, block.body + '\n');
-        if (!isProgram) continue; // an importable module definition, not a program
-        const error = await compile(snippetPath, join(workDir, `snippet_${n}.out`));
-        n++;
-        compiled++;
-        if (error) failures.push({ rel, line: block.line, error });
-      }
+      const r = await checkFile(file, workRoot);
+      totals.compiled += r.compiled;
+      totals.fragments += r.fragments;
+      totals.optedOut += r.optedOut;
+      totals.failures.push(...r.failures);
     }
   } finally {
     await rm(workRoot, { recursive: true, force: true });
   }
 
   console.log(
-    `compiled ${compiled} complete example(s); skipped ${fragments} fragment(s) and ${optedOut} no-compile fence(s)`,
+    `compiled ${totals.compiled} complete example(s); skipped ${totals.fragments} fragment(s) and ${totals.optedOut} no-compile fence(s)`,
   );
-  if (failures.length) {
-    console.error(`\nDocs snippet check FAILED (${failures.length} snippet(s)):\n`);
-    for (const f of failures) {
-      console.error(`--- ${f.rel}:${f.line}\n${f.error}\n`);
-    }
-    console.error(
-      'These examples do not compile with the released compiler the playground runs.\n' +
-        'If the docs are ahead of the release, hold this change until the release ships\n' +
-        '(see mux-context docs/release-process.md). An intentional error example opts\n' +
-        'out with `no-compile` in the fence meta.',
-    );
+  if (totals.failures.length) {
+    reportFailures(totals.failures);
     process.exit(1);
   }
   console.log('Docs snippet check passed.');

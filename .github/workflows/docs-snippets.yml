@@ -25,6 +25,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      # `mux run` shells out to clang and the mux binary links LLVM. Keep the
+      # major in one place: apt packages, the clang symlink, and LD_LIBRARY_PATH
+      # all derive from it. Must match the LLVM the released compiler was built
+      # against (see mux-website-api's Dockerfile).
+      LLVM_VERSION: '22'
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +42,7 @@ jobs:
         id: pin
         run: |
           url="https://raw.githubusercontent.com/muxlang/mux-website-api/main/Dockerfile"
-          version="$(curl -fsSL "$url" | sed -n 's/^ARG MUX_VERSION=\(.*\)$/\1/p' | head -n1)"
+          version="$(curl --proto '=https' --tlsv1.2 -fsSL "$url" | sed -n 's/^ARG MUX_VERSION=\(.*\)$/\1/p' | head -n1)"
           if [ -z "$version" ]; then
             echo "::error::Could not read ARG MUX_VERSION from the playground Dockerfile ($url)"
             exit 1
@@ -46,14 +52,14 @@ jobs:
 
       - name: Install clang and the LLVM runtime libraries
         run: |
-          wget --max-redirect=0 -O /tmp/llvm.key https://apt.llvm.org/llvm-snapshot.gpg.key
+          wget --https-only --max-redirect=0 -O /tmp/llvm.key https://apt.llvm.org/llvm-snapshot.gpg.key
           sudo install -Dm644 /tmp/llvm.key /usr/share/keyrings/llvm-snapshot.gpg.key
           codename="$(lsb_release -cs)"
-          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] https://apt.llvm.org/${codename}/ llvm-toolchain-${codename}-22 main" \
+          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] https://apt.llvm.org/${codename}/ llvm-toolchain-${codename}-${LLVM_VERSION} main" \
             | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang-22 llvm-22
-          sudo ln -sf /usr/bin/clang-22 /usr/local/bin/clang
+          sudo apt-get install -y --no-install-recommends "clang-${LLVM_VERSION}" "llvm-${LLVM_VERSION}"
+          sudo ln -sf "/usr/bin/clang-${LLVM_VERSION}" /usr/local/bin/clang
 
       - name: Install the released mux compiler
         env:
@@ -76,5 +82,5 @@ jobs:
         env:
           MUX_BIN: mux
           MUX_RUNTIME_LIB: /usr/local/lib/mux/libmux_runtime.a
-          LD_LIBRARY_PATH: /usr/lib/llvm-22/lib
+          LD_LIBRARY_PATH: /usr/lib/llvm-${{ env.LLVM_VERSION }}/lib
         run: npm run check:docs-snippets
