@@ -20,7 +20,7 @@
 //
 // The compiler binary comes from $MUX_BIN (default: `mux` on PATH). CI
 // installs the release resolved from the playground's Dockerfile pin; see
-// .github/workflows/ci.yml. Snippets are compiled only, never run.
+// .github/workflows/docs-snippets.yml. Snippets are compiled only, never run.
 
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';

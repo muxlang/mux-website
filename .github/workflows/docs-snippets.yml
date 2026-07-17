@@ -52,7 +52,9 @@ jobs:
 
       - name: Install clang and the LLVM runtime libraries
         run: |
-          wget --https-only --max-redirect=0 -O /tmp/llvm.key https://apt.llvm.org/llvm-snapshot.gpg.key
+          # Literal https:// URL plus --max-redirect=0 means the download cannot
+          # be downgraded to http via a redirect.
+          wget --max-redirect=0 -O /tmp/llvm.key https://apt.llvm.org/llvm-snapshot.gpg.key
           sudo install -Dm644 /tmp/llvm.key /usr/share/keyrings/llvm-snapshot.gpg.key
           codename="$(lsb_release -cs)"
           echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] https://apt.llvm.org/${codename}/ llvm-toolchain-${codename}-${LLVM_VERSION} main" \
