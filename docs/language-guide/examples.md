@@ -81,10 +81,10 @@ func main() returns void {
     }
 
     // While loop
-    auto n = 3
-    while n > 0 {
-        print("Countdown: " + n.to_string())
-        n--
+    auto count = 3
+    while count > 0 {
+        print("Countdown: " + count.to_string())
+        count--
     }
     return
 }
@@ -113,7 +113,7 @@ func main() returns void {
 
 ```mux title="enums.mux"
 enum Shape {
-    Circle(float radius)
+    Circle(float radius),
     Rectangle(float width, float height)
 }
 
@@ -144,7 +144,7 @@ class Counter {
     }
 
     func increment() returns void {
-        self.value++
+        self.value = self.value + 1
         return
     }
 
@@ -204,7 +204,7 @@ func divide(int a, int b) returns result<int, string> {
 }
 
 func find_item(list<int> items, int target) returns optional<int> {
-    for item in items {
+    for int item in items {
         if item == target {
             return some(item)
         }
@@ -265,13 +265,6 @@ func main() returns void {
 ## Complete Program
 
 ```mux title="complete.mux"
-import std
-
-enum result<T, E> {
-    ok(T)
-    err(E)
-}
-
 class Stack<T> {
     list<T> items
 

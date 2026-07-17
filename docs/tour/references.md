@@ -15,27 +15,28 @@ References allow functions to modify variables directly without copying.
 
 ## Reference Parameters
 
-Use `ref` to pass a variable by reference:
+Declare a reference parameter with `&`, pass one with `&`, and read or write
+through it with `*`:
 
-<EmbeddedPlayground initialCode={`func increment(int ref n) returns void {
-    n = n + 1
+<EmbeddedPlayground initialCode={`func increment(&int n) returns void {
+    *n = *n + 1
     return
 }
 
 func main() returns void {
     int num = 5
     print("Before: " + num.to_string())
-    increment(num)
+    increment(&num)
     print("After: " + num.to_string())
     return
 }`} />
 
 ## Swap Function
 
-<EmbeddedPlayground initialCode={`func swap(int ref a, int ref b) returns void {
-    int temp = a
-    a = b
-    b = temp
+<EmbeddedPlayground initialCode={`func swap(&int a, &int b) returns void {
+    int temp = *a
+    *a = *b
+    *b = temp
     return
 }
 
@@ -44,7 +45,7 @@ func main() returns void {
     int y = 2
     
     print("Before: x = " + x.to_string() + ", y = " + y.to_string())
-    swap(x, y)
+    swap(&x, &y)
     print("After: x = " + x.to_string() + ", y = " + y.to_string())
     return
 }`} />
@@ -53,14 +54,14 @@ func main() returns void {
 
 References are useful when you need to modify the original value, avoid copying large data, or return multiple values.
 
-<EmbeddedPlayground initialCode={`func double(int ref n) returns void {
-    n = n * 2
+<EmbeddedPlayground initialCode={`func double(&int n) returns void {
+    *n = *n * 2
     return
 }
 
 func main() returns void {
     int value = 10
-    double(value)
+    double(&value)
     print("Doubled: " + value.to_string())
     return
 }`} />
