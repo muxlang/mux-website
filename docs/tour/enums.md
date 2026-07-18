@@ -16,14 +16,14 @@ Enums define tagged unions with named variants that can hold data.
 ## Basic Enum
 
 <EmbeddedPlayground initialCode={`enum Direction {
-    North
-    South
-    East
+    North,
+    South,
+    East,
     West
 }
 
 func main() returns void {
-    Direction dir = Direction.North
+    Direction dir = Direction.North()
     
     match dir {
         North { print("Heading North") }
@@ -37,7 +37,7 @@ func main() returns void {
 ## Enum with Data
 
 <EmbeddedPlayground initialCode={`enum Shape {
-    Circle(float radius)
+    Circle(float radius),
     Rectangle(float width, float height)
 }
 
@@ -58,7 +58,7 @@ func main() returns void {
 ## Matching Enums
 
 <EmbeddedPlayground initialCode={`enum Result {
-    Success(int value)
+    Success(int value),
     Error(string message)
 }
 

@@ -42,7 +42,7 @@ match result {
 
 ```mux title="result_variants.mux"
 enum result<T, E> {
-    ok(T)      // Success case with value
+    ok(T),     // Success case with value
     err(E)     // Error case with error value
 }
 ```
@@ -123,7 +123,7 @@ The `optional` type represents values that may or may not exist.
 
 ```mux title="optional_basic.mux"
 func findEven(list<int> xs) returns optional<int> {
-    for x in xs {
+    for int x in xs {
         if x % 2 == 0 {
             return some(x)
         }
@@ -165,7 +165,7 @@ print(opt2.is_none().to_string())  // true
 
 ```mux title="optional_variants.mux"
 enum optional<T> {
-    some(T)    // Value present
+    some(T),   // Value present
     none       // Value absent
 }
 ```

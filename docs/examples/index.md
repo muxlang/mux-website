@@ -199,8 +199,8 @@ Enums define tagged unions with data variants. Each variant can hold different t
 
 ```mux title="enums.mux"
 enum Shape {
-    Circle(float radius)
-    Rectangle(float width, float height)
+    Circle(float radius),
+    Rectangle(float width, float height),
     Square(float size)
 }
 

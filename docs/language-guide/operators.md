@@ -332,7 +332,7 @@ Custom types can implement interfaces for equality and comparison:
 
 ```mux title="operator_overloading.mux"
 interface Equatable {
-    func eq(Self) returns bool
+    func eq(Self other) returns bool
 }
 
 class Point is Equatable {

@@ -6,14 +6,14 @@ Enums in Mux are tagged unions (also called algebraic data types or sum types) t
 
 ```mux title="basic_enum.mux"
 enum Status {
-    Pending
-    Active
+    Pending,
+    Active,
     Completed
 }
 
 enum Shape {
-    Circle(float radius)
-    Rectangle(float width, float height)
+    Circle(float radius),
+    Rectangle(float width, float height),
     Square(float size)
 }
 ```
@@ -44,8 +44,8 @@ Use `match` to handle different enum variants:
 
 ```mux title="pattern_matching_enums.mux"
 enum Shape {
-    Circle(float radius)
-    Rectangle(float width, float height)
+    Circle(float radius),
+    Rectangle(float width, float height),
     Square(float size)
 }
 
@@ -98,7 +98,7 @@ Add conditional logic with guards:
 
 ```mux title="enum_guards.mux"
 enum MaybeValue<T> {
-    some(T)
+    some(T),
     none
 }
 
@@ -152,7 +152,7 @@ auto failure = err("error msg")      // result<T, string>
 
 ```mux title="optional_values.mux"
 func findFirst(list<int> items, int target) returns optional<int> {
-    for i in range(0, items.size()) {
+    for int i in range(0, items.size()) {
         if items[i] == target {
             return some(i)
         }
@@ -200,9 +200,9 @@ See [Error Handling](./error-handling.md) for more details on result and optiona
 
 ```mux title="state_machines.mux"
 enum Connection {
-    Disconnected
-    Connecting(string address)
-    Connected(string address, int port)
+    Disconnected,
+    Connecting(string address),
+    Connected(string address, int port),
     Failed(string error)
 }
 
@@ -229,14 +229,14 @@ func handleConnection(Connection conn) returns void {
 
 ```mux title="nested_enums.mux"
 enum Message {
-    Text(string content)
-    Image(string url, int width, int height)
+    Text(string content),
+    Image(string url, int width, int height),
     Reply(string content, int replyToId)
 }
 
 enum Event {
-    MessageReceived(Message msg)
-    UserJoined(string username)
+    MessageReceived(Message msg),
+    UserJoined(string username),
     UserLeft(string username)
 }
 
@@ -269,8 +269,8 @@ match event {
 
 ```mux title="enums_in_collections.mux"
 enum Shape {
-    Circle(float radius)
-    Rectangle(float width, float height)
+    Circle(float radius),
+    Rectangle(float width, float height),
     Square(float size)
 }
 
@@ -302,8 +302,8 @@ Mux enforces exhaustive pattern matching - all variants must be covered:
 
 ```mux title="exhaustiveness_checking.mux"
 enum Color {
-    Red
-    Green
+    Red,
+    Green,
     Blue
 }
 
