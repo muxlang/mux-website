@@ -78,7 +78,7 @@ import std.random
 func generate_lotto_numbers() returns list<int> {
     list<int> numbers = []
     
-    for _ in range(0, 6) {
+    for int _ in range(0, 6) {
         // Numbers from 1 to 49
         auto num = random.next_range(1, 50)
         numbers.push_back(num)
@@ -90,7 +90,7 @@ func generate_lotto_numbers() returns list<int> {
 func main() returns void {
     auto lotto = generate_lotto_numbers()
     print("Your lottery numbers:")
-    for num in lotto {
+    for int num in lotto {
         print(num.to_string())
     }
     return
@@ -164,28 +164,28 @@ func main() returns void {
     
     // Generate some random integers
     print("Random integers:")
-    for i in range(0, 5) {
+    for int i in range(0, 5) {
         auto num = random.next_int()
         print(num.to_string())
     }
     
     // Generate random numbers in range
     print("\nRandom numbers (1-100):")
-    for i in range(0, 5) {
+    for int i in range(0, 5) {
         auto num = random.next_range(1, 101)
         print(num.to_string())
     }
     
     // Generate random floats
     print("\nRandom floats:")
-    for i in range(0, 3) {
+    for int i in range(0, 3) {
         auto f = random.next_float()
         print(f.to_string())
     }
     
     // Generate random booleans
     print("\nRandom booleans:")
-    for i in range(0, 5) {
+    for int i in range(0, 5) {
         auto b = random.next_bool()
         print(b.to_string())
     }

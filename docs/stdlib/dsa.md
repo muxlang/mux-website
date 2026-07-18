@@ -157,39 +157,39 @@ import std.dsa.collection.Collection
 
 func main() returns void {
     // Stack example
-    auto stack = stack.Stack<int>.new()
-    stack.push(1)
-    stack.push(2)
-    stack.push(3)
+    auto s = stack.Stack<int>.new()
+    s.push(1)
+    s.push(2)
+    s.push(3)
 
-    print("Stack top: " + match stack.peek() {
-        some(v) { v.to_string() }
-        none { "empty" }
-    })  // 3
+    match s.peek() {
+        some(v) { print("Stack top: " + v.to_string()) }  // 3
+        none { print("Stack top: empty") }
+    }
 
-    match stack.pop() {
+    match s.pop() {
         some(v) { print("Popped: " + v.to_string()) }  // 3
         none {}
     }
 
     // Queue example
-    auto queue = queue.Queue<string>.new()
-    queue.enqueue("first")
-    queue.enqueue("second")
-    queue.enqueue("third")
+    auto q = queue.Queue<string>.new()
+    q.enqueue("first")
+    q.enqueue("second")
+    q.enqueue("third")
 
-    match queue.dequeue() {
+    match q.dequeue() {
         some(v) { print("Dequeued: " + v) }  // first
         none {}
     }
 
     // Heap example (min-heap)
-    auto heap = heap.Heap<int>.new()
-    heap.push(30)
-    heap.push(10)
-    heap.push(20)
+    auto h = heap.Heap<int>.new()
+    h.push(30)
+    h.push(10)
+    h.push(20)
 
-    match heap.pop() {
+    match h.pop() {
         some(v) { print("Min: " + v.to_string()) }  // 10
         none {}
     }
@@ -199,9 +199,18 @@ func main() returns void {
     auto sorted = algorithm.sort(numbers)
     print("Sorted: " + sorted.to_string())  // [1, 2, 3, 5, 8]
 
-    match algorithm.binary_search(sorted, 3) {
-        ok(idx) { print("Found 3 at index: " + idx.to_string()) }
-        err(_) { print("Not found") }
+    // Binary search requires the collection to already be sorted, and returns
+    // an index into iteration order. A Stack iterates in push order, so pushing
+    // 1, 3, 5 gives a sorted, ascending sequence to search.
+    auto search = stack.Stack<int>.new()
+    search.push(1)
+    search.push(3)
+    search.push(5)
+    auto idx = algorithm.binary_search(search, 3)
+    if idx >= 0 {
+        print("Found 3 at index: " + idx.to_string())  // 1 (position of 3 in [1, 3, 5])
+    } else {
+        print("Not found")
     }
     return
 }

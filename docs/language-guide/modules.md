@@ -64,8 +64,7 @@ project/
 
 ### Basic Usage
 
-```mux title="math_module.mux"
-// math.mux
+```mux title="math.mux"
 func add(int a, int b) returns int {
     return a + b
 }
@@ -73,8 +72,6 @@ func add(int a, int b) returns int {
 func multiply(int a, int b) returns int {
     return a * b
 }
-
-const float PI = 3.14159
 ```
 
 ```mux title="main_import.mux"
@@ -84,7 +81,6 @@ import math
 func main() returns void {
     auto sum = math.add(5, 3)
     auto product = math.multiply(4, 7)
-    auto circumference = 2.0 * math.PI * 5.0
     
     print(sum.to_string())
     print(product.to_string())
@@ -97,12 +93,11 @@ func main() returns void {
 Use `as` to rename imported modules:
 
 ```mux title="aliased_imports.mux"
-import shapes.circle as circle
-import utils.logger as log
+import math as m
 
 func main() returns void {
-    auto c = circle.from_radius(5.0)
-    log.info("Created circle")
+    auto sum = m.add(5, 3)
+    print(sum.to_string())
     return
 }
 ```
@@ -119,13 +114,9 @@ import utils.logger as _  // imported but not directly used
 
 Functions from imported modules use mangled names to prevent conflicts:
 
-```mux title="fibonacci_module.mux"
-// math.mux
-func fibonacci(int n) returns int {
-    if n <= 1 {
-        return n
-    }
-    return fibonacci(n - 1) + fibonacci(n - 2)
+```mux title="math.mux"
+func square(int n) returns int {
+    return n * n
 }
 ```
 
@@ -134,13 +125,13 @@ func fibonacci(int n) returns int {
 import math
 
 func main() returns void {
-    auto result = math.fibonacci(10)  // Calls math_fibonacci
+    auto result = math.square(10)  // Calls math_square
     print(result.to_string())
     return
 }
 ```
 
-Generates LLVM function: `math_fibonacci` (not just `fibonacci`)
+Generates LLVM function: `math_square` (not just `square`)
 
 This prevents conflicts when multiple modules define functions with the same name.
 
@@ -220,9 +211,7 @@ const float PI = 3.14159  // Public
 
 ### Module-Level Variables
 
-```mux title="module_variables.mux"
-// config.mux
-const string VERSION = "1.0.0"
+```mux title="config.mux"
 auto request_count = 0
 
 func increment_requests() returns void {
@@ -240,7 +229,6 @@ func get_request_count() returns int {
 import config
 
 func main() returns void {
-    print("Version: " + config.VERSION)
     config.increment_requests()
     print(config.get_request_count().to_string())
     return
@@ -321,8 +309,8 @@ class Point {
 }
 
 enum Color {
-    Red
-    Green
+    Red,
+    Green,
     Blue
 }
 ```
@@ -395,8 +383,7 @@ calculator/
     └── format.mux
 ```
 
-```mux title="basic_operations.mux"
-// operations/basic.mux
+```mux title="operations/basic.mux"
 func add(int a, int b) returns int {
     return a + b
 }
@@ -406,19 +393,17 @@ func subtract(int a, int b) returns int {
 }
 ```
 
-```mux title="advanced_operations.mux"
-// operations/advanced.mux
+```mux title="operations/advanced.mux"
 func power(int base, int exp) returns int {
     auto result = 1
-    for _ in range(0, exp) {
+    for int _ in range(0, exp) {
         result = result * base
     }
     return result
 }
 ```
 
-```mux title="format_module.mux"
-// utils/format.mux
+```mux title="utils/format.mux"
 func format_result(int value) returns string {
     return "result: " + value.to_string()
 }

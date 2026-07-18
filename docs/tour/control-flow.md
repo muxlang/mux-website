@@ -48,7 +48,7 @@ Repeat while a condition is true:
 <EmbeddedPlayground initialCode={`func main() returns void {
     int count = 0
     
-    while count &lt; 3 {
+    while count < 3 {
         print("Count: " + count.to_string())
         count = count + 1
     }
@@ -60,7 +60,7 @@ Repeat while a condition is true:
 Powerful pattern matching with enums and optionals:
 
 <EmbeddedPlayground initialCode={`func main() returns void {
-    optional&lt;int&gt; opt = some(42)
+    optional<int> opt = some(42)
     
     match opt {
         some(value) {
