@@ -176,7 +176,7 @@ if value == 1 {
 
 ```mux title="matching_optional.mux"
 func findEven(list<int> xs) returns optional<int> {
-    for x in xs {
+    for int x in xs {
         if x % 2 == 0 {
             return some(x)
         }
@@ -269,8 +269,8 @@ match result {
 
 ```mux title="matching_enums.mux"
 enum Shape {
-    Circle(float radius)
-    Rectangle(float width, float height)
+    Circle(float radius),
+    Rectangle(float width, float height),
     Square(float size)
 }
 
@@ -438,7 +438,7 @@ Exit a function early:
 
 ```mux title="return_statement.mux"
 func findFirst(list<int> items, int target) returns optional<int> {
-    for i in range(0, items.size()) {
+    for int i in range(0, items.size()) {
         if items[i] == target {
             return some(i)  // early return
         }

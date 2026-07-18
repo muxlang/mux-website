@@ -194,7 +194,7 @@ auto result = compare(p1, p2)
 // Generic map function
 func map<T, U>(list<T> items, func(T) returns U transform) returns list<U> {
     auto result = list<U>()
-    for item in items {
+    for T item in items {
         result.push_back(transform(item))
     }
     return result
@@ -203,7 +203,7 @@ func map<T, U>(list<T> items, func(T) returns U transform) returns list<U> {
 // Generic filter function
 func filter<T>(list<T> items, func(T) returns bool predicate) returns list<T> {
     auto result = list<T>()
-    for item in items {
+    for T item in items {
         if predicate(item) {
             result.push_back(item)
         }
@@ -286,12 +286,12 @@ Enums can be generic:
 
 ```mux title="generic_enums.mux"
 enum optional<T> {
-    some(T)
+    some(T),
     none
 }
 
 enum result<T, E> {
-    ok(T)
+    ok(T),
     err(E)
 }
 
@@ -309,7 +309,7 @@ See [Enums](./enums.md) and [Error Handling](./error-handling.md) for more detai
 
 ```mux title="single_constraint.mux"
 func process<T is Stringable>(list<T> items) returns void {
-    for item in items {
+    for T item in items {
         print(item.to_string())
     }
     return

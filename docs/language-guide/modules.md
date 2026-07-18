@@ -309,8 +309,8 @@ class Point {
 }
 
 enum Color {
-    Red
-    Green
+    Red,
+    Green,
     Blue
 }
 ```
