@@ -199,14 +199,16 @@ func main() returns void {
     auto sorted = algorithm.sort(numbers)
     print("Sorted: " + sorted.to_string())  // [1, 2, 3, 5, 8]
 
-    // Binary search over a sorted collection
+    // Binary search requires the collection to already be sorted, and returns
+    // an index into iteration order. A Stack iterates in push order, so pushing
+    // 1, 3, 5 gives a sorted, ascending sequence to search.
     auto search = stack.Stack<int>.new()
     search.push(1)
     search.push(3)
     search.push(5)
     auto idx = algorithm.binary_search(search, 3)
     if idx >= 0 {
-        print("Found 3 at index: " + idx.to_string())  // 1
+        print("Found 3 at index: " + idx.to_string())  // 1 (position of 3 in [1, 3, 5])
     } else {
         print("Not found")
     }
