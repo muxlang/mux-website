@@ -51,6 +51,30 @@ lives in the `mux-syntax-highlighting` repo. When that repo's generator is wired
 up, `src/shiki/mux.json` gets a CI parity check against the published spec. Until
 then, keep it in sync manually and do not hand-edit it as the source of truth.
 
+## Docs snippets must compile against the released compiler
+
+The docs deploy from `main` on every merge, but the playground runs the RELEASED
+compiler pinned in `mux-website-api` (`Dockerfile` `ARG MUX_VERSION`). Docs that
+teach unreleased syntax go live while the playground still rejects them - this
+skew shipped once with the `{:}` empty-map literal.
+
+`scripts/check-docs-snippets.mjs` compiles every complete ```mux example and
+`EmbeddedPlayground` block in `docs/` against a `mux` binary. Run it before
+changing docs that add or alter Mux code:
+
+```bash
+MUX_BIN=/path/to/released/mux npm run check:docs-snippets
+```
+
+Fragments (fences without a `func main`) are skipped; a titled fence
+(`title="name.mux"`) is written to disk first so a later example can `import` it;
+an intentional error example opts out with `no-compile` in the fence meta. The
+`.github/workflows/docs-snippets.yml` job runs this against the playground's
+pinned release; it is manual (`workflow_dispatch`) until 0.6.0 ships and the
+playground is bumped, then it should gate on `docs/**` changes. When a compiler
+syntax change lands, hold the docs PR until the release ships (see the
+[release process](https://github.com/muxlang/mux-context/blob/main/docs/release-process.md)).
+
 ## Coupling notes
 
 - The site talks to `mux-website-api` (compile/run) and the `mux-ai` worker over

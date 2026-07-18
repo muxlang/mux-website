@@ -1,0 +1,88 @@
+name: Docs Snippets
+
+# Compiles every complete ```mux example and EmbeddedPlayground block in docs/
+# against the SAME released compiler the playground runs, so docs can never
+# teach syntax the live playground rejects (the skew that shipped once with the
+# `{:}` empty-map literal).
+#
+# The compiler version is read from muxlang/mux-website-api's Dockerfile
+# (ARG MUX_VERSION) - the single source of truth for what the playground runs.
+#
+# Trigger: manual for now (workflow_dispatch). It stays manual until 0.6.0 is
+# released AND the playground is bumped to it (mux-website-api#12), because the
+# deployed docs already teach 0.6.0-only syntax that the 0.5.0 release rejects.
+# Once the playground runs 0.6.0, switch the trigger to:
+#   pull_request:
+#     paths: [ 'docs/**' ]
+# to make it a gate on docs changes.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docs_snippets:
+    name: Compile docs snippets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      # `mux run` shells out to clang and the mux binary links LLVM. Keep the
+      # major in one place: apt packages, the clang symlink, and LD_LIBRARY_PATH
+      # all derive from it. Must match the LLVM the released compiler was built
+      # against (see mux-website-api's Dockerfile).
+      LLVM_VERSION: '22'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Resolve the playground's pinned compiler version
+        id: pin
+        run: |
+          url="https://raw.githubusercontent.com/muxlang/mux-website-api/main/Dockerfile"
+          version="$(curl --proto '=https' --tlsv1.2 -fsSL "$url" | sed -n 's/^ARG MUX_VERSION=\(.*\)$/\1/p' | head -n1)"
+          if [ -z "$version" ]; then
+            echo "::error::Could not read ARG MUX_VERSION from the playground Dockerfile ($url)"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Playground compiler pin: $version"
+
+      - name: Install clang and the LLVM runtime libraries
+        run: |
+          # Literal https:// URL plus --max-redirect=0 means the download cannot
+          # be downgraded to http via a redirect.
+          wget --max-redirect=0 -O /tmp/llvm.key https://apt.llvm.org/llvm-snapshot.gpg.key
+          sudo install -Dm644 /tmp/llvm.key /usr/share/keyrings/llvm-snapshot.gpg.key
+          codename="$(lsb_release -cs)"
+          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] https://apt.llvm.org/${codename}/ llvm-toolchain-${codename}-${LLVM_VERSION} main" \
+            | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends "clang-${LLVM_VERSION}" "llvm-${LLVM_VERSION}"
+          sudo ln -sf "/usr/bin/clang-${LLVM_VERSION}" /usr/local/bin/clang
+
+      - name: Install the released mux compiler
+        env:
+          MUX_VERSION: ${{ steps.pin.outputs.version }}
+        run: |
+          set -eux
+          target="linux-x86_64"
+          base="https://github.com/muxlang/mux-compiler/releases/download/v${MUX_VERSION}"
+          archive="mux-${target}.tar.gz"
+          cd /tmp
+          curl --proto '=https' -fsSL "${base}/${archive}" -o "${archive}"
+          curl --proto '=https' -fsSL "${base}/${archive}.sha256" -o "${archive}.sha256"
+          echo "$(awk '{print $1}' "${archive}.sha256")  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}"
+          sudo install -Dm755 "mux-${target}/bin/mux" /usr/local/bin/mux
+          sudo mkdir -p /usr/local/lib/mux
+          sudo cp "mux-${target}/lib/"* /usr/local/lib/mux/
+
+      - name: Compile docs snippets
+        env:
+          MUX_BIN: mux
+          MUX_RUNTIME_LIB: /usr/local/lib/mux/libmux_runtime.a
+          LD_LIBRARY_PATH: /usr/lib/llvm-${{ env.LLVM_VERSION }}/lib
+        run: npm run check:docs-snippets

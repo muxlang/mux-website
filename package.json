@@ -14,7 +14,8 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
-    "check:syntax-parity": "node scripts/check-syntax-parity.mjs"
+    "check:syntax-parity": "node scripts/check-syntax-parity.mjs",
+    "check:docs-snippets": "node scripts/check-docs-snippets.mjs"
   },
   "dependencies": {
     "@codemirror/basic-setup": "^0.20.0",
