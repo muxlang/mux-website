@@ -167,7 +167,7 @@ Custom types can implement interfaces to work with generic functions:
 
 ```mux title="custom_equatable.mux"
 interface Equatable {
-    func eq(Self) returns bool
+    func eq(Self other) returns bool
 }
 
 class Point is Equatable {

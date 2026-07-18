@@ -65,7 +65,7 @@ func calculate() returns int {
 
 // Constants in classes
 class Config {
-    const int MAX_RETRIES
+    const int MAX_RETRIES = 3
     int current_retry
     
     func increment() returns void {
