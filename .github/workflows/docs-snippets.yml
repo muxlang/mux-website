@@ -8,15 +8,18 @@ name: Docs Snippets
 # The compiler version is read from muxlang/mux-website-api's Dockerfile
 # (ARG MUX_VERSION) - the single source of truth for what the playground runs.
 #
-# Trigger: manual for now (workflow_dispatch). It stays manual until 0.6.0 is
-# released AND the playground is bumped to it (mux-website-api#12), because the
-# deployed docs already teach 0.6.0-only syntax that the 0.5.0 release rejects.
-# Once the playground runs 0.6.0, switch the trigger to:
-#   pull_request:
-#     paths: [ 'docs/**' ]
-# to make it a gate on docs changes.
+# Trigger: gates any PR that touches docs/. If this job goes red, the docs are
+# ahead of the compiler release the playground runs - hold the docs change until
+# that release ships (see mux-context docs/release-process.md), or opt a fence
+# out with `no-compile` if it is an intentional error example. Also runnable
+# manually to check the current docs against the pinned release at any time.
 
 on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'scripts/check-docs-snippets.mjs'
+      - '.github/workflows/docs-snippets.yml'
   workflow_dispatch:
 
 jobs:

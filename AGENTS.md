@@ -70,10 +70,11 @@ Fragments (fences without a `func main`) are skipped; a titled fence
 (`title="name.mux"`) is written to disk first so a later example can `import` it;
 an intentional error example opts out with `no-compile` in the fence meta. The
 `.github/workflows/docs-snippets.yml` job runs this against the playground's
-pinned release; it is manual (`workflow_dispatch`) until 0.6.0 ships and the
-playground is bumped, then it should gate on `docs/**` changes. When a compiler
-syntax change lands, hold the docs PR until the release ships (see the
-[release process](https://github.com/muxlang/mux-context/blob/main/docs/release-process.md)).
+pinned release and **gates every PR touching `docs/**`** (it can also be run
+manually). If it goes red, the docs are ahead of the release the playground
+runs: hold the docs PR until that release ships (see the
+[release process](https://github.com/muxlang/mux-context/blob/main/docs/release-process.md)),
+or mark the fence `no-compile` if it is an intentional error example.
 
 ## Coupling notes
 
