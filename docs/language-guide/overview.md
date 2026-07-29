@@ -105,4 +105,4 @@ Explore the detailed language documentation:
 
 - [Quick Start Guide](../getting-started/quick-start.md)
 - [Examples](./examples.md) - Code examples for common patterns
-- [GitHub Issues](https://github.com/derekcorniello/mux-lang/issues)
+- [GitHub Issues](https://github.com/muxlang/mux-compiler/issues)
