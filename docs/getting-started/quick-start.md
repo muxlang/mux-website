@@ -127,6 +127,7 @@ For contributors who want the easiest setup:
 ./scripts/bootstrap-dev.sh
 ./scripts/dev-cargo.sh build -p mux-runtime
 ./scripts/dev-cargo.sh install --path mux-compiler
+mkdir -p ~/.cargo/lib
 cp target/dev-cargo/debug/libmux_runtime.a ~/.cargo/lib/
 ```
 
