@@ -106,10 +106,14 @@ If you prefer to build from source, maybe to even help [contribute](https://gith
 3. Build using the dev wrapper:
 
    ```bash title="bash"
-   ./scripts/dev-cargo.sh build
+   ./scripts/dev-cargo.sh build -p mux-runtime -p mux-lang
    ```
 
    The `dev-cargo.sh` script wraps cargo calls with the correct LLVM environment variables set automatically.
+
+   Build both packages. Compiled Mux programs link `libmux_runtime.a`, and cargo
+   emits a dependency's rlib but never its staticlib, so building only the
+   compiler leaves every program failing to link.
 
 The binary is called `mux`. `dev-cargo.sh` builds into `target/dev-cargo/`, so a
 default build lands at `target/dev-cargo/debug/mux`; add `--release` for
@@ -121,10 +125,15 @@ For contributors who want the easiest setup:
 
 ```bash title="bash"
 ./scripts/bootstrap-dev.sh
+./scripts/dev-cargo.sh build -p mux-runtime
 ./scripts/dev-cargo.sh install --path mux-compiler
+cp target/dev-cargo/debug/libmux_runtime.a ~/.cargo/lib/
 ```
 
-This installs the `mux` binary to your cargo bin directory.
+This installs the `mux` binary to your cargo bin directory. `cargo install`
+copies only the binary, so the runtime archive has to be placed where the
+compiler looks for it: `~/.cargo/lib/`, next to `~/.cargo/bin/mux`. Setting
+`MUX_RUNTIME_LIB` to the archive works too.
 
 ## Your First Mux Program
 

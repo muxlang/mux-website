@@ -45,8 +45,12 @@ For compiler development or source builds, you need LLVM 22 and clang. The boots
 git clone https://github.com/muxlang/mux-compiler
 cd mux-compiler
 ./scripts/bootstrap-dev.sh
-./scripts/dev-cargo.sh build
+./scripts/dev-cargo.sh build -p mux-runtime -p mux-lang
 ```
+
+Build both packages. Compiled Mux programs link `libmux_runtime.a`, and cargo
+emits a dependency's rlib but never its staticlib, so building only the compiler
+leaves programs failing to link. `scripts/run-checks.sh` does this for you.
 
 ### Verify installation
 
