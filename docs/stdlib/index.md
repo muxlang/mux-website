@@ -55,4 +55,4 @@ Planned additions include:
 
 ## Contributing
 
-The standard library is part of the Mux language project. Contributions are welcome! See the [Contributing Guide](https://github.com/derekcorniello/mux-lang/blob/main/CONTRIBUTING.md) for guidelines.
+The standard library is part of the Mux language project. Contributions are welcome! See the [Contributing Guide](https://github.com/muxlang/mux-compiler/blob/main/CONTRIBUTING.md) for guidelines.

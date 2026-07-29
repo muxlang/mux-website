@@ -4,9 +4,23 @@ This page covers end-to-end Mux setup, including runtime installs, compiler/tool
 
 ## Language install
 
-### Runtime (prebuilt binaries)
+### Compiler and runtime (prebuilt binaries)
 
-Use the prebuilt installer to get the runtime without Rust or LLVM.
+The installer downloads a prebuilt compiler and runtime library, so you do not
+need Rust or the LLVM development libraries.
+
+You do need **clang**, and its major version must match the LLVM the compiler
+was built against (currently 22). Mux compiles your program to an object file
+and then calls clang to link it, so this is required to run anything, not just
+to build from source:
+
+- **Debian/Ubuntu:** `sudo apt-get install clang-22` (via [apt.llvm.org](https://apt.llvm.org/))
+- **Arch Linux:** `sudo pacman -S clang`
+- **macOS:** `brew install llvm@22`
+- **Windows:** install LLVM 22, for example via Chocolatey
+
+The installer runs `mux doctor` when it finishes and tells you if anything is
+missing. You can re-run that check at any time.
 
 **Linux and macOS:**
 ```bash
@@ -37,7 +51,7 @@ cd mux-compiler
 ### Verify installation
 
 ```bash
-mux --version
+mux version
 mux doctor
 mux doctor --dev
 ```

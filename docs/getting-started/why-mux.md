@@ -126,4 +126,4 @@ Want to understand the design decisions? Check out the [Design Notes](../design-
 
 **Mux is in active development.** The language is growing and improving. This is an exciting time to get involved and help shape Mux's future.
 
-If you're interested in following along or contributing, check out the [GitHub repository](https://github.com/derekcorniello/mux-lang).
+If you're interested in following along or contributing, check out the [GitHub repository](https://github.com/muxlang/mux-compiler).

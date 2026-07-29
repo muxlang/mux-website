@@ -47,9 +47,9 @@ Mux is currently in active development. The language specification, compiler, an
 
 ## Community
 
-- [GitHub Repository](https://github.com/derekcorniello/mux-lang)
-- [Contributing Guide](https://github.com/derekcorniello/mux-lang/blob/main/CONTRIBUTING.md)
-- [Issues](https://github.com/derekcorniello/mux-lang/issues)
+- [GitHub Repository](https://github.com/muxlang/mux-compiler)
+- [Contributing Guide](https://github.com/muxlang/mux-compiler/blob/main/CONTRIBUTING.md)
+- [Issues](https://github.com/muxlang/mux-compiler/issues)
 
 ## License
 

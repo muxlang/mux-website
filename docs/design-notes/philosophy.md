@@ -173,7 +173,7 @@ Mux's design will evolve, but guided by these principles:
 
 ## Questions About Design?
 
-The best place to discuss Mux's design decisions is on [GitHub Discussions](https://github.com/derekcorniello/mux-lang/discussions).
+The best place to discuss Mux's design decisions is in [GitHub Issues](https://github.com/muxlang/mux-compiler/issues).
 
 I value:
 - Thoughtful critique

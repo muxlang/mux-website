@@ -48,9 +48,9 @@ This is different from the [Language Guide](../language-guide/overview.md), whic
 ## Additional Resources
 
 - [Language Guide](../language-guide/overview.md) - Practical language documentation
-- [README.md](https://github.com/derekcorniello/mux-lang/blob/main/README.md) - Comprehensive language specification
-- [Source Code](https://github.com/derekcorniello/mux-lang) - The compiler itself is the ultimate reference
+- [README.md](https://github.com/muxlang/mux-compiler/blob/main/README.md) - Comprehensive language specification
+- [Source Code](https://github.com/muxlang/mux-compiler) - The compiler itself is the ultimate reference
 
 ## Contributing
 
-If you find discrepancies between documentation and implementation, please [file an issue](https://github.com/derekcorniello/mux-lang/issues).
+If you find discrepancies between documentation and implementation, please [file an issue](https://github.com/muxlang/mux-compiler/issues).

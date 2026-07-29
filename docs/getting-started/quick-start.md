@@ -6,8 +6,12 @@ Get up and running with Mux in just a few minutes.
 
 Before you begin, make sure you have the following installed:
 
-- **For prebuilt install**: no Rust or LLVM toolchain needed
+- **For prebuilt install**: clang 22 (Mux calls it to link your compiled program).
+  No Rust and no LLVM development libraries needed.
 - **For source install**: Rust is required; use the bootstrap script to install LLVM 22 and clang 22
+
+See [Setup](../setup.md) for the clang install command on your platform. The
+installer also runs `mux doctor` at the end and reports anything missing.
 
 ## Installation
 
@@ -18,13 +22,13 @@ Mux provides multiple installation methods to suit different needs.
 Install with the official script:
 
 ```bash title="bash"
-curl -fsSL https://raw.githubusercontent.com/derekcorniello/mux-lang/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.sh | sh
 ```
 
 Windows PowerShell:
 
 ```powershell title="powershell"
-iwr -useb https://raw.githubusercontent.com/derekcorniello/mux-lang/main/scripts/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.ps1 | iex
 ```
 
 #### Custom Installation Directory (Optional)
@@ -40,7 +44,7 @@ MUX_INSTALL_DIR=/usr/local/bin MUX_LIB_DIR=/usr/local/lib sh install.sh
 # Custom installation directory (PowerShell)
 $env:MUX_INSTALL_DIR = "C:\Program Files\mux"
 $env:MUX_LIB_DIR = "C:\Program Files\mux\lib"
-iwr -useb https://raw.githubusercontent.com/derekcorniello/mux-lang/main/scripts/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.ps1 | iex
 ```
 
 #### Verifying Your Installation
@@ -48,8 +52,11 @@ iwr -useb https://raw.githubusercontent.com/derekcorniello/mux-lang/main/scripts
 After installation, verify everything is working:
 
 ```bash title="bash"
-mux --version
+mux version
 ```
+
+This prints the compiler version and the runtime it resolved, including the
+locked commit. Quote that line in bug reports.
 
 Use the built-in doctor command to check your setup:
 
@@ -61,29 +68,29 @@ mux doctor --dev  # Validate LLVM 22 and clang for development
 - `mux doctor` - For end users to verify runtime dependencies
 - `mux doctor --dev` - For contributors to verify LLVM 22 and clang
 
-### Option 2: Install from crates.io (Advanced)
+### Option 2: crates.io (frozen)
 
-If you want to build from source with cargo:
+`mux-lang` was published to crates.io through 0.6.0, but that channel is no
+longer updated. `cargo install mux-lang` requires a Rust toolchain and the exact
+LLVM 22 development libraries, then compiles the LLVM bindings from scratch,
+which makes it by far the slowest way to get a working compiler.
 
-```bash title="bash"
-cargo install mux-lang
-```
-
-This installs the Mux compiler to your cargo bin directory.
-The runtime library is built on first use or by running `mux doctor`.
-
-**Note:** Make sure LLVM 22 and clang are installed first for source builds.
+Use the prebuilt installer above instead. Build from source (below) if you want
+to work on the compiler itself.
 
 ### Option 3: Build from Source (Contributors)
 
-If you prefer to build from source, maybe to even help [contribute](https://github.com/derekcorniello/mux-lang/blob/main/CONTRIBUTING.md) to the project:
+If you prefer to build from source, maybe to even help [contribute](https://github.com/muxlang/mux-compiler/blob/main/CONTRIBUTING.md) to the project:
 
 1. Clone the repository:
 
    ```bash title="bash"
-   git clone https://github.com/derekcorniello/mux-lang
-   cd mux-lang
+   git clone https://github.com/muxlang/mux-compiler
+   cd mux-compiler
    ```
+
+   You only need this one repository. The runtime is a git dependency, so cargo
+   fetches it for you.
 
 2. Run the bootstrap script to install LLVM 22 automatically:
 
@@ -104,7 +111,9 @@ If you prefer to build from source, maybe to even help [contribute](https://gith
 
    The `dev-cargo.sh` script wraps cargo calls with the correct LLVM environment variables set automatically.
 
-The compiler will be built in `target/release/mux-compiler`.
+The binary is called `mux`. `dev-cargo.sh` builds into `target/dev-cargo/`, so a
+default build lands at `target/dev-cargo/debug/mux`; add `--release` for
+`target/dev-cargo/release/mux`.
 
 ### Option 4: Install via Bootstrap Scripts
 
@@ -180,7 +189,6 @@ Commands:
   build    Compile a Mux file without running it
   run      Compile and run a Mux file
   format   Format a Mux file
-  try      Try running a Mux file (for quick experimentation)
   doctor   Check system dependencies for the Mux compiler
   version  Print the Mux version
   help     Print this message or the help of the given subcommand(s)
@@ -189,14 +197,13 @@ Options:
   -o, --output <OUTPUT>  Name of the output executable
   -i, --intermediate     Emit intermediate LLVM IR (.ll)
   -h, --help             Print help
-  -V, --version          Print version
 ```
 
 ## Getting Help
 
 - [Language Guide](../language-guide/overview.md)
 - [Why Mux?](./why-mux.md)
-- [GitHub Issues](https://github.com/derekcorniello/mux-lang/issues)
+- [GitHub Issues](https://github.com/muxlang/mux-compiler/issues)
 
 ## Current Limitations
 
