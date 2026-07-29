@@ -112,7 +112,7 @@ const config: Config = {
   plugins: [],
 
   themeConfig: {
-    image: 'img/mux-social-card.jpg',
+    image: 'img/mux-social-card.png',
     colorMode: {
       defaultMode: 'light',
       disableSwitch: false,
