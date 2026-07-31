@@ -22,6 +22,14 @@ on:
       - '.github/workflows/docs-snippets.yml'
   workflow_dispatch:
 
+concurrency:
+  # Supersede an in-flight run for the SAME PR. Push runs deliberately get a
+  # unique group (run_id): a shared group keeps only one pending run, so rapid
+  # pushes to main would evict an intermediate commit's queued run before it
+  # ever ran, leaving that commit unverified.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   docs_snippets:
     name: Compile docs snippets
