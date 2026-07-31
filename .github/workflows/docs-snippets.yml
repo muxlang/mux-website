@@ -22,6 +22,11 @@ on:
       - '.github/workflows/docs-snippets.yml'
   workflow_dispatch:
 
+concurrency:
+  # A newer push supersedes an in-flight run for the same PR.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   docs_snippets:
     name: Compile docs snippets
