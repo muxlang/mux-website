@@ -23,9 +23,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # A newer push supersedes an in-flight run for the same PR.
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Supersede an in-flight run for the SAME PR. Push runs deliberately get a
+  # unique group (run_id): a shared group keeps only one pending run, so rapid
+  # pushes to main would evict an intermediate commit's queued run before it
+  # ever ran, leaving that commit unverified.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   docs_snippets:
