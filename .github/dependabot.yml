@@ -23,11 +23,6 @@ updates:
         update-types:
           - patch
           - minor
-    ignore:
-      # Pinned to an untagged commit on master that is NEWER than the repo's
-      # only tag (v1). Left to Dependabot the single "update" available is a
-      # downgrade, which would drop the cross-device copy fix. Move by hand.
-      - dependency-name: dtolnay/rust-toolchain
     commit-message:
       prefix: "ci"
     # `chore` replaces Dependabot's default `dependencies` label rather than
