@@ -22,6 +22,14 @@ on:
       - '.github/workflows/docs-snippets.yml'
   workflow_dispatch:
 
+concurrency:
+  # Supersede an in-flight run for the SAME PR. Push runs deliberately get a
+  # unique group (run_id): a shared group keeps only one pending run, so rapid
+  # pushes to main would evict an intermediate commit's queued run before it
+  # ever ran, leaving that commit unverified.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   docs_snippets:
     name: Compile docs snippets
@@ -35,9 +43,9 @@ jobs:
       # against (see mux-website-api's Dockerfile).
       LLVM_VERSION: '22'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '20'
 
