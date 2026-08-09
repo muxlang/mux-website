@@ -161,7 +161,7 @@
     "declarations": {
       "patterns": [
         {
-          "match": "\\b(func)\\s+([a-zA-Z][a-zA-Z0-9_]*)\\b",
+          "match": "\\b(func)\\s+((?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+))\\b",
           "captures": {
             "1": {
               "name": "keyword.declaration"
@@ -172,7 +172,7 @@
           }
         },
         {
-          "match": "\\b(class|interface|enum)\\s+([a-zA-Z][a-zA-Z0-9_]*)\\b",
+          "match": "\\b(class|interface|enum)\\s+((?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+))\\b",
           "captures": {
             "1": {
               "name": "keyword.declaration"
@@ -188,10 +188,10 @@
       "patterns": [
         {
           "name": "support.function",
-          "match": "\\b[a-zA-Z][a-zA-Z0-9_]*\\b\\s*(?=(?:<[^()<>\\n]+>\\s*)?\\()"
+          "match": "\\b(?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+)\\b\\s*(?=(?:<[^()<>\\n]+>\\s*)?\\()"
         },
         {
-          "match": "\\b([a-zA-Z][a-zA-Z0-9_]*)(\\s*\\.\\s*)([a-zA-Z][a-zA-Z0-9_]*)\\b\\s*(?=(?:<[^()<>\\n]+>\\s*)?\\()",
+          "match": "\\b((?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+))(\\s*\\.\\s*)((?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+))\\b\\s*(?=(?:<[^()<>\\n]+>\\s*)?\\()",
           "captures": {
             "1": {
               "name": "variable.other"
@@ -209,7 +209,7 @@
     "types": {
       "patterns": [
         {
-          "match": "\\b(returns)\\s+([a-zA-Z][a-zA-Z0-9_]*)\b",
+          "match": "\\b(returns)\\s+((?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+))\\b",
           "captures": {
             "1": {
               "name": "keyword.declaration"
@@ -220,7 +220,7 @@
           }
         },
         {
-          "match": "\\b(const)\\s+([a-zA-Z][a-zA-Z0-9_]*)\\s+([a-zA-Z][a-zA-Z0-9_]*)\b",
+          "match": "\\b(const)\\s+((?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+))\\s+((?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+))\\b",
           "captures": {
             "1": {
               "name": "keyword.declaration"
@@ -243,7 +243,7 @@
       "patterns": [
         {
           "name": "variable.other",
-          "match": "\\b[a-zA-Z][a-zA-Z0-9_]*\\b"
+          "match": "\\b(?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+)\\b"
         }
       ]
     }

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **An identifier can begin with an underscore.** `docs/reference/lexical-structure.md`
+  said identifiers "must start with a letter" and showed `_123` as an error. The
+  rule is now `[a-zA-Z][a-zA-Z0-9_]* | _[a-zA-Z0-9_]+`, and the page separates a
+  lone `_` (the placeholder, which does not bind) from a name that merely starts
+  with one (an ordinary identifier). Shiki's identifier rules follow the
+  canonical spec. Closes muxlang/mux-context#46.
+
+### Fixed
+- **`returns <Type>` and `const <Type> <name>` are highlighted again.** Both
+  Shiki rules ended in `\b` written as a JSON escape rather than `\\b`, so the
+  pattern ended in a literal backspace (U+0008) and could never match.
+
 ## [0.5.0] - 2026-07-13
 
 First release of `mux-website` as a standalone, independently versioned repo,
