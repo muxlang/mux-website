@@ -6,11 +6,12 @@ Get up and running with Mux in just a few minutes.
 
 Before you begin, make sure you have the following installed:
 
-- **For prebuilt install**: clang 22 (Mux calls it to link your compiled program).
-  No Rust and no LLVM development libraries needed.
+- **For prebuilt install**: any recent clang or gcc (Mux calls it to link your
+  compiled program; the version does not need to match). No Rust and no LLVM
+  development libraries needed.
 - **For source install**: Rust is required; use the bootstrap script to install LLVM 22 and clang 22
 
-See [Setup](../setup.md) for the clang install command on your platform. The
+See [Setup](../setup.md) for the install command on your platform. The
 installer also runs `mux doctor` at the end and reports anything missing.
 
 ## Installation
