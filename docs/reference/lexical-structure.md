@@ -21,6 +21,13 @@ x = 3  // Reassign to existing variable
 The only significant whitespace in Mux is the Newline character (`\n`), which separates statements. Other whitespace characters (space, tab, carriage return) are ignored except for separating tokens.
 
 ```mux
+// A newline ends a statement; there are no semicolons.
+auto a = 1
+auto b = 2
+
+// Spaces and tabs only separate tokens, so this is the same statement.
+auto    c     =    a   +   b
+```
 
 ## Comments
 

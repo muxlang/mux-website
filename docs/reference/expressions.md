@@ -116,16 +116,19 @@ auto strs = {"a", "b", "c"}     // set<string>
 
 ## Lambda Expressions
 
+A lambda always declares its return type, like any other function - there is no
+inference for it:
+
 ```mux
 auto square = func(int n) returns int {
     return n * n
 }
 
-auto add = func(int a, int b) {
+auto add = func(int a, int b) returns int {
     return a + b
 }
 
-// Type: func(int, int) -> int
+// Type: func(int, int) returns int
 ```
 
 ### Lambda Capture
@@ -143,13 +146,15 @@ auto times10 = func(int x) returns int {
 
 ```mux
 enum Option<T> {
-    some(T)
-    none
+    Some(T value),
+    None
 }
 
-auto opt = Option<int>.some(42)
-auto none = Option<int>.none
-auto inferred = some(42)  // Type inferred from context
+auto opt = Option<int>.Some(42)
+auto empty = Option<int>.None      // no parentheses: it carries no payload
+
+// The built-in optional is separate, and uses the some/none functions.
+auto builtin = some(42)            // optional<int>
 ```
 
 ## Class Instantiation

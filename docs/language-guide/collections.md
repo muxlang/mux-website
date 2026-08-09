@@ -14,8 +14,8 @@ list<int> nums = [1, 2, 3, 4]
 list<string> names = ["Alice", "Bob", "Charlie"]
 
 // With type inference
-auto nums = [1, 2, 3, 4]           // inferred as list<int>
-auto names = ["Alice", "Bob"]      // inferred as list<string>
+auto inferred_nums = [1, 2, 3, 4]        // inferred as list<int>
+auto inferred_names = ["Alice", "Bob"]   // inferred as list<string>
 
 // Empty list requires explicit type
 list<int> empty = []
@@ -227,10 +227,11 @@ if tags.contains("urgent") {
     print("Has urgent tag")
 }
 
-// Remove item
-match tags.remove("review") {
-    some(removed) { print("Removed: " + removed) }
-    none { print("Item not found") }
+// Remove item - returns whether it was there
+if tags.remove("review") {
+    print("Removed")
+} else {
+    print("Item not found")
 }
 
 // Union
