@@ -52,9 +52,17 @@ Identifiers name variables, functions, types, and other entities.
 
 ### Rules
 
-- Must start with a letter
+- Must start with a letter or an underscore
 - Can contain letters, digits, and underscores
+- An identifier that starts with an underscore needs at least one more
+  character, because a lone `_` is the [placeholder](#underscore-placeholder)
 - Cannot be a reserved keyword
+
+As a pattern:
+
+```text
+[a-zA-Z][a-zA-Z0-9_]*  |  _[a-zA-Z0-9_]+
+```
 
 ### Valid Identifiers
 
@@ -62,9 +70,15 @@ Identifiers name variables, functions, types, and other entities.
 auto x = 1
 auto camelCase = 3
 auto snake_case = 4
-// auto _123 = 5 // ERROR: variable names cannot start with _
+auto _unused = 5
+auto _123 = 6
+auto __ = 7
 auto Greek_alpha = 'α'
 ```
+
+A leading underscore carries no meaning to the compiler. It is a convention,
+shared with Rust, Python, Go, C and JavaScript, for marking something
+deliberately unused or private to its module.
 
 **Note**: Most Mux code uses `snake_case`, with some exceptions of course, but this is a convention, not a requirement.
 
@@ -78,7 +92,8 @@ auto class = 3      // ERROR: reserved keyword
 
 ### Underscore Placeholder
 
-The underscore `_` is a special identifier used as a placeholder:
+A lone `_` is not an identifier at all. It is a placeholder, and it is the one
+spelling a name cannot take:
 
 ```mux
 func process(int data, int _) returns void {
@@ -100,7 +115,22 @@ for int _ in range(0, 10) {
 
 The underscore has special semantics:
 - Cannot be read (assigning to `_` discards the value)
-- Multiple uses of `_` in the same scope do not conflict
+- Multiple uses of `_` in the same scope do not conflict, including several in
+  one signature: `func f(int _, string _)` is fine
+
+None of this applies to a name that merely *starts* with an underscore. `_x` is
+an ordinary identifier: it binds, it can be read, and a second `_x` in the same
+scope is a duplicate like any other.
+
+```mux
+func scale(int _factor, int value) returns int {
+    return _factor * value      // _factor is a normal parameter
+}
+
+func discard(int _, int _) returns int {
+    return 0                    // neither parameter has a name
+}
+```
 
 ## Keywords
 
