@@ -210,7 +210,7 @@ set<int> empty = {}
 | `.is_empty()` | `bool` | Returns `true` if set is empty |
 | `.add(T item)` | `void` | Adds an item to the set |
 | `.contains(T item)` | `bool` | Returns `true` if item exists in set |
-| `.remove(T item)` | `optional<T>` | Removes item and returns it, or `none` if not found |
+| `.remove(T item)` | `bool` | Removes item; returns `true` if it was there |
 | `.to_string()` | `string` | String representation of the set |
 | `.to_list()` | `list<T>` | Creates a list from the set |
 
