@@ -273,25 +273,22 @@ auto hasZ = 'z' in msg              // false
 Collections can be arbitrarily nested:
 
 ```mux title="nested_collections.mux"
-// List of maps
-auto users = [
-    {"name": "Alice", "age": 30},
-    {"name": "Bob", "age": 25}
+// List of maps. A map is homogeneous in both key and value type, so a record
+// with mixed field types is a class rather than a map.
+auto ages = [
+    {"Alice": 30},
+    {"Bob": 25}
 ]
 
-// Map of lists
-auto data = {
-    "numbers": [1, 2, 3, 4, 5],
-    "names": ["Alice", "Bob", "Charlie"]
+// Map of lists - every value must be the same list type.
+auto scores = {
+    "Alice": [95, 87, 92],
+    "Bob": [78, 85, 90]
 }
 
-// Complex nested structure
-auto complex = {
-    "users": [
-        {"name": "Alice", "scores": [95, 87, 92]},
-        {"name": "Bob", "scores": [78, 85, 90]}
-    ]
-}
+// Reaching into a nested value.
+print(scores["Alice"].to_string())
+print(ages[0].to_string())
 ```
 
 ## Collection Type Conversions
@@ -342,9 +339,9 @@ auto scores = {"Alice": 90, "Bob": 85}
 auto tags = {"urgent", "important"}
 
 // Explicit type with literal (empty collections)
-list<int> nums = []
-map<string, int> scores = {:}
-set<string> tags = {}
+list<int> empty_nums = []
+map<string, int> empty_scores = {:}
+set<string> empty_tags = {}
 ```
 
 ## Best Practices

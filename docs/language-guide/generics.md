@@ -36,8 +36,8 @@ func greet<T is Stringable>(T value) returns string {
 }
 
 // Usage
-auto max_int = max(3, 7)          // T = int
-auto max_float = max(3.14, 2.71)  // T = float
+auto biggest_int = max(3, 7)          // T = int
+auto biggest_float = max(3.14, 2.71)  // T = float
 auto greeting = greet("World")    // T = string
 ```
 
@@ -276,16 +276,18 @@ auto b = identity("hello")  // Generates: identity$$string
 Type parameters can often be inferred from context:
 
 ```mux title="type_inference_generics.mux"
-func identity<T is Stringable>(T value) returns T {
+func identity<T>(T value) returns T {
+    return value
+}
+
+func describe<T is Stringable>(T value) returns string {
     return value.to_string()
 }
 
-// Explicit type parameter
-auto a = identity(42)
-
-// Type inferred from argument
-auto b = identity(42)  // T is a int
-auto c = identity("hello")  // T is a string
+// T comes from the argument; there is no explicit form.
+auto a = identity(42)          // T is int
+auto b = identity("hello")     // T is string
+auto c = describe(3.5)         // T is float, result is string
 ```
 
 However, when ambiguous, explicit types are required:

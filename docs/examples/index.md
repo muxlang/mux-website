@@ -213,7 +213,7 @@ func area(Shape shape) returns float {
 }
 
 auto circle = Shape.Circle(5.0)
-auto rect = Shape.Rect(4.0, 6.0)
+auto rect = Shape.Rectangle(4.0, 6.0)
 
 print("Circle area: " + area(circle).to_string())
 print("Rectangle area: " + area(rect).to_string())
@@ -398,27 +398,33 @@ print("10 >= 10: " + (10 >= 10).to_string())
 
 Functions can accept references to modify the original value or avoid copying large data.
 
+A reference parameter is written `&T`, the argument is passed with `&`, and the
+value behind it is read and written through `*`:
+
 ```mux title="references.mux"
 func increment(&int n) returns void {
-    n = n + 1
+    *n = *n + 1
     return
 }
 
 func swap(&int a, &int b) returns void {
-    int temp = a
-    a = b
-    b = temp
+    int temp = *a
+    *a = *b
+    *b = temp
     return
 }
 
-int num = 5
-increment(num)
-print("After increment: " + num.to_string())
+func main() returns void {
+    int num = 5
+    increment(&num)
+    print("After increment: " + num.to_string())
 
-int x = 1
-int y = 2
-swap(x, y)
-print("After swap: x = " + x.to_string() + ", y = " + y.to_string())
+    int x = 1
+    int y = 2
+    swap(&x, &y)
+    print("After swap: x = " + x.to_string() + ", y = " + y.to_string())
+    return
+}
 ```
 
 ## Lambda Functions

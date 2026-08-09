@@ -133,20 +133,20 @@ Collections contain RC-allocated values. When freed:
 ### Nested Collections
 
 ```mux
-auto nested = [
-    {"name": "Alice", "scores": [95, 87, 92]},
-    {"name": "Bob", "scores": [78, 85, 90]}
-]
+// A map is homogeneous in both key and value type, so a record with mixed
+// field types is a class rather than a map.
+auto scores_by_name = {
+    "Alice": [95, 87, 92],
+    "Bob": [78, 85, 90]
+}
 ```
 
 Cleanup order:
-1. Outer list refcount -> 0
-2. Drop outer list
-3. Each map's refcount -> 0
-4. Drop each map
-5. Each inner list's refcount -> 0
-6. Drop inner lists
-7. All strings freed
+1. Outer map refcount -> 0
+2. Drop outer map
+3. Each key string and each value list's refcount -> 0
+4. Drop the lists
+5. All strings freed
 
 ## Value Semantics
 

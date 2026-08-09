@@ -29,9 +29,9 @@ none            // none literal (type: optional<T>.none)
 ### Identifiers
 
 ```mux
-auto x = 42     // x is an identifier expression
-print(x)        // x evaluates to its current value
-x = 100         // x is a place expression (assignment target)
+auto x = 42                // x is an identifier expression
+print(x.to_string())       // x evaluates to its current value
+x = 100                    // x is a place expression (assignment target)
 ```
 
 ### Parenthesized Expressions
@@ -98,7 +98,10 @@ auto complex = {"key": [1, 2, 3]}
 
 ```mux
 auto scores = {"Alice": 90}      // map<string, int>
-auto mixed = {"a": 1, "b": "x"}  // map<string, Value>
+
+// A map is homogeneous in both key and value type. Mixing value types is a
+// compile error, not a map of some dynamic value.
+//     auto mixed = {"a": 1, "b": "x"}   // ERROR
 ```
 
 ## Set Literals
