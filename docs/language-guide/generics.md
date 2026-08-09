@@ -13,8 +13,8 @@ func identity<T>(T value) returns T {
 }
 
 // Usage
-auto a = identity<int>(42)
-auto b = identity<string>("hello")
+auto a = identity(42)
+auto b = identity("hello")
 ```
 
 ### Type Constraints
@@ -36,9 +36,9 @@ func greet<T is Stringable>(T value) returns string {
 }
 
 // Usage
-auto max_int = max<int>(3, 7)           // T = int
-auto max_float = max<float>(3.14, 2.71) // T = float
-auto greeting = greet<string>("World")  // T = string
+auto max_int = max(3, 7)          // T = int
+auto max_float = max(3.14, 2.71)  // T = float
+auto greeting = greet("World")    // T = string
 ```
 
 ### Multiple Type Parameters
@@ -51,7 +51,7 @@ func pair<T, U>(T first, U second) returns Pair<T, U> {
     return p
 }
 
-auto result = pair<int, string>(42, "answer")
+auto result = pair(42, "answer")
 ```
 
 ### Multiple Bounds (AND Semantics)
@@ -65,8 +65,8 @@ func describe<T is Stringable & Hashable>(T value) returns string {
 }
 
 func main() returns void {
-    // Type arguments are inferred from the call - a generic function is not
-    // called as 'describe<int>(42)'.
+    // Type arguments are inferred from the call; there is no
+    // 'describe<int>(42)' form.
     print(describe(42))     // 42
     print(describe("hi"))   // hi
     return
@@ -235,7 +235,7 @@ auto doubled = map<int, int>(numbers, func(int n) returns int {
     return n * 2
 })
 
-auto evens = filter<int>(numbers, func(int n) returns bool {
+auto evens = filter(numbers, func(int n) returns bool {
     return n % 2 == 0
 })
 ```
@@ -249,8 +249,8 @@ func identity<T>(T value) returns T {
     return value
 }
 
-auto a = identity<int>(42)        // Generates: identity$$int
-auto b = identity<string>("hello") // Generates: identity$$string
+auto a = identity(42)       // Generates: identity$$int
+auto b = identity("hello")  // Generates: identity$$string
 ```
 
 ### How Monomorphization Works
@@ -281,7 +281,7 @@ func identity<T is Stringable>(T value) returns T {
 }
 
 // Explicit type parameter
-auto a = identity<int>(42)
+auto a = identity(42)
 
 // Type inferred from argument
 auto b = identity(42)  // T is a int

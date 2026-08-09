@@ -100,10 +100,7 @@ if condition {
 ### Examples
 
 ```mux
-enum Option<T> {
-    some(T)
-    none
-}
+optional<int> maybeValue = some(42)
 
 match maybeValue {
     some(v) if v > 10 {

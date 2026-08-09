@@ -169,8 +169,8 @@ func greet<T is Stringable>(T value) returns string {
 }
 
 // Usage
-auto max_int = max<int>(3, 7)
-auto max_float = max<float>(3.14, 2.71)
+auto max_int = max(3, 7)
+auto max_float = max(3.14, 2.71)
 ```
 
 ## Built-in Functions

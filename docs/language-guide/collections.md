@@ -327,10 +327,10 @@ func lookup<K, V>(map<K, V> data, K key) returns optional<V> {
 
 // Usage
 auto nums = [1, 2, 3]
-auto maybeFirst = first<int>(nums)
+auto maybeFirst = first(nums)
 
 auto scores = {"Alice": 90, "Bob": 85}
-auto aliceScore = lookup<string, int>(scores, "Alice")
+auto aliceScore = lookup(scores, "Alice")
 ```
 
 ## Collection Literals vs Constructors

@@ -195,10 +195,21 @@ print(opt2.is_none().to_string())  // true
 
 ### result Methods
 
-```mux title="optional_variants.mux"
-enum optional<T> {
-    some(T),   // Value present
-    none       // Value absent
+`optional<T>` is built in and has two cases - `some` carrying a `T`, and
+`none`. Like `result`, you build it with the `some` and `none` functions rather
+than through an enum name, and you cannot declare a type named `optional`
+yourself:
+
+```mux title="creating_optional_values.mux"
+func main() returns void {
+    optional<int> present = some(42)
+    optional<int> absent = none
+
+    match present {
+        some(v) { print("got " + v.to_string()) }
+        none { print("nothing") }
+    }
+    return
 }
 ```
 
