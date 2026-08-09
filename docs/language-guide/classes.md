@@ -261,17 +261,153 @@ auto pair2 = Pair<string, int>.from("key", 100)
 
 See [Generics](./generics.md) for more details.
 
-## Interface Dispatch (Static)
+## Built-in Capabilities
 
-Mux uses **static dispatch** for interfaces - no runtime vtable lookup:
+Four capabilities are built into the language rather than declared. A class
+opts in by naming one and writing the method it requires, and the operators
+then work on that class:
 
-```mux title="static_dispatch.mux"
-func drawAll(list<Drawable> shapes) returns void {
-    for Shape shape in shapes {
-        shape.draw()  // Resolved at compile time
+| Capability | Method | What it enables |
+|------------|--------|-----------------|
+| `Equatable` | `eq(Self) returns bool` | `==` and `!=` |
+| `Comparable` | `cmp(Self) returns int` | `<`, `<=`, `>`, `>=`, and `==` |
+| `Hashable` | `hash() returns int` and `eq` | use as a `map` key or `set` member |
+| `Stringable` | `to_string() returns string` | `to_string()` on the class |
+
+`cmp` returns negative, zero or positive like C's `strcmp`, so one method
+supplies every ordering operator. `Comparable` and `Hashable` each grant
+`Equatable`, so a class needs only the one that fits - and `Hashable` requires
+`eq` as well as `hash`, because a hash alone cannot tell two keys in one bucket
+apart.
+
+```mux title="class_capabilities.mux"
+class Money is Comparable, Stringable {
+    int cents
+
+    common func of(int c) returns Money {
+        auto m = Money.new()
+        m.cents = c
+        return m
     }
+
+    func cmp(Money other) returns int {
+        return self.cents - other.cents
+    }
+
+    func to_string() returns string {
+        return self.cents.to_string() + "c"
+    }
+}
+
+func main() returns void {
+    auto low = Money.of(100)
+    auto high = Money.of(250)
+
+    print((low < high).to_string())    // true - from cmp
+    print((low == low).to_string())    // true - Comparable grants Equatable
+    print(high.to_string())            // 250c
     return
 }
+```
+
+A class declaring `Hashable` can key a map, and instances match by their fields
+rather than by identity:
+
+```mux title="class_as_map_key.mux"
+class Point is Hashable {
+    int x
+    int y
+
+    common func at(int a, int b) returns Point {
+        auto p = Point.new()
+        p.x = a
+        p.y = b
+        return p
+    }
+
+    func hash() returns int {
+        return self.x * 31 + self.y
+    }
+
+    func eq(Point other) returns bool {
+        return self.x == other.x && self.y == other.y
+    }
+}
+
+func main() returns void {
+    map<Point, string> names = {:}
+    names[Point.at(1, 2)] = "origin-ish"
+
+    // A different instance holding the same fields finds the same entry.
+    print(names.contains(Point.at(1, 2)).to_string())   // true
+    print(names[Point.at(1, 2)])                        // origin-ish
+    return
+}
+```
+
+A **generic** class cannot declare `Equatable`, `Comparable` or `Hashable`:
+those are registered with the runtime once per class, and a generic class
+shares one registration across every instantiation. `Stringable` registers
+nothing and is available to generic classes.
+
+## Interface Dispatch (Static)
+
+Mux uses **static dispatch** for interfaces - no runtime vtable lookup. That
+shapes how you use them: an interface is a **bound on a type parameter**, not a
+type you can store a value in.
+
+```mux title="static_dispatch.mux"
+interface Drawable {
+    func draw() returns string
+}
+
+class Circle is Drawable {
+    float radius
+
+    common func of(float r) returns Circle {
+        auto c = Circle.new()
+        c.radius = r
+        return c
+    }
+
+    func draw() returns string {
+        return "circle r=" + self.radius.to_string()
+    }
+}
+
+class Square is Drawable {
+    float side
+
+    common func of(float s) returns Square {
+        auto q = Square.new()
+        q.side = s
+        return q
+    }
+
+    func draw() returns string {
+        return "square s=" + self.side.to_string()
+    }
+}
+
+// The bound form. Each call is monomorphized to the concrete class.
+func render<T is Drawable>(T shape) returns string {
+    return shape.draw()
+}
+
+func main() returns void {
+    print(render(Circle.of(2.0)))   // circle r=2.0
+    print(render(Square.of(3.0)))   // square s=3.0
+    return
+}
+```
+
+Writing the interface as a value type is an error, and says so at the
+declaration rather than at the call:
+
+```mux
+func render(Drawable shape) returns string   // ERROR: 'Drawable' is an
+                                             // interface and cannot be used
+                                             // as a value type
 ```
 
 **Why Static Dispatch?**
@@ -279,7 +415,11 @@ func drawAll(list<Drawable> shapes) returns void {
 - **Inlining**: LLVM can inline interface methods
 - **Optimization**: Better branch prediction, no indirect jumps
 
-The tradeoff: interfaces cannot be added to types from other modules (no "extension traits").
+The tradeoffs: interfaces cannot be added to types from other modules (no
+"extension traits"), and there are no heterogeneous collections - a
+`list<Drawable>` holding both a `Circle` and a `Square` needs dynamic dispatch,
+which Mux does not have. Model a closed set of alternatives as an enum
+instead.
 
 ## Best Practices
 

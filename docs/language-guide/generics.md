@@ -59,13 +59,18 @@ auto result = pair<int, string>(42, "answer")
 Type parameters can have multiple constraints:
 
 ```mux title="multiple_bounds.mux"
-// Type must implement BOTH Stringable AND Hashable
-func print_if_hashable<T is Stringable & Hashable>(T value) returns string {
+// The type must satisfy BOTH Stringable and Hashable
+func describe<T is Stringable & Hashable>(T value) returns string {
     return value.to_string()
 }
 
-// Only types implementing both interfaces can be used
-auto result = print_if_hashable<int>(42)  // "42"
+func main() returns void {
+    // Type arguments are inferred from the call - a generic function is not
+    // called as 'describe<int>(42)'.
+    print(describe(42))     // 42
+    print(describe("hi"))   // hi
+    return
+}
 ```
 
 ## Generic Classes
@@ -163,30 +168,43 @@ Mux provides built-in interfaces for common operations:
 
 ## Implementing Interfaces for Custom Types
 
-Custom types can implement interfaces to work with generic functions:
+A class opts into a capability by declaring it and writing the method it
+requires. `Equatable` is **built in** - you do not declare the interface
+yourself - and once a class implements it, `==` works on that class and it
+satisfies an `Equatable` bound:
 
 ```mux title="custom_equatable.mux"
-interface Equatable {
-    func eq(Self other) returns bool
-}
-
 class Point is Equatable {
     int x
     int y
-    
+
+    common func at(int a, int b) returns Point {
+        auto p = Point.new()
+        p.x = a
+        p.y = b
+        return p
+    }
+
     func eq(Point other) returns bool {
         return self.x == other.x && self.y == other.y
     }
 }
 
-func compare<T is Equatable>(T a, T b) returns bool {
-    return a.eq(b)
+func same<T is Equatable>(T a, T b) returns bool {
+    return a == b
 }
 
-auto p1 = Point.new()
-auto p2 = Point.new()
-auto result = compare(p1, p2)
+func main() returns void {
+    print(same(Point.at(1, 2), Point.at(1, 2)).to_string())   // true
+    print(same(Point.at(1, 2), Point.at(3, 4)).to_string())   // false
+    return
+}
 ```
+
+The four built-in capabilities are `Equatable` (`eq`), `Comparable` (`cmp`),
+`Hashable` (`hash` and `eq`) and `Stringable` (`to_string`). `Comparable` and
+`Hashable` each grant `Equatable`, so a class needs only the one that fits.
+See [Classes](./classes.md#built-in-capabilities).
 
 ## Generic Functions with Collections
 

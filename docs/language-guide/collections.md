@@ -93,7 +93,14 @@ for int i in range(0, items.size()) {
 
 ## Maps
 
-Key-value pairs with unique keys.
+Key-value pairs with unique keys. Lookup, insert and remove are O(1), and a map
+**iterates and prints in insertion order** - re-assigning an existing key keeps
+its original position rather than moving it to the end, the same rule Python
+and JavaScript use.
+
+Any key type must be hashable: a primitive, a user enum, or a class declaring
+`is Hashable`. Two maps holding the same pairs are equal however they were
+built, so equality ignores order even though iteration does not.
 
 ### Creating Maps
 
@@ -166,6 +173,19 @@ auto merged = map1 + map2        // {"a": 1, "b": 3, "c": 4}
 ```
 
 ## Sets
+
+Unique elements, with O(1) membership tests. Like a map, a set **iterates and
+prints in insertion order** rather than sorted order:
+
+```mux
+set<string> tags = {"urgent", "important"}
+tags.add("review")
+print(tags.to_string())          // {urgent, important, review}
+```
+
+Element types follow the same rule as map keys - a primitive, a user enum, or a
+class declaring `is Hashable`. Two sets with the same members are equal
+regardless of the order they were built in.
 
 ### Creating Sets
 
