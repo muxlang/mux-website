@@ -282,23 +282,46 @@ auto numbers = [1, 2, 3]  // list<int> inferred
 
 ## Generic Enums
 
-Enums can be generic:
+Enums can be generic, and each instantiation is monomorphized - `Box<int>`
+holds a real `int` rather than a boxed pointer.
 
 ```mux title="generic_enums.mux"
-enum optional<T> {
-    some(T),
-    none
+enum Box<T> {
+    Full(T value),
+    Empty
 }
 
-enum result<T, E> {
-    ok(T),
-    err(E)
+enum Either<L, R> {
+    Left(L value),
+    Right(R value)
 }
 
-// Usage
-auto maybeInt = some(42)                   // optional<int>
-auto success = ok(100)                     // result<int, E>
-auto failure = err("error message")       // result<T, string>
+func main() returns void {
+    auto boxed = Box<int>.Full(42)
+    auto either = Either<int, string>.Right("text")
+
+    match boxed {
+        Full(v) { print(v.to_string()) }
+        Empty { print("empty") }
+    }
+
+    match either {
+        Left(n) { print(n.to_string()) }
+        Right(s) { print(s) }
+    }
+    return
+}
+```
+
+`optional` and `result` are **built in**, not user enums. You cannot declare a
+type named `optional` or `result` - that is rejected, because it used to
+overwrite the built-in silently - and you construct them with `some`, `none`,
+`ok` and `err` rather than through an enum name:
+
+```mux
+auto maybeInt = some(42)              // optional<int>
+auto success = ok(100)                // result<int, ...>
+auto failure = err("error message")   // result<..., string>
 ```
 
 See [Enums](./enums.md) and [Error Handling](./error-handling.md) for more details.
