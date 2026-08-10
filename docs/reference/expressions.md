@@ -29,9 +29,9 @@ none            // none literal (type: optional<T>.none)
 ### Identifiers
 
 ```mux
-auto x = 42     // x is an identifier expression
-print(x)        // x evaluates to its current value
-x = 100         // x is a place expression (assignment target)
+auto x = 42                // x is an identifier expression
+print(x.to_string())       // x evaluates to its current value
+x = 100                    // x is a place expression (assignment target)
 ```
 
 ### Parenthesized Expressions
@@ -98,7 +98,10 @@ auto complex = {"key": [1, 2, 3]}
 
 ```mux
 auto scores = {"Alice": 90}      // map<string, int>
-auto mixed = {"a": 1, "b": "x"}  // map<string, Value>
+
+// A map is homogeneous in both key and value type. Mixing value types is a
+// compile error, not a map of some dynamic value.
+//     auto mixed = {"a": 1, "b": "x"}   // ERROR
 ```
 
 ## Set Literals
@@ -116,16 +119,19 @@ auto strs = {"a", "b", "c"}     // set<string>
 
 ## Lambda Expressions
 
+A lambda always declares its return type, like any other function - there is no
+inference for it:
+
 ```mux
 auto square = func(int n) returns int {
     return n * n
 }
 
-auto add = func(int a, int b) {
+auto add = func(int a, int b) returns int {
     return a + b
 }
 
-// Type: func(int, int) -> int
+// Type: func(int, int) returns int
 ```
 
 ### Lambda Capture
@@ -143,13 +149,15 @@ auto times10 = func(int x) returns int {
 
 ```mux
 enum Option<T> {
-    some(T)
-    none
+    Some(T value),
+    None
 }
 
-auto opt = Option<int>.some(42)
-auto none = Option<int>.none
-auto inferred = some(42)  // Type inferred from context
+auto opt = Option<int>.Some(42)
+auto empty = Option<int>.None      // no parentheses: it carries no payload
+
+// The built-in optional is separate, and uses the some/none functions.
+auto builtin = some(42)            // optional<int>
 ```
 
 ## Class Instantiation

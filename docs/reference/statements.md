@@ -100,23 +100,17 @@ if condition {
 ### Examples
 
 ```mux
-enum Option<T> {
-    some(T)
-    none
-}
+optional<int> maybeValue = some(42)
 
 match maybeValue {
     some(v) if v > 10 {
-        print("large: " + v)
+        print("large: " + v.to_string())
     }
     some(v) {
-        print("small: " + v)
+        print("small: " + v.to_string())
     }
     none {
         print("no value")
-    }
-    _ {
-        print("unexpected")
     }
 }
 ```

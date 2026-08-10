@@ -13,8 +13,8 @@ func identity<T>(T value) returns T {
 }
 
 // Usage
-auto a = identity<int>(42)
-auto b = identity<string>("hello")
+auto a = identity(42)
+auto b = identity("hello")
 ```
 
 ### Type Constraints
@@ -36,9 +36,9 @@ func greet<T is Stringable>(T value) returns string {
 }
 
 // Usage
-auto max_int = max<int>(3, 7)           // T = int
-auto max_float = max<float>(3.14, 2.71) // T = float
-auto greeting = greet<string>("World")  // T = string
+auto biggest_int = max(3, 7)          // T = int
+auto biggest_float = max(3.14, 2.71)  // T = float
+auto greeting = greet("World")    // T = string
 ```
 
 ### Multiple Type Parameters
@@ -51,7 +51,7 @@ func pair<T, U>(T first, U second) returns Pair<T, U> {
     return p
 }
 
-auto result = pair<int, string>(42, "answer")
+auto result = pair(42, "answer")
 ```
 
 ### Multiple Bounds (AND Semantics)
@@ -59,13 +59,18 @@ auto result = pair<int, string>(42, "answer")
 Type parameters can have multiple constraints:
 
 ```mux title="multiple_bounds.mux"
-// Type must implement BOTH Stringable AND Hashable
-func print_if_hashable<T is Stringable & Hashable>(T value) returns string {
+// The type must satisfy BOTH Stringable and Hashable
+func describe<T is Stringable & Hashable>(T value) returns string {
     return value.to_string()
 }
 
-// Only types implementing both interfaces can be used
-auto result = print_if_hashable<int>(42)  // "42"
+func main() returns void {
+    // Type arguments are inferred from the call; there is no
+    // 'describe<int>(42)' form.
+    print(describe(42))     // 42
+    print(describe("hi"))   // hi
+    return
+}
 ```
 
 ## Generic Classes
@@ -163,30 +168,43 @@ Mux provides built-in interfaces for common operations:
 
 ## Implementing Interfaces for Custom Types
 
-Custom types can implement interfaces to work with generic functions:
+A class opts into a capability by declaring it and writing the method it
+requires. `Equatable` is **built in** - you do not declare the interface
+yourself - and once a class implements it, `==` works on that class and it
+satisfies an `Equatable` bound:
 
 ```mux title="custom_equatable.mux"
-interface Equatable {
-    func eq(Self other) returns bool
-}
-
 class Point is Equatable {
     int x
     int y
-    
+
+    common func at(int a, int b) returns Point {
+        auto p = Point.new()
+        p.x = a
+        p.y = b
+        return p
+    }
+
     func eq(Point other) returns bool {
         return self.x == other.x && self.y == other.y
     }
 }
 
-func compare<T is Equatable>(T a, T b) returns bool {
-    return a.eq(b)
+func same<T is Equatable>(T a, T b) returns bool {
+    return a == b
 }
 
-auto p1 = Point.new()
-auto p2 = Point.new()
-auto result = compare(p1, p2)
+func main() returns void {
+    print(same(Point.at(1, 2), Point.at(1, 2)).to_string())   // true
+    print(same(Point.at(1, 2), Point.at(3, 4)).to_string())   // false
+    return
+}
 ```
+
+The four built-in capabilities are `Equatable` (`eq`), `Comparable` (`cmp`),
+`Hashable` (`hash` and `eq`) and `Stringable` (`to_string`). `Comparable` and
+`Hashable` each grant `Equatable`, so a class needs only the one that fits.
+See [Classes](./classes.md#built-in-capabilities).
 
 ## Generic Functions with Collections
 
@@ -217,7 +235,7 @@ auto doubled = map<int, int>(numbers, func(int n) returns int {
     return n * 2
 })
 
-auto evens = filter<int>(numbers, func(int n) returns bool {
+auto evens = filter(numbers, func(int n) returns bool {
     return n % 2 == 0
 })
 ```
@@ -231,8 +249,8 @@ func identity<T>(T value) returns T {
     return value
 }
 
-auto a = identity<int>(42)        // Generates: identity$$int
-auto b = identity<string>("hello") // Generates: identity$$string
+auto a = identity(42)       // Generates: identity$$int
+auto b = identity("hello")  // Generates: identity$$string
 ```
 
 ### How Monomorphization Works
@@ -258,16 +276,18 @@ auto b = identity<string>("hello") // Generates: identity$$string
 Type parameters can often be inferred from context:
 
 ```mux title="type_inference_generics.mux"
-func identity<T is Stringable>(T value) returns T {
+func identity<T>(T value) returns T {
+    return value
+}
+
+func describe<T is Stringable>(T value) returns string {
     return value.to_string()
 }
 
-// Explicit type parameter
-auto a = identity<int>(42)
-
-// Type inferred from argument
-auto b = identity(42)  // T is a int
-auto c = identity("hello")  // T is a string
+// T comes from the argument; there is no explicit form.
+auto a = identity(42)          // T is int
+auto b = identity("hello")     // T is string
+auto c = describe(3.5)         // T is float, result is string
 ```
 
 However, when ambiguous, explicit types are required:
@@ -282,23 +302,46 @@ auto numbers = [1, 2, 3]  // list<int> inferred
 
 ## Generic Enums
 
-Enums can be generic:
+Enums can be generic, and each instantiation is monomorphized - `Box<int>`
+holds a real `int` rather than a boxed pointer.
 
 ```mux title="generic_enums.mux"
-enum optional<T> {
-    some(T),
-    none
+enum Box<T> {
+    Full(T value),
+    Empty
 }
 
-enum result<T, E> {
-    ok(T),
-    err(E)
+enum Either<L, R> {
+    Left(L value),
+    Right(R value)
 }
 
-// Usage
-auto maybeInt = some(42)                   // optional<int>
-auto success = ok(100)                     // result<int, E>
-auto failure = err("error message")       // result<T, string>
+func main() returns void {
+    auto boxed = Box<int>.Full(42)
+    auto either = Either<int, string>.Right("text")
+
+    match boxed {
+        Full(v) { print(v.to_string()) }
+        Empty { print("empty") }
+    }
+
+    match either {
+        Left(n) { print(n.to_string()) }
+        Right(s) { print(s) }
+    }
+    return
+}
+```
+
+`optional` and `result` are **built in**, not user enums. You cannot declare a
+type named `optional` or `result` - that is rejected, because it used to
+overwrite the built-in silently - and you construct them with `some`, `none`,
+`ok` and `err` rather than through an enum name:
+
+```mux
+auto maybeInt = some(42)              // optional<int>
+auto success = ok(100)                // result<int, ...>
+auto failure = err("error message")   // result<..., string>
 ```
 
 See [Enums](./enums.md) and [Error Handling](./error-handling.md) for more details.

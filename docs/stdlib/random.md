@@ -12,7 +12,7 @@ import std.random
 
 ### random.seed
 
-```mux
+```text
 random.seed(int seed) returns void
 ```
 
@@ -39,7 +39,7 @@ func main() returns void {
 
 ### random.next_int
 
-```mux
+```text
 random.next_int() returns int
 ```
 
@@ -64,7 +64,7 @@ func main() returns void {
 
 ### random.next_range
 
-```mux
+```text
 random.next_range(int min, int max) returns int
 ```
 
@@ -99,7 +99,7 @@ func main() returns void {
 
 ### random.next_float
 
-```mux
+```text
 random.next_float() returns float
 ```
 
@@ -128,7 +128,7 @@ func main() returns void {
 
 ### random.next_bool
 
-```mux
+```text
 random.next_bool() returns bool
 ```
 

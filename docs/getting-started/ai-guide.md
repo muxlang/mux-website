@@ -49,16 +49,49 @@ class Circle is Drawable {
 auto c = Circle.new()
 c.r = 5.0
 auto c2 = Circle.from_radius(7.5)
+
+// An interface is a BOUND, never a value type. This is an error:
+//     func render(Drawable d) returns void
+// Write it as:
+func render<T is Drawable>(T d) returns void { ... }
 ```
+
+**Built-in capabilities** a class can declare: `Equatable` (`eq`), `Comparable`
+(`cmp`), `Hashable` (`hash` + `eq`), `Stringable` (`to_string`). Declaring one
+makes the matching operators work on the class - `Hashable` is what lets it key
+a `map`. A **generic** class cannot declare the first three.
+
+### Enums
+```mux
+enum Status { Pending, Active }                 // payload-less
+enum Shape { Circle(float radius) }             // every payload field is NAMED
+
+auto s = Status.Pending          // no parentheses - it takes no arguments
+auto c = Shape.Circle(5.0)       // parentheses mean arguments
+```
+Enums compare with `==` structurally. They have **no** `to_string()`; write a
+`match`-based function instead. `optional` and `result` are built in - never
+declare a type named `optional` or `result`, and `none` is a reserved keyword
+so it cannot be a variant name.
 
 ### Pattern Matching
 ```mux
-match value {
+// result
+match parse(text) {
     ok(val) { print(val.to_string()) }
     err(msg) { print("Error: " + msg) }
+}
+
+// optional
+match lookup(key) {
+    some(v) { print(v.to_string()) }
     none { print("No value") }
+}
+
+// literals need a wildcard or a binding arm to close the match
+match code {
     42 { print("The answer") }
-    _ { print("Wildcard") }
+    other { print(other.to_string()) }
 }
 ```
 
@@ -106,7 +139,9 @@ for int i in range(0, 10) { ... }   // Python‑style loop
 
 ## Pitfalls & Constraints
 
-- **No operator overloading** for user‑defined types.
+- **Operators come from capabilities, not overloading** – a class gets `==` by
+  declaring `Equatable`, and `<` by declaring `Comparable`. There is no way to
+  define `+` or `[]` for a class.
 - **No arbitrary‑precision integers** – `int` is 64‑bit signed.
 - **No mutable references to immutable data** – references are mutable by default.
 - **No prefix increment/decrement** – only postfix (`x++`, `x--`) and as standalone statements.
@@ -134,5 +169,6 @@ mux doctor --dev          # Check LLVM/clang for development
 2. **Encourage pattern matching** – for `result<T,E>`, `optional<T>`, and `match` expressions.
 3. **Prefer `auto`** for local variables, but explicit types for function signatures.
 4. **Use standard library** – suggest `std.math`, `std.io`, `std.net`, etc., when relevant.
-5. **Highlight Mux‑specific features** – reference counting, boxed values, static interfaces.
+5. **Highlight Mux‑specific features** – reference counting, static interfaces,
+   and inline scalar class fields (an `int` field is an `int`, not a pointer).
 6. **Point to resources** – language guide (https://mux-lang.dev), GitHub repo, examples in `test_scripts/`.

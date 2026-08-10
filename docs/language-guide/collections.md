@@ -14,8 +14,8 @@ list<int> nums = [1, 2, 3, 4]
 list<string> names = ["Alice", "Bob", "Charlie"]
 
 // With type inference
-auto nums = [1, 2, 3, 4]           // inferred as list<int>
-auto names = ["Alice", "Bob"]      // inferred as list<string>
+auto inferred_nums = [1, 2, 3, 4]        // inferred as list<int>
+auto inferred_names = ["Alice", "Bob"]   // inferred as list<string>
 
 // Empty list requires explicit type
 list<int> empty = []
@@ -93,7 +93,14 @@ for int i in range(0, items.size()) {
 
 ## Maps
 
-Key-value pairs with unique keys.
+Key-value pairs with unique keys. Lookup, insert and remove are O(1), and a map
+**iterates and prints in insertion order** - re-assigning an existing key keeps
+its original position rather than moving it to the end, the same rule Python
+and JavaScript use.
+
+Any key type must be hashable: a primitive, a user enum, or a class declaring
+`is Hashable`. Two maps holding the same pairs are equal however they were
+built, so equality ignores order even though iteration does not.
 
 ### Creating Maps
 
@@ -167,6 +174,19 @@ auto merged = map1 + map2        // {"a": 1, "b": 3, "c": 4}
 
 ## Sets
 
+Unique elements, with O(1) membership tests. Like a map, a set **iterates and
+prints in insertion order** rather than sorted order:
+
+```mux
+set<string> tags = {"urgent", "important"}
+tags.add("review")
+print(tags.to_string())          // {urgent, important, review}
+```
+
+Element types follow the same rule as map keys - a primitive, a user enum, or a
+class declaring `is Hashable`. Two sets with the same members are equal
+regardless of the order they were built in.
+
 ### Creating Sets
 
 ```mux title="creating_sets.mux"
@@ -190,7 +210,7 @@ set<int> empty = {}
 | `.is_empty()` | `bool` | Returns `true` if set is empty |
 | `.add(T item)` | `void` | Adds an item to the set |
 | `.contains(T item)` | `bool` | Returns `true` if item exists in set |
-| `.remove(T item)` | `optional<T>` | Removes item and returns it, or `none` if not found |
+| `.remove(T item)` | `bool` | Removes item; returns `true` if it was there |
 | `.to_string()` | `string` | String representation of the set |
 | `.to_list()` | `list<T>` | Creates a list from the set |
 
@@ -207,10 +227,11 @@ if tags.contains("urgent") {
     print("Has urgent tag")
 }
 
-// Remove item
-match tags.remove("review") {
-    some(removed) { print("Removed: " + removed) }
-    none { print("Item not found") }
+// Remove item - returns whether it was there
+if tags.remove("review") {
+    print("Removed")
+} else {
+    print("Item not found")
 }
 
 // Union
@@ -252,25 +273,22 @@ auto hasZ = 'z' in msg              // false
 Collections can be arbitrarily nested:
 
 ```mux title="nested_collections.mux"
-// List of maps
-auto users = [
-    {"name": "Alice", "age": 30},
-    {"name": "Bob", "age": 25}
+// List of maps. A map is homogeneous in both key and value type, so a record
+// with mixed field types is a class rather than a map.
+auto ages = [
+    {"Alice": 30},
+    {"Bob": 25}
 ]
 
-// Map of lists
-auto data = {
-    "numbers": [1, 2, 3, 4, 5],
-    "names": ["Alice", "Bob", "Charlie"]
+// Map of lists - every value must be the same list type.
+auto scores = {
+    "Alice": [95, 87, 92],
+    "Bob": [78, 85, 90]
 }
 
-// Complex nested structure
-auto complex = {
-    "users": [
-        {"name": "Alice", "scores": [95, 87, 92]},
-        {"name": "Bob", "scores": [78, 85, 90]}
-    ]
-}
+// Reaching into a nested value.
+print(scores["Alice"].to_string())
+print(ages[0].to_string())
 ```
 
 ## Collection Type Conversions
@@ -306,10 +324,10 @@ func lookup<K, V>(map<K, V> data, K key) returns optional<V> {
 
 // Usage
 auto nums = [1, 2, 3]
-auto maybeFirst = first<int>(nums)
+auto maybeFirst = first(nums)
 
 auto scores = {"Alice": 90, "Bob": 85}
-auto aliceScore = lookup<string, int>(scores, "Alice")
+auto aliceScore = lookup(scores, "Alice")
 ```
 
 ## Collection Literals vs Constructors
@@ -321,9 +339,9 @@ auto scores = {"Alice": 90, "Bob": 85}
 auto tags = {"urgent", "important"}
 
 // Explicit type with literal (empty collections)
-list<int> nums = []
-map<string, int> scores = {:}
-set<string> tags = {}
+list<int> empty_nums = []
+map<string, int> empty_scores = {:}
+set<string> empty_tags = {}
 ```
 
 ## Best Practices

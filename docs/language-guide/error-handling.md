@@ -40,10 +40,42 @@ match result {
 
 ### result Variants
 
-```mux title="result_variants.mux"
-enum result<T, E> {
-    ok(T),     // Success case with value
-    err(E)     // Error case with error value
+`result<T, E>` is built in, not a user enum. It has two cases - `ok` carrying a
+`T`, and `err` carrying an `E` - and you construct them with the `ok` and `err`
+functions rather than through an enum name. Declaring your own type named
+`result` is an error, because it used to overwrite the built-in silently.
+
+The error type must implement `Error`, which means supplying `message()`.
+`string` does, so `result<int, string>` works out of the box; a class can too:
+
+```mux title="custom_error_type.mux"
+class ParseError is Error {
+    string detail
+
+    common func of(string d) returns ParseError {
+        auto e = ParseError.new()
+        e.detail = d
+        return e
+    }
+
+    func message() returns string {
+        return "parse failed: " + self.detail
+    }
+}
+
+func parse(string input) returns result<int, ParseError> {
+    if input == "7" {
+        return ok(7)
+    }
+    return err(ParseError.of(input))
+}
+
+func main() returns void {
+    match parse("nope") {
+        ok(v) { print(v.to_string()) }
+        err(e) { print(e.message()) }
+    }
+    return
 }
 ```
 
@@ -163,10 +195,21 @@ print(opt2.is_none().to_string())  // true
 
 ### result Methods
 
-```mux title="optional_variants.mux"
-enum optional<T> {
-    some(T),   // Value present
-    none       // Value absent
+`optional<T>` is built in and has two cases - `some` carrying a `T`, and
+`none`. Like `result`, you build it with the `some` and `none` functions rather
+than through an enum name, and you cannot declare a type named `optional`
+yourself:
+
+```mux title="creating_optional_values.mux"
+func main() returns void {
+    optional<int> present = some(42)
+    optional<int> absent = none
+
+    match present {
+        some(v) { print("got " + v.to_string()) }
+        none { print("nothing") }
+    }
+    return
 }
 ```
 

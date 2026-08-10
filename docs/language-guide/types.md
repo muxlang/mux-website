@@ -119,13 +119,33 @@ auto good3 = 1.to_float() < 1.0           // OK: true
 
 ## Composite Types
 
+These are type *forms* rather than runnable declarations - `T`, `K`, `V` and
+`U` stand for whatever you instantiate them with:
+
+| Form | Meaning |
+|------|---------|
+| `optional<T>` | a value that may or may not exist |
+| `result<T, E>` | success carrying `T`, or an error carrying `E` |
+| `list<T>` | ordered collection |
+| `map<K, V>` | key-value pairs, iterating in insertion order |
+| `set<T>` | unique elements, iterating in insertion order |
+| `tuple<T, U>` | fixed-size pair |
+
 ```mux title="composite_types.mux"
-optional<T>        // Represents a value that may or may not exist
-result<T, E>       // Represents success (T) or error (E)
-list<T>            // Ordered collection
-map<K, V>          // Key-value pairs
-set<T>             // Unique elements
-tuple<T, U>        // Fixed size pair
+func main() returns void {
+    optional<int> maybe = some(42)
+    result<int, string> outcome = ok(7)
+    list<string> names = ["ana", "bo"]
+    map<string, int> ages = {"ana": 31}
+    set<int> seen = {1, 2, 3}
+    tuple<int, string> pair = (1, "one")
+
+    print(names.to_string())
+    print(ages.to_string())
+    print(seen.to_string())
+    print(pair.to_string())
+    return
+}
 ```
 
 ## Tuples

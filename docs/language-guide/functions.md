@@ -169,8 +169,8 @@ func greet<T is Stringable>(T value) returns string {
 }
 
 // Usage
-auto max_int = max<int>(3, 7)
-auto max_float = max<float>(3.14, 2.71)
+auto biggest_int = max(3, 7)
+auto biggest_float = max(3.14, 2.71)
 ```
 
 ## Built-in Functions
@@ -237,8 +237,8 @@ func add(int a, int b) returns int {
     return a + b
 }
 
-auto ok = add(1, 2)   // correct: two arguments
-auto bad = add(1)     // error: Wrong number of arguments: expected 2, got 1
+auto sum = add(1, 2)   // correct: two arguments
+auto bad = add(1)      // error: Wrong number of arguments: expected 2, got 1
 ```
 
 To call a function with fewer explicit arguments, give the trailing parameters

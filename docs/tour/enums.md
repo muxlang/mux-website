@@ -23,7 +23,7 @@ Enums define tagged unions with named variants that can hold data.
 }
 
 func main() returns void {
-    Direction dir = Direction.North()
+    Direction dir = Direction.North
     
     match dir {
         North { print("Heading North") }

@@ -330,31 +330,41 @@ Custom types can implement interfaces for equality and comparison:
 
 ### Custom Type Example
 
-```mux title="operator_overloading.mux"
-interface Equatable {
-    func eq(Self other) returns bool
-}
+`Equatable` and `Comparable` are built in - you declare that a class has the
+capability, you do not declare the interface itself:
 
+```mux title="operator_overloading.mux"
 class Point is Equatable {
     int x
     int y
-    
+
+    common func at(int a, int b) returns Point {
+        auto p = Point.new()
+        p.x = a
+        p.y = b
+        return p
+    }
+
     func eq(Point other) returns bool {
         return self.x == other.x && self.y == other.y
     }
 }
 
-// Now == works with Point
-auto p1 = Point.new()
-p1.x = 1
-p1.y = 2
+func main() returns void {
+    auto p1 = Point.at(1, 2)
+    auto p2 = Point.at(1, 2)
 
-auto p2 = Point.new()
-p2.x = 1
-p2.y = 2
-
-auto same = p1.eq(p2)  // true
+    // The operator dispatches to the class's own eq. '!=' is its negation,
+    // so a class writes one method rather than two.
+    print((p1 == p2).to_string())   // true
+    print((p1 != p2).to_string())   // false
+    return
+}
 ```
+
+A class declaring `Comparable` supplies `cmp` instead, which powers `<`, `<=`,
+`>` and `>=` - and `==` as well, tested against zero. See
+[Classes](./classes.md#built-in-capabilities).
 
 ## Assignment Operators
 

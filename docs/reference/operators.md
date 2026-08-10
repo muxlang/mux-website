@@ -86,24 +86,57 @@ The postfix-only, standalone-only design prevents ambiguity and side-effect conf
 
 | Operator | Description | Types |
 |----------|-------------|-------|
-| `==` | Equality | All types |
-| `!=` | Inequality | All types |
-| `<` | Less than | `int`, `float`, `string` |
-| `<=` | Less than or equal | `int`, `float`, `string` |
-| `>` | Greater than | `int`, `float`, `string` |
-| `>=` | Greater than or equal | `int`, `float`, `string` |
+| `==` | Equality | `int`, `float`, `bool`, `char`, `string`, `list`, `map`, `set`, `tuple`, `optional`, `result`, user enums, and classes declaring `Equatable`, `Comparable` or `Hashable` |
+| `!=` | Inequality | same as `==` |
+| `<` | Less than | `int`, `float`, `string`, and classes declaring `Comparable` |
+| `<=` | Less than or equal | `int`, `float`, `string`, and classes declaring `Comparable` |
+| `>` | Greater than | `int`, `float`, `string`, and classes declaring `Comparable` |
+| `>=` | Greater than or equal | `int`, `float`, `string`, and classes declaring `Comparable` |
 
 ### Comparison Rules
 
 - Both operands must have the same type
 - No implicit conversion between numeric types
 - String comparison is lexicographic (Unicode codepoint order)
+- Collections and enums compare **structurally** - by their contents, not by
+  identity. Two lists with the same elements are equal; two enum values are
+  equal when they are the same variant carrying equal payloads. A `map` and a
+  `set` ignore insertion order.
 
 ```mux
 auto a = 1 == 1           // true
 auto b = 1 == "1"         // ERROR: different types
 auto c = "abc" < "abd"    // true
+auto d = [1, 2] == [1, 2] // true - structural
 ```
+
+### What does not compare
+
+A class does **not** compare with `==` unless it says so. Declaring
+`is Equatable` and writing `eq` is what opts in:
+
+```mux
+class Money is Equatable {
+    int cents
+
+    func eq(Money other) returns bool {
+        return self.cents == other.cents
+    }
+}
+```
+
+`is Comparable` (which supplies `cmp`) and `is Hashable` both grant equality
+too, so a class needs only one of the three. See
+[Classes](../language-guide/classes.md) for the full set.
+
+References, function values, and the result of a `void` call are never
+comparable. Each is reported with a suggestion at the point of use.
+
+### Ordering
+
+`<`, `<=`, `>` and `>=` accept `int`, `float` and `string`, plus any class
+declaring `is Comparable`. There is no ordering for collections, enums,
+`optional` or `result` - compare them with `==`, or `match` on them.
 
 ## Logical Operators
 

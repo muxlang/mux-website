@@ -374,8 +374,9 @@ Capture matched values in variables:
 auto value = 42
 match value {
     1 { print("one") }
+    // A bare name binds the value and matches everything else, so it closes
+    // the match - no wildcard arm is needed after it.
     captured { print("got: " + captured.to_string()) }
-    _ { print("shouldn't reach here") }
 }
 
 // With strings
