@@ -59,6 +59,17 @@ function parseFrontMatter(fileContent: string): {
   };
 }
 
+// The site's top-level nav links all follow the same shape: a route, its
+// label, and a regex that highlights the link while that route is active.
+function navDocLink(to: string, label: string) {
+  return {
+    to,
+    label,
+    position: 'left' as const,
+    activeBaseRegex: `${to.replace(/\/$/, '')}/?$`,
+  };
+}
+
 const config: Config = {
   title: 'Mux',
   tagline: 'A Programming Language For The People',
@@ -148,48 +159,13 @@ const config: Config = {
         src: 'img/mux-logo.png',
       },
       items: [
-        {
-          to: '/docs/',
-          label: 'Documentation',
-          position: 'left',
-          activeBaseRegex: '/docs/?$',
-        },
-        {
-          to: '/docs/getting-started/quick-start',
-          label: 'Quick Start',
-          position: 'left',
-          activeBaseRegex: '/docs/getting-started/quick-start/?$',
-        },
-        {
-          to: '/docs/examples',
-          label: 'Examples',
-          position: 'left',
-          activeBaseRegex: '/docs/examples/?$',
-        },
-        {
-          to: '/docs/tour',
-          label: 'Tour',
-          position: 'left',
-          activeBaseRegex: '/docs/tour/?$',
-        },
-        {
-          to: '/playground',
-          label: 'Playground',
-          position: 'left',
-          activeBaseRegex: '/playground/?$',
-        },
-        {
-          to: '/blog',
-          label: 'Blog',
-          position: 'left',
-          activeBaseRegex: '/blog/?$',
-        },
-        {
-          to: '/changelog',
-          label: 'Changelog',
-          position: 'left',
-          activeBaseRegex: '/changelog/?$',
-        },
+        navDocLink('/docs/', 'Documentation'),
+        navDocLink('/docs/getting-started/quick-start', 'Quick Start'),
+        navDocLink('/docs/examples', 'Examples'),
+        navDocLink('/docs/tour', 'Tour'),
+        navDocLink('/playground', 'Playground'),
+        navDocLink('/blog', 'Blog'),
+        navDocLink('/changelog', 'Changelog'),
         {
           type: 'search',
           position: 'right',
