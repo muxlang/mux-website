@@ -241,7 +241,10 @@ function QuickStartSection() {
           </div>
           
           <div className={styles.codeBlockWrapper}>
-            <CodeBlock title="error-handling.mux" className={`language-mux ${styles.featuredCode}`}>
+            <CodeBlock
+              title="error-handling.mux"
+              className={`language-mux ${styles.featuredCode}`}
+              metastring="static">
 {`func divide(float a, float b) returns result<float, string> {
     if b == 0.to_float() {
         return err("division by zero")

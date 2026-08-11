@@ -1,5 +1,6 @@
 import React, { isValidElement, useState, type ReactNode, useEffect } from 'react';
 import useIsBrowser from '@docusaurus/useIsBrowser';
+import { useLocation } from '@docusaurus/router';
 import type { Props } from '@theme/CodeBlock';
 import { CopyIcon, CheckIcon } from '@site/src/components/CodeIcons';
 import { getHighlighter, resolveShikiLanguage } from '@site/src/shiki/highlighter';
@@ -35,15 +36,20 @@ function parseMetastring(
 ): {
   title?: string;
   showLineNumbers?: boolean | number;
+  static?: boolean;
 } {
   if (!metastring) return {};
 
-  const result: { title?: string; showLineNumbers?: boolean | number } = {};
+  const result: { title?: string; showLineNumbers?: boolean | number; static?: boolean } = {};
 
   const titleRegex = /title=["']([^"']+)["']/;
   const titleMatch = titleRegex.exec(metastring);
   if (titleMatch) {
     result.title = titleMatch[1];
+  }
+
+  if (/(?:^|\s)static(?:\s|$)/.test(metastring)) {
+    result.static = true;
   }
 
   if (metastring.includes('showLineNumbers')) {
@@ -57,6 +63,31 @@ function parseMetastring(
   }
 
   return result;
+}
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  mux: 'Mux',
+  'source.mux': 'Mux',
+  typescript: 'TypeScript',
+  ts: 'TypeScript',
+  javascript: 'JavaScript',
+  js: 'JavaScript',
+  bash: 'Bash',
+  sh: 'Bash',
+  shell: 'Bash',
+  console: 'Bash',
+  powershell: 'PowerShell',
+  ps1: 'PowerShell',
+  pwsh: 'PowerShell',
+  hm: 'HM',
+  text: 'Output',
+  plaintext: 'Output',
+};
+
+function languageLabel(lang: string | undefined): string {
+  if (!lang) return 'Code';
+  const key = lang.trim().toLowerCase();
+  return LANGUAGE_LABELS[key] ?? key.toUpperCase();
 }
 
 function getThemeFromBody(): 'github-dark' | 'github-light' {
@@ -81,20 +112,33 @@ export default function CodeBlock({
   const [copied, setCopied] = useState(false);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const isBrowser = useIsBrowser();
+  const { pathname } = useLocation();
+  const isBlogRoute = pathname.startsWith('/blog');
 
-  // Determine initial dark mode; stays null until mounted
+  // Read the real theme directly off the DOM (Docusaurus sets it via an
+  // inline script before hydration) rather than gating on useIsBrowser(),
+  // which is still false on this component's first client render. Waiting
+  // on that flag left isDark stuck at null until some unrelated DOM mutation
+  // happened to trip the observer below - the async highlight effect (guarded
+  // on `isDark !== null`) could then never run, leaving code unhighlighted.
   const [isDark, setIsDark] = useState<boolean | null>(() =>
-    isBrowser ? getThemeFromBody() === 'github-dark' : null,
+    typeof document === 'undefined' ? null : getThemeFromBody() === 'github-dark',
   );
 
   const parsedMeta = parseMetastring(metastring);
   const title = titleProp || parsedMeta.title;
-  const terminalTitle = typeof title === 'string' ? title : 'snippet.mux';
 
   const children = maybeStringifyChildren(rawChildren);
 
   const detectedLang = language || parseLanguage(className);
-  const isMuxCode = detectedLang === 'mux' || detectedLang === 'source.mux';
+  // Blog posts and any fence marked "static" get the same non-interactive
+  // terminal rendering as every other language - a page full of separate
+  // Monaco editors is heavier than a blog post needs.
+  const isMuxCode =
+    (detectedLang === 'mux' || detectedLang === 'source.mux') &&
+    !parsedMeta.static &&
+    !isBlogRoute;
+  const terminalTitle = typeof title === 'string' ? title : languageLabel(detectedLang);
 
   const handleCopy = () => {
     const textToCopy = getCodeString(rawChildren);
@@ -169,7 +213,7 @@ export default function CodeBlock({
     return (
       <div
         className={`terminal-code ${className || ''}`}
-        data-filename={title || ''}
+        data-filename={terminalTitle}
       >
         <div className="terminal-buttons">
           <button

@@ -1,0 +1,30 @@
+.changelogContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.subtitle {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 1.1rem;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 3rem 0;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.markdown :global(pre) {
+  overflow-x: auto;
+}
+
+.markdown :global(a) {
+  overflow-wrap: break-word;
+}

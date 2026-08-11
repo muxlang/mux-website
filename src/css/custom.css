@@ -112,12 +112,17 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  /* Guard against any single element (a wide code block, an embedded editor,
+     an unbroken URL) pushing the whole page into horizontal scroll. Content
+     that would overflow should scroll within its own container instead. */
+  overflow-x: hidden;
 }
 
 body {
   font-feature-settings: "kern" 1;
   text-rendering: optimizeLegibility;
   letter-spacing: -0.01em;
+  overflow-x: hidden;
 }
 
 /* Headings use Space Grotesk for distinctive look */
@@ -360,6 +365,14 @@ kbd,
 .navbar__inner {
   align-items: center;
   justify-content: space-between;
+  max-width: var(--ifm-container-width-xl);
+  margin: 0 auto;
+}
+
+/* Reserve room for the "ctrl K" shortcut hint so it never overlaps the
+   placeholder or typed search text. */
+.navbar__search-input {
+  padding-right: 4.5rem;
 }
 
 .navbar__items {
@@ -790,6 +803,32 @@ hr {
 
   .navbar__items:not(.navbar__items--right) {
     justify-content: flex-start;
+  }
+
+  /* Infima shrinks the search input to 9rem here; that leaves no room for
+     both the placeholder and the "ctrl K" hint once padding-right reserves
+     space for the hint, so widen it back out. */
+  .navbar__search-input {
+    width: 11rem;
+  }
+}
+
+/*
+ * With 7 left-side nav links, the desktop nav row is genuinely tight just
+ * above the 996px breakpoint where Infima/Docusaurus switch to the hamburger
+ * menu (that breakpoint is hardcoded in both infima's CSS and Docusaurus's
+ * useWindowSize JS hook, so it cannot be raised without touching both -
+ * https://github.com/facebook/docusaurus/issues/9603). Reclaim space instead
+ * so the search box keeps a comfortable gap from the last link.
+ */
+@media (min-width: 997px) and (max-width: 1200px) {
+  .navbar__link {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .navbar__items:not(.navbar__items--right) {
+    gap: 0.125rem;
   }
 }
 

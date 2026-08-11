@@ -2,11 +2,19 @@ import { createHighlighter, type Highlighter } from 'shiki';
 import muxGrammar from './mux.json';
 import bash from '@shikijs/langs/bash';
 import powershell from '@shikijs/langs/powershell';
+import typescript from '@shikijs/langs/typescript';
+import javascript from '@shikijs/langs/javascript';
 
 let highlighterInstance: Highlighter | null = null;
 let highlighterPromise: Promise<Highlighter> | null = null;
 
-const SUPPORTED_LANGUAGES = new Set(['source.mux', 'bash', 'powershell']);
+const SUPPORTED_LANGUAGES = new Set([
+  'source.mux',
+  'bash',
+  'powershell',
+  'typescript',
+  'javascript',
+]);
 
 export function resolveShikiLanguage(rawLanguage: string | undefined): string | null {
   if (!rawLanguage) {
@@ -39,6 +47,14 @@ export function resolveShikiLanguage(rawLanguage: string | undefined): string | 
     return 'powershell';
   }
 
+  if (trimmed === 'ts') {
+    return 'typescript';
+  }
+
+  if (trimmed === 'js') {
+    return 'javascript';
+  }
+
   return SUPPORTED_LANGUAGES.has(trimmed) ? trimmed : null;
 }
 
@@ -58,6 +74,8 @@ export async function getHighlighter(): Promise<Highlighter> {
       });
       await highlighter.loadLanguage(bash[0]);
       await highlighter.loadLanguage(powershell[0]);
+      await highlighter.loadLanguage(javascript[0]);
+      await highlighter.loadLanguage(typescript[0]);
       highlighterInstance = highlighter;
       return highlighter;
     })();
