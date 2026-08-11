@@ -29,7 +29,13 @@ function parseFrontMatter(fileContent: string): {
   let parsedFrontMatter: unknown;
   try {
     parsedFrontMatter = loadYaml(frontMatterMatch[1]);
-  } catch {
+  } catch (err) {
+    // A caught error here means the page silently loses its title, date, tags,
+    // etc, so it must not fail silently: log loudly so a malformed front
+    // matter block (e.g. an unquoted ":" in a title) gets caught in review.
+    console.warn(
+      `[parseFrontMatter] Failed to parse front matter, ignoring it:\n${String(err)}`,
+    );
     return {
       frontMatter: {},
       content: fileContent.slice(frontMatterMatch[0].length).trim(),
@@ -89,7 +95,20 @@ const config: Config = {
           editUrl:
             'https://github.com/derekcorniello/mux-lang/tree/main/mux-website/',
         },
-        blog: false,
+        blog: {
+          path: 'blog',
+          routeBasePath: 'blog',
+          blogTitle: 'Blog',
+          blogDescription: 'Updates, announcements, and deep dives on Mux',
+          blogSidebarCount: 10,
+          authorsMapPath: 'authors.yml',
+          showReadingTime: true,
+          postsPerPage: 5,
+          feedOptions: {
+            type: 'all',
+            copyright: `Copyright © ${new Date().getFullYear()} Derek Corniello`,
+          },
+        },
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -158,6 +177,18 @@ const config: Config = {
           label: 'Playground',
           position: 'left',
           activeBaseRegex: '/playground/?$',
+        },
+        {
+          to: '/blog',
+          label: 'Blog',
+          position: 'left',
+          activeBaseRegex: '/blog/?$',
+        },
+        {
+          to: '/changelog',
+          label: 'Changelog',
+          position: 'left',
+          activeBaseRegex: '/changelog/?$',
         },
         {
           type: 'search',
