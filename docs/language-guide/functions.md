@@ -226,6 +226,31 @@ auto result = myString.to_int().to_string()
 auto doubled = square(add(2, 3))
 ```
 
+### Wrapping a Long Argument List
+
+An argument list may span lines, because a newline inside an open parenthesis
+continues the expression (see the
+[lexical structure reference](../reference/lexical-structure.md)). A trailing
+comma before the closing parenthesis is allowed, so adding an argument is a
+one-line change.
+
+```mux title="wrapped_call.mux"
+func describe(string name, int width, int height, bool visible) returns string {
+    return name + " " + width.to_string() + "x" + height.to_string()
+}
+
+func main() returns void {
+    auto text = describe(
+        "panel",
+        1920,
+        1080,
+        true,
+    )
+    print(text)
+    return
+}
+```
+
 ### Argument Count
 
 A call must pass exactly as many arguments as the function declares (after

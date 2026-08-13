@@ -10,6 +10,23 @@ title: Data JSON
 - `data.json.from_map(map<string, T>) -> result<Json, string>` — converts a string-keyed map into a `Json` object (generic over values).
 - `data.json.to_map(Json value) -> result<map<string, Json>, string>` — extracts an object map if the `Json` value is an object.
 
+## Round-trip fidelity
+
+Parsing a document and serializing it again returns what you started with.
+
+**Integers stay integers.** A whole number is not widened to a floating-point
+value, so `{"id":42}` comes back as `{"id":42}` and not `{"id":42.0}`. That
+matters wherever a receiver is strict about the difference - an HTTP status, a
+record id, an array index - and it means values beyond the range a float can
+represent exactly keep their value rather than silently rounding to a nearby
+one. A number written with a decimal point stays a float.
+
+**Key order is preserved.** Object keys come back in the order the document
+listed them rather than sorted, so re-serializing produces a byte-identical
+document, diffs stay meaningful, and a canonical form you signed still matches.
+This is the same guarantee Mux's own `map` gives: printed output does not depend
+on how a container arranged itself internally.
+
 Example:
 
 ```mux

@@ -44,6 +44,23 @@ auto num = 3.to_string()
 auto val = (42).to_float()
 ```
 
+### String Length
+
+`length()` counts **characters**, not bytes. A string is a sequence of
+characters, and every position-based operation agrees on that, so the count is
+the same whether or not the text is ASCII.
+
+```mux title="string_length.mux"
+func main() returns void {
+    print("hello".length().to_string())   // 5
+    print("hi there".length().to_string())  // 8
+    return
+}
+```
+
+A character outside ASCII still counts as one, even though it occupies more than
+one byte in memory.
+
 ### String Parsing (Fallible Conversions)
 
 String and char parsing methods return `result<T, string>` because they can fail:
