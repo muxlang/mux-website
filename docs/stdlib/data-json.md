@@ -12,7 +12,8 @@ title: Data JSON
 
 ## Round-trip fidelity
 
-Parsing a document and serializing it again returns what you started with.
+Parsing a document and serializing it again preserves its **values and their
+order**.
 
 **Integers stay integers.** A whole number is not widened to a floating-point
 value, so `{"id":42}` comes back as `{"id":42}` and not `{"id":42.0}`. That
@@ -22,10 +23,17 @@ represent exactly keep their value rather than silently rounding to a nearby
 one. A number written with a decimal point stays a float.
 
 **Key order is preserved.** Object keys come back in the order the document
-listed them rather than sorted, so re-serializing produces a byte-identical
-document, diffs stay meaningful, and a canonical form you signed still matches.
-This is the same guarantee Mux's own `map` gives: printed output does not depend
-on how a container arranged itself internally.
+listed them rather than sorted, so a re-serialized document reads the way it was
+written and diffs stay meaningful. This is the same guarantee Mux's own `map`
+gives: printed output does not depend on how a container arranged itself
+internally.
+
+**What is not preserved is source formatting.** Insignificant whitespace, the
+choice between an escape and a literal character, and other spelling details of
+the original text are normalized by serialization. So a round trip is not
+byte-for-byte, and re-serialized output is not by itself a canonical form -
+signing or byte-comparing it requires a canonicalization step these routines do
+not provide.
 
 Example:
 

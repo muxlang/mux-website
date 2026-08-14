@@ -46,9 +46,8 @@ auto val = (42).to_float()
 
 ### String Length
 
-`length()` counts **characters**, not bytes. A string is a sequence of
-characters, and every position-based operation agrees on that, so the count is
-the same whether or not the text is ASCII.
+`length()` counts **code points**, not bytes - the same unit `char` denotes, so
+a string behaves as a sequence of `char`.
 
 ```mux title="string_length.mux"
 func main() returns void {
@@ -58,8 +57,14 @@ func main() returns void {
 }
 ```
 
-A character outside ASCII still counts as one, even though it occupies more than
-one byte in memory.
+A code point outside ASCII still counts as one, even though it occupies several
+bytes in memory.
+
+Note that a code point is not always a whole visible glyph. A character built
+from a base letter plus a combining mark, or an emoji assembled from several
+code points, counts once per code point rather than once per glyph - so
+`length()` answers "how many `char` values", which is what indexing and slicing
+also use, rather than "how many symbols a reader sees".
 
 ### String Parsing (Fallible Conversions)
 
