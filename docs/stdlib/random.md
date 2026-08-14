@@ -199,7 +199,7 @@ The random module uses a custom Linear Congruential Generator (LCG) with the fol
 
 - **Thread safety**: Uses a `Mutex`-protected state with `Once`-based initialization
 - **Auto-initialization**: Seeds automatically with current time if not explicitly seeded
-- **Range distribution**: Uses modulo arithmetic for `next_range`, which may have slight bias for very large ranges
+- **Range distribution**: `next_range` scales the generator's output by the span with a fixed-point multiply rather than taking a remainder. Like any method without a rejection step this leaves a slight bias, growing with the size of the range relative to the generator's 31-bit output
 - **Float precision**: Produces values with approximately 31 bits of precision
 
 For cryptographic applications or high-precision simulations, consider using a specialized library.
