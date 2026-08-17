@@ -11,6 +11,14 @@ It is part of the multi-repo [muxlang](https://github.com/muxlang) ecosystem.
 
 - **No special characters** - avoid em-dashes, emojis, or other non-ASCII in code,
   comments, or commit messages.
+
+  One deliberate exception: a documentation example whose SUBJECT is multi-byte
+  text. `docs/language-guide/strings.md` shows that `length` counts characters
+  rather than bytes, and that claim cannot be demonstrated with ASCII - every
+  ASCII string has as many bytes as characters. Mux has no `\u` escape either,
+  so the character has to appear literally. Keep such examples; do not "fix"
+  them to ASCII, which would leave the page asserting something its own code
+  does not show.
 - **Understand existing code first** - read relevant components/config before
   changing anything. Follow existing patterns.
 - **No LLVM/Rust toolchain needed** - this is a JS/TS + Markdown repo. Node 20 is

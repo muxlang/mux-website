@@ -6,6 +6,8 @@ counts characters, so a string behaves like a list of `char` and the same
 operations work on both.
 
 ```mux title="string_positions.mux"
+// The accented character is deliberate: it takes two bytes and one character,
+// which is the whole distinction being shown here.
 auto plain = "hello"
 auto accented = "héllo"
 
