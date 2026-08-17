@@ -74,6 +74,45 @@ auto list2 = [3, 4]
 auto combined = list1 + list2        // [1, 2, 3, 4]
 ```
 
+### Slicing
+
+A slice takes a range of positions and returns a new list. The bounds are
+half-open: `[1:3]` takes positions 1 and 2, not 3. That is what makes the length
+of a slice its difference, `3 - 1`, and what lets two slices meet at one index
+without overlapping.
+
+```mux title="list_slicing.mux"
+auto nums = [10, 20, 30, 40, 50]
+
+auto middle = nums[1:3]     // [20, 30]
+
+// Either bound may be omitted, and defaults to that end of the list
+auto head = nums[:2]        // [10, 20]
+auto tail = nums[3:]        // [40, 50]
+auto copy = nums[:]         // [10, 20, 30, 40, 50]
+
+// A negative bound counts back from the end, as it does when indexing
+auto last_two = nums[-2:]   // [40, 50]
+auto but_last = nums[:-1]   // [10, 20, 30, 40]
+```
+
+A slice is a **new list**. Changing it does not change the original, and
+changing the original does not change a slice taken earlier.
+
+Out-of-range bounds clamp rather than fail, because a slice is asking for "what
+is there", not asserting that something is:
+
+```mux title="slice_clamping.mux"
+auto nums = [1, 2, 3]
+
+print(nums[0:99].to_string())   // [1, 2, 3] - no error
+print(nums[5:9].to_string())    // [] - nothing in range
+```
+
+This is the one place bounds behave differently from indexing, where reading
+past the end is an error. Indexing asks for a single element and there either is
+one or there is not; slicing asks for a range and an empty answer is a real one.
+
 ### Iterating Lists
 
 ```mux title="iterating_lists.mux"

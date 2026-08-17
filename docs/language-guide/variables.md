@@ -44,7 +44,51 @@ func process(int item) returns void { ... }   // Valid
 func process(int item, int _) returns void { ... }  // second parameter unused
 ```
 
-All declarations require either an explicit type or `auto` with an initializer. Semicolons are not used.
+`auto` needs an initializer, because there is nothing else to infer the type
+from. An explicit type does not. Semicolons are not used.
+
+### Declaring Without a Value
+
+A declaration with an explicit type may omit the initializer, and be assigned
+later:
+
+```mux title="uninitialized_declaration.mux"
+func fetch() returns result<string, string> {
+    return ok("done")
+}
+
+func run() returns result<string, string> {
+    string status
+    match fetch() {
+        ok(value) { status = value }
+        err(e) { return err(e) }
+    }
+
+    return ok(status)
+}
+```
+
+This is what keeps a function flat when it makes several fallible calls. The
+alternative is a `match` nested inside a `match` for each one, indenting the
+real work further at every step.
+
+It matters most for types with no natural zero value. A `string` could be
+declared as `""` and overwritten, but a class type has nothing to stand in -
+there is no empty `TcpListener` - so without this the value could not leave the
+arm that produced it.
+
+Reading such a variable before it is assigned is a **compile error**, not a
+default value:
+
+```mux title="read_before_assignment.mux"
+string s
+// print(s)  // ERROR: 's' is read before it is assigned
+```
+
+The check is flow-sensitive: it follows every path to the read. A variable
+assigned in an `if` with no `else` is not assigned on all paths, and neither is
+one assigned in only some arms of a `match`. Every branch must either assign it
+or leave (return, or otherwise not reach the read).
 
 ## Constants
 
