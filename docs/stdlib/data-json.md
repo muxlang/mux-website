@@ -101,3 +101,47 @@ is a number, so it reads through `as_int`.
 An integral float converts: `{"n": 42.0}` reads through `as_int` as `42`. A
 fractional one does not - `1.5` is `none` rather than silently truncating to
 `1` - and neither does a value outside the range of an `int`.
+
+## Round-trip fidelity
+
+Parsing a document and serializing it again preserves its **values and their
+order**.
+
+**Integers stay integers.** A whole number is not widened to a floating-point
+value, so `{"id":42}` comes back as `{"id":42}` and not `{"id":42.0}`. That
+matters wherever a receiver is strict about the difference - an HTTP status, a
+record id, an array index - and it means values beyond the range a float can
+represent exactly keep their value rather than silently rounding to a nearby
+one. A number written with a decimal point stays a float.
+
+**Key order is preserved.** Object keys come back in the order the document
+listed them rather than sorted, so a re-serialized document reads the way it was
+written and diffs stay meaningful. This is the same guarantee Mux's own `map`
+gives: printed output does not depend on how a container arranged itself
+internally.
+
+**What is not preserved is source formatting.** Insignificant whitespace, the
+choice between an escape and a literal character, and other spelling details of
+the original text are normalized by serialization. So a round trip is not
+byte-for-byte, and re-serialized output is not by itself a canonical form -
+signing or byte-comparing it requires a canonicalization step these routines do
+not provide.
+
+```mux
+import std.data.json
+
+func main() returns void {
+    auto source = "{\"zebra\":1,\"apple\":2,\"id\":9007199254740993}"
+    match json.parse(source) {
+        ok(document) {
+            match document.stringify(none) {
+                // Same key order, and the large integer is unchanged
+                ok(text) { print(text) }
+                err(e) { print(e) }
+            }
+        }
+        err(e) { print("parse failed: " + e) }
+    }
+    return
+}
+```

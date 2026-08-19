@@ -44,6 +44,28 @@ auto num = 3.to_string()
 auto val = (42).to_float()
 ```
 
+### String Length
+
+`length()` counts **code points**, not bytes - the same unit `char` denotes, so
+a string behaves as a sequence of `char`.
+
+```mux title="string_length.mux"
+func main() returns void {
+    print("hello".length().to_string())   // 5
+    print("hi there".length().to_string())  // 8
+    return
+}
+```
+
+A code point outside ASCII still counts as one, even though it occupies several
+bytes in memory.
+
+Note that a code point is not always a whole visible glyph. A character built
+from a base letter plus a combining mark, or an emoji assembled from several
+code points, counts once per code point rather than once per glyph - so
+`length()` answers "how many `char` values", which is what indexing and slicing
+also use, rather than "how many symbols a reader sees".
+
 ### String Parsing (Fallible Conversions)
 
 String and char parsing methods return `result<T, string>` because they can fail:

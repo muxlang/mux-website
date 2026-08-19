@@ -29,6 +29,48 @@ auto b = 2
 auto    c     =    a   +   b
 ```
 
+### Line continuation
+
+A newline inside an open `(` or `[` continues the expression instead of ending
+the statement, so a long call, a chain of operators, or a collection literal can
+be wrapped across lines.
+
+```mux
+auto total = sum(
+    first,
+    second,
+    third,
+)
+
+auto scaled = (base
+    + margin
+    - discount)
+
+auto rows = [
+    "alpha",
+    "beta",
+]
+```
+
+A trailing comma before the closing bracket is allowed, in a call as well as in
+a collection literal, so adding an entry stays a one-line change.
+
+Braces are **not** continuation brackets. `{` opens both a block and a map or
+set literal, and those are not distinguishable at this level, so a newline
+inside `{` still separates statements - which is what makes an ordinary function
+body work:
+
+```mux
+func describe(int n) returns string {
+    auto label = "value"
+    auto text = n.to_string()
+    return label + " " + text
+}
+```
+
+A map or set literal therefore spans lines only when it is itself inside
+parentheses or brackets.
+
 ## Comments
 
 ### Single-Line Comments
