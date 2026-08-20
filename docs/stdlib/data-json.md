@@ -12,22 +12,32 @@ title: Data JSON
 
 ## Reading values out of a document
 
-A `Json` value has typed accessors. Each returns an `optional<T>` and answers
-`none` when the value is a different kind:
+A `Json` value has typed accessors. Each returns a `result<T, string>`, and the
+error names what was actually there:
 
 | Accessor | Returns |
 | --- | --- |
-| `as_string()` | `optional<string>` |
-| `as_int()` | `optional<int>` |
-| `as_float()` | `optional<float>` |
-| `as_bool()` | `optional<bool>` |
-| `as_list()` | `optional<list<Json>>` |
-| `as_map()` | `optional<map<string, Json>>` |
+| `as_string()` | `result<string, string>` |
+| `as_int()` | `result<int, string>` |
+| `as_float()` | `result<float, string>` |
+| `as_bool()` | `result<bool, string>` |
+| `as_list()` | `result<list<Json>, string>` |
+| `as_map()` | `result<map<string, Json>, string>` |
 | `is_null()` | `bool` |
 
-They return an optional rather than a `result` because a field holding a
-different kind than you expected is ordinary when reading a document you did not
-write - it is control flow, not an error worth reporting.
+They return a `result` rather than an `optional` because "not an int" is worth
+saying *why*. A bare `none` leaves you unable to tell a string from a null from
+something else - exactly the information you need when a document is not the
+shape you expected:
+
+```
+expected an int, found a string
+```
+
+That matters most in the escape hatch, where you are deliberately reading data
+whose shape you could not declare. For a document you *can* describe, prefer
+[parsing straight into a class](../language-guide/classes.md) - the error there
+names the field as well.
 
 ```mux
 import std.data.json
@@ -38,12 +48,12 @@ func main() returns void {
             match json.to_map(j) {
                 ok(fields) {
                     match fields["user"].as_string() {
-                        some(name) { print("user=" + name) }
-                        none { print("user is not a string") }
+                        ok(name) { print("user=" + name) }
+                        err(e) { print("user: " + e) }
                     }
                     match fields["age"].as_int() {
-                        some(age) { print("age=" + age.to_string()) }
-                        none { print("age is not an int") }
+                        ok(age) { print("age=" + age.to_string()) }
+                        err(e) { print("age: " + e) }
                     }
                 }
                 err(e) { print("not object: " + e) }
@@ -76,8 +86,8 @@ func main() returns void {
 
                     // as_string gives  mux
                     match fields["user"].as_string() {
-                        some(name) { print(name) }
-                        none { }
+                        ok(name) { print(name) }
+                        err(e) { print(e) }
                     }
                 }
                 err(e) { print(e) }
@@ -94,12 +104,12 @@ the value.
 
 ### Pick the accessor by what the field holds
 
-An accessor answers `none` for the wrong kind rather than converting, so a
-number read with `as_string` is `none`, not `"36"`. A status code in a document
-is a number, so it reads through `as_int`.
+An accessor reports the wrong kind rather than converting, so a number read with
+`as_string` is `err("expected a string, found an int")`, not `"36"`. A status
+code in a document is a number, so it reads through `as_int`.
 
 An integral float converts: `{"n": 42.0}` reads through `as_int` as `42`. A
-fractional one does not - `1.5` is `none` rather than silently truncating to
+fractional one does not - `1.5` is an error rather than silently truncating to
 `1` - and neither does a value outside the range of an `int`.
 
 ## Round-trip fidelity
