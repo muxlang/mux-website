@@ -421,6 +421,104 @@ The tradeoffs: interfaces cannot be added to types from other modules (no
 which Mux does not have. Model a closed set of alternatives as an enum
 instead.
 
+## Building a Class From a Document
+
+Every class gets three deserializers, synthesized the way `new` is. Declare the
+shape you expect, and get it or an error saying what was wrong:
+
+```mux title="from_json.mux"
+class Config {
+    int port
+    string host
+    optional<string> note
+}
+
+func load(string text) returns void {
+    match Config.from_json(text) {
+        ok(cfg) { print(cfg.host + ":" + cfg.port.to_string()) }
+        err(e) { print("bad config: " + e) }
+    }
+    return
+}
+```
+
+The name says what shape it returns:
+
+| Method | Returns |
+| --- | --- |
+| `Config.from_json(text)` | `result<Config, string>` - one object |
+| `Config.list_from_json(text)` | `result<list<Config>, string>` - a JSON array |
+| `Config.list_from_csv(text)` | `result<list<Config>, string>` - the rows of a table |
+
+There is deliberately no singular `from_csv`: a CSV document *is* a table, so a
+singular form would only work for a file with exactly one row.
+
+### The rules
+
+| Case | Result |
+| --- | --- |
+| A required field is missing | error naming the field |
+| An `optional<T>` field is missing | `none` |
+| An `optional<T>` field is `null` | `none` |
+| A field is the wrong kind | error naming the field and the type expected |
+| The document has fields you did not declare | ignored |
+
+Absence and an explicit `null` deliberately mean the same thing. Extra fields
+are ignored so a server adding one does not break a program that reads it.
+
+### Shapes it understands
+
+```mux title="nested_shapes.mux"
+class Item { string sku  int qty }
+
+class Order {
+    int id
+    Item shipping           // a nested class
+    list<int> codes         // a list of primitives
+    list<Item> items        // a list of classes
+    optional<string> note   // may be absent
+}
+```
+
+An error inside a nested class names the field that was actually wrong, not the
+one that contained it - `missing required field 'qty'`, not "bad shipping".
+
+### Data whose shape you cannot declare
+
+JSON allows a **heterogeneous array** - `[1, "two", true]` is valid - and no Mux
+type holds those together. Declare such a field as `Json` and read each entry on
+its own terms:
+
+```mux title="escape_hatch.mux"
+import std.data.json
+
+class Payload {
+    string kind
+    list<Json> mixed   // a heterogeneous array
+    Json raw           // anything at all
+}
+```
+
+This is the escape hatch, and the reason [`Json` accessors](../stdlib/data-json.md)
+still exist: everything with a knowable shape goes through a class, and the rest
+goes through `Json`.
+
+### CSV is different
+
+A CSV cell is always **text**, so `3` in a file is the string `"3"`. An `int`
+column is therefore *parsed* rather than type-checked, and an unparseable cell
+names the column:
+
+```
+column 'qty': expected an int
+```
+
+For the same reason a CSV column can only be a `string`, `int`, `float`, `bool`
+or an optional of those - a nested class cannot come out of a single cell. And
+`optional` there means the **column** may be absent from the header; within a
+row that has the column, an empty cell is an empty string, because CSV cannot
+tell "empty" from "absent" once the column exists.
+
 ## Best Practices
 
 1. **Fields must be explicitly typed** - No `auto` for class fields
