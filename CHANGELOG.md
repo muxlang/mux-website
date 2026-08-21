@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-08-20
+
+### Added
+
+- **Typed deserialization is documented.** `classes.md` gains `from_json`,
+  `list_from_json` and `list_from_csv`: the rules for missing and optional
+  fields, the shapes understood (nested classes, lists, optionals), the `Json`
+  escape hatch for heterogeneous arrays, and why CSV differs - a cell is text,
+  so a column is parsed rather than type-checked and cannot hold a nested class.
+
+### Fixed
+
+- **The JSON accessor page said `optional`.** The accessors return
+  `result<T, string>`, and the error names what was actually there. The examples
+  move from `some`/`none` to `ok`/`err`, and the page now points at the class
+  path for documents whose shape can be described, since the error there names
+  the field as well (muxlang/mux-compiler#404).
 
 ### Changed
 - **An identifier can begin with an underscore.** `docs/reference/lexical-structure.md`
