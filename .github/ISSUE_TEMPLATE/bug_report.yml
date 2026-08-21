@@ -1,6 +1,7 @@
 name: Bug report
 description: Report a bug on mux-lang.dev or the playground
 labels: ["needs triage"]
+type: Bug
 assignees: ["DerekCorniello"]
 body:
   - type: textarea
