@@ -14,7 +14,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: docs-index
+  # Share the Pages deployment lock with the ordinary deploy workflow. A
+  # documentation-index run must not publish concurrently with a site build.
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -56,7 +58,9 @@ jobs:
           npm run typecheck --prefix tools/retrieval-test
 
       - name: Embed, upsert, and remove stale vectors
-        run: npm run index --prefix tools/docs-indexer 2>&1 | tee /tmp/mux-docs-index.log
+        run: |
+          set -o pipefail
+          npm run index --prefix tools/docs-indexer 2>&1 | tee /tmp/mux-docs-index.log
 
       - name: Run retrieval and diagnostic explanation evaluations
         run: |
