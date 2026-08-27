@@ -1,0 +1,38 @@
+[
+  {
+    "id": "type_mismatch",
+    "code": "E0302",
+    "source": "int n = \"hello\"",
+    "error": "Type mismatch: expected int, got string",
+    "help": null,
+    "category": "diagnostic",
+    "relevant_docs": ["/docs/reference/diagnostics/"]
+  },
+  {
+    "id": "undefined_name",
+    "code": "E0300",
+    "source": "print(missing)",
+    "error": "Undefined variable 'missing'",
+    "help": null,
+    "category": "diagnostic",
+    "relevant_docs": ["/docs/reference/diagnostics/"]
+  },
+  {
+    "id": "unterminated_string",
+    "code": "E0101",
+    "source": "\"hello",
+    "error": "Unterminated string",
+    "help": "Make sure to close the string with a matching quote",
+    "category": "diagnostic",
+    "relevant_docs": ["/docs/reference/diagnostics/"]
+  },
+  {
+    "id": "unused_binding",
+    "code": "W0300",
+    "source": "auto unused = 1",
+    "error": "unused binding",
+    "help": null,
+    "category": "diagnostic",
+    "relevant_docs": ["/docs/reference/diagnostics/"]
+  }
+]

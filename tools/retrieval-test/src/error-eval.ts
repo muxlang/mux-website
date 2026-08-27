@@ -18,6 +18,7 @@ import path from 'node:path';
 
 interface ErrorCase {
   id: string;
+  code: string;
   source: string;
   error: string;
   help: string | null;
@@ -54,7 +55,7 @@ function loadCorpus(): ErrorCase[] {
 
 function buildErrorMessage(c: ErrorCase): string {
   const help = c.help ? `\n  = help: ${c.help}` : '';
-  return `I got this compiler error, what does it mean and how do I fix it?\n\nerror: ${c.error}\n${c.source}${help}`;
+  return `I got this compiler error, what does it mean and how do I fix it?\n\nerror[${c.code}]: ${c.error}\n${c.source}${help}`;
 }
 
 async function askChat(baseUrl: string, content: string): Promise<ChatResponse> {

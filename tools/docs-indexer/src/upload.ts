@@ -20,6 +20,7 @@ interface VectorizeRecord {
     title: string;
     path: string;
     section: string;
+    codes: string[];
     heading: string | null;
     text: string;
   };
@@ -40,6 +41,7 @@ function toRecord(entry: IndexedChunk): VectorizeRecord {
       title: entry.doc.title,
       path: entry.doc.docPath,
       section: entry.doc.section,
+      codes: entry.doc.codes,
       heading: entry.chunk.heading,
       text: entry.chunk.text,
     },
@@ -100,11 +102,10 @@ export function computeStaleIds(oldIds: string[] | null, newIds: string[]): stri
 // controlled `npx`/`wrangler` earlier on PATH).
 const WRANGLER_BIN = path.join(WORKER_DIR, 'node_modules', '.bin', 'wrangler');
 
-// Strip the local embedding-only API token so wrangler falls back to the
-// `wrangler login` OAuth session, which has Vectorize permissions.
 function wranglerEnv(): NodeJS.ProcessEnv {
-  const { CLOUDFLARE_API_TOKEN: _unused, ...env } = process.env;
-  return env;
+  // CI supplies a protected token with both Workers AI and Vectorize rights.
+  // Local runs may omit it and use an existing `wrangler login` session.
+  return process.env;
 }
 
 export function upsertToVectorize(ndjsonPath: string): void {
