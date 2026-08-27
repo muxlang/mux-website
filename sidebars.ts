@@ -65,6 +65,7 @@ const docsSidebar: NonNullable<SidebarsConfig['docsSidebar']> = [
       'reference/statements',
       'reference/operators',
       'reference/memory-model',
+      'reference/diagnostics',
     ],
   },
   {

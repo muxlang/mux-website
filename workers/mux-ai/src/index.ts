@@ -40,6 +40,7 @@ export interface SearchResult {
   heading: string | null;
   text: string;
   score: number;
+  codes: string[];
 }
 
 export interface SearchResponse {
@@ -169,6 +170,9 @@ async function retrieveChunks(query: string, env: Env): Promise<SearchResult[]> 
         heading: typeof meta?.heading === 'string' ? meta.heading : null,
         text: typeof meta?.text === 'string' ? meta.text : '',
         score: match.score,
+        codes: Array.isArray(meta?.codes)
+          ? meta.codes.filter((code): code is string => typeof code === 'string')
+          : [],
       };
     });
 }
@@ -189,7 +193,8 @@ function buildContextBlock(chunks: SearchResult[]): string {
   return chunks
     .map((chunk, i) => {
       const heading = chunk.heading ? ` > ${chunk.heading}` : '';
-      return `[${i + 1}] ${chunk.title}${heading} (${chunk.path})\n${chunk.text}`;
+      const codes = chunk.codes.length ? ` [${chunk.codes.join(', ')}]` : '';
+      return `[${i + 1}] ${chunk.title}${heading}${codes} (${chunk.path})\n${chunk.text}`;
     })
     .join('\n\n---\n\n');
 }

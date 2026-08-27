@@ -10,8 +10,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  changes:
+    name: Check documentation changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      index_changed: ${{ steps.docs.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - id: docs
+        name: Detect indexed-content changes
+        run: |
+          if git diff --quiet HEAD^ HEAD -- \
+            docs \
+            tools/docs-indexer \
+            workers/mux-ai/src \
+            workers/mux-ai/package.json \
+            workers/mux-ai/package-lock.json \
+            .github/workflows/docs-index.yml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     name: Build site
+    needs: changes
+    if: needs.changes.outputs.index_changed != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,7 +58,8 @@ jobs:
 
   deploy:
     name: Deploy to Pages
-    needs: build
+    needs: [changes, build]
+    if: needs.changes.outputs.index_changed != 'true' && needs.build.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       pages: write

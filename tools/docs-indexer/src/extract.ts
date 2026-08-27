@@ -9,7 +9,15 @@ export interface ExtractedDoc {
   docPath: string;
   title: string;
   section: string;
+  /** Stable compiler diagnostic codes mentioned by this document. */
+  codes: string[];
   content: string;
+}
+
+function extractDiagnosticCodes(content: string): string[] {
+  return [...new Set(content.match(/\b[EW]\d{4}\b/g) ?? [])].sort((left, right) =>
+    left.localeCompare(right),
+  );
 }
 
 function parseFrontMatter(raw: string): { frontMatter: Record<string, unknown>; content: string } {
@@ -67,6 +75,7 @@ export function extractDoc(file: DocFile): ExtractedDoc {
     docPath: docPathForId(file.docId),
     title,
     section: sectionForDocId(file.docId),
+    codes: extractDiagnosticCodes(content),
     content,
   };
 }
