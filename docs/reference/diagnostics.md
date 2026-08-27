@@ -44,14 +44,12 @@ The registry is owned by `mux-compiler`. Codes are never reused.
 | E0309 | Error | Invalid match pattern | wrong enum pattern | Match the value's type |
 | E0310 | Error | Invalid generic arguments | `list<int, string>` | Use the declared arity |
 | E0311 | Error | Read before assignment | `int value` then `print(value)` | Initialize it on every path |
+| E0312 | Error | Division or modulo by a provable zero | `10 / 0` | Use a non-zero divisor |
+| E0313 | Error | Named nested function captures a local | nested `inner` uses `outer`'s local | Pass it as a parameter or use a lambda |
 | E0400 | Error | Module cannot be found | `import missing` | Correct the path or add it |
 | E0401 | Error | Imported module cannot be loaded | broken imported file | Fix that module |
 | E0900 | Error | Internal compiler failure | compiler bug | Report the complete output |
-| W0300 | Warning | Unused binding | `auto unused = 1` | Remove, use, or write `_` |
-| W0301 | Warning | Shadowed binding | nested `auto x` | Rename the inner binding |
 | W0302 | Warning | Unreachable code | after `return` | Remove or move it |
-| W0303 | Warning | Dead assignment | `x = 1` then `x = 2` | Remove or use the first value |
-| W0304 | Warning | Possibly uninitialized read | read before assignment | Initialize on every path |
 | W0305 | Warning | Provably constant condition | `if 1 == 1` | Remove it or use runtime data |
 | W0306 | Warning | Safe redundant construct | `value && true` or equivalent | Apply the suggested simplification |
 
@@ -60,6 +58,9 @@ not use warnings for style preferences, guesses about performance, or ignored
 return values. A bare `_` is the intentional unused-binding escape hatch.
 `_name` is an ordinary identifier.
 
+The allocated warning numbers W0300, W0301, W0303, and W0304 are reserved for
+future analyses and are not emitted or accepted by `mux explain` yet.
+
 ## `mux explain`
 
 The compiler embeds the same registry used by diagnostics, so code lookup does
@@ -67,7 +68,7 @@ not need a network connection:
 
 ```text
 mux explain E0302
-mux explain W0300
+mux explain W0302
 ```
 
 The command prints the trigger, a small example, why the diagnostic exists,

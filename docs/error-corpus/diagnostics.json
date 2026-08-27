@@ -27,10 +27,10 @@
     "relevant_docs": ["/docs/reference/diagnostics/"]
   },
   {
-    "id": "unused_binding",
-    "code": "W0300",
-    "source": "auto unused = 1",
-    "error": "unused binding",
+    "id": "constant_condition",
+    "code": "W0305",
+    "source": "if 1 == 1 { print(\"yes\") }",
+    "error": "condition is always true",
     "help": null,
     "category": "diagnostic",
     "relevant_docs": ["/docs/reference/diagnostics/"]

@@ -15,7 +15,9 @@ export interface ExtractedDoc {
 }
 
 function extractDiagnosticCodes(content: string): string[] {
-  return [...new Set(content.match(/\b[EW][0-9]{4}\b/g) ?? [])].sort();
+  return [...new Set(content.match(/\b[EW]\d{4}\b/g) ?? [])].sort((left, right) =>
+    left.localeCompare(right),
+  );
 }
 
 function parseFrontMatter(raw: string): { frontMatter: Record<string, unknown>; content: string } {
