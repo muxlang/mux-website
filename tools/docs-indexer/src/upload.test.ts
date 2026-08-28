@@ -4,12 +4,15 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
+  deleteVectors,
   promoteRecords,
   targetFromEnv,
   writeNdjson,
   type IndexedChunk,
   type VectorizeTarget,
 } from './upload';
+
+const VECTORIZE_DELETE_LIMIT = 100;
 
 function makeTarget(root: string, overrides: Partial<VectorizeTarget>): VectorizeTarget {
   return {
@@ -156,4 +159,59 @@ test('targetFromEnv resolves workflow paths from the npm invocation directory', 
     }
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test('deleteVectors dispatches sequential requests within the Vectorize ID limit', () => {
+  const target = makeTarget(os.tmpdir(), {});
+  const cases = [0, 1, 100, 101, 303];
+
+  for (const count of cases) {
+    const ids = Array.from({ length: count }, (_, index) => `id-${index}`);
+    const invocations: string[][] = [];
+
+    deleteVectors(ids, target, (args) => invocations.push(args));
+
+    const expected = Array.from(
+      { length: Math.ceil(count / VECTORIZE_DELETE_LIMIT) },
+      (_, batchIndex) => [
+        'vectorize',
+        'delete-vectors',
+        target.indexName,
+        '--ids',
+        ...ids.slice(
+          batchIndex * VECTORIZE_DELETE_LIMIT,
+          (batchIndex + 1) * VECTORIZE_DELETE_LIMIT,
+        ),
+      ],
+    );
+    assert.deepEqual(invocations, expected, `${count} ids`);
+  }
+});
+
+test('deleteVectors stops after the first failed batch', () => {
+  const target = makeTarget(os.tmpdir(), {});
+  const ids = Array.from({ length: 303 }, (_, index) => `id-${index}`);
+  const invocations: string[][] = [];
+  const failure = new Error('Vectorize delete failed');
+
+  assert.throws(
+    () =>
+      deleteVectors(ids, target, (args) => {
+        invocations.push(args);
+        if (invocations.length === 2) {
+          throw failure;
+        }
+      }),
+    (error) => error === failure,
+  );
+
+  assert.equal(invocations.length, 2);
+  assert.deepEqual(
+    invocations[0].slice(4),
+    ids.slice(0, VECTORIZE_DELETE_LIMIT),
+  );
+  assert.deepEqual(
+    invocations[1].slice(4),
+    ids.slice(VECTORIZE_DELETE_LIMIT, 2 * VECTORIZE_DELETE_LIMIT),
+  );
 });
