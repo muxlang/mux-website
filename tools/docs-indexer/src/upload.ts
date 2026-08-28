@@ -79,8 +79,8 @@ function toRecord(entry: IndexedChunk, target: VectorizeTarget): VectorizeRecord
 }
 
 const OUT_DIR = path.resolve(import.meta.dirname, '..', 'out');
-// Vectorize rejects delete-by-ID requests containing more than 100 IDs.
-const VECTORIZE_DELETE_BATCH_SIZE = 100;
+// Vectorize rejects delete-by-ID requests containing more than 20 IDs.
+const VECTORIZE_DELETE_BATCH_SIZE = 20;
 const VECTORIZE_API_BASE_URL = 'https://api.cloudflare.com/client/v4';
 const MUTATION_POLL_INTERVAL_MS = 2_000;
 const MUTATION_WAIT_TIMEOUT_MS = 5 * 60_000;

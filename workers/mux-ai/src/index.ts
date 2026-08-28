@@ -57,6 +57,7 @@ const EMBEDDING_MODEL = '@cf/baai/bge-base-en-v1.5';
 // asymmetric separates query/passage vectors and improves ranking.
 const QUERY_INSTRUCTION = 'Represent this sentence for searching relevant passages: ';
 const GENERATION_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+const VECTOR_QUERY_TOP_K = 20;
 const TOP_K = 5;
 // Number of recent user turns combined into the retrieval query so contextual
 // follow-ups ("show me an example") inherit the topic of earlier turns. Only
@@ -156,12 +157,14 @@ async function embedQuery(query: string, env: Env): Promise<number[]> {
 async function retrieveChunks(query: string, env: Env): Promise<SearchResult[]> {
   const vector = await embedQuery(query, env);
   const queryResult = await env.VECTORIZE.query(vector, {
-    topK: TOP_K,
+    topK: VECTOR_QUERY_TOP_K,
     returnMetadata: 'all',
     ...(env.VECTORIZE_NAMESPACE
       ? { namespace: env.VECTORIZE_NAMESPACE }
       : {}),
   });
+
+  const diagnosticCodes = new Set(query.toUpperCase().match(/\b[EW]\d{4}\b/g) ?? []);
 
   return queryResult.matches
     .filter((match) => match.score >= MIN_SCORE)
@@ -178,7 +181,16 @@ async function retrieveChunks(query: string, env: Env): Promise<SearchResult[]> 
           ? meta.codes.filter((code): code is string => typeof code === 'string')
           : [],
       };
-    });
+    })
+    .sort((left, right) => {
+      const leftMatchesCode = left.codes.some((code) => diagnosticCodes.has(code));
+      const rightMatchesCode = right.codes.some((code) => diagnosticCodes.has(code));
+      if (leftMatchesCode !== rightMatchesCode) {
+        return leftMatchesCode ? -1 : 1;
+      }
+      return right.score - left.score;
+    })
+    .slice(0, TOP_K);
 }
 
 function deduplicateSources(chunks: SearchResult[]): ChatSource[] {
