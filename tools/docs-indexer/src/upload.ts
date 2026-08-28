@@ -98,7 +98,6 @@ interface VectorizeMutation {
 interface ReadinessWaitOptions {
   maxAttempts?: number;
   pollIntervalMs?: number;
-  onPending?: (elapsedMs: number) => void;
 }
 
 interface DeleteBatchProgress {
@@ -240,13 +239,11 @@ export async function waitForReadiness(
 ): Promise<void> {
   const pollIntervalMs = options.pollIntervalMs ?? MUTATION_POLL_INTERVAL_MS;
   const maxAttempts = options.maxAttempts ?? Math.ceil(MUTATION_WAIT_TIMEOUT_MS / pollIntervalMs);
-  const startedAt = Date.now();
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     if (await isReady()) {
       return;
     }
     if (attempt < maxAttempts) {
-      options.onPending?.(Date.now() - startedAt);
       await pause(pollIntervalMs);
     }
   }
@@ -317,23 +314,22 @@ async function deleteVectorBatch(
   if (!mutation.mutationId) {
     throw new Error('Vectorize deletion returned no mutation id');
   }
-  let nextProgressReportMs = 10_000;
-  await waitForReadiness(
-    `deletion mutation ${mutation.mutationId}`,
-    async () => (await readVectorsByIds(ids, target)).length === 0,
-    undefined,
-    {
-      onPending: (elapsedMs) => {
-        if (elapsedMs >= nextProgressReportMs) {
-          report(
-            `Still waiting for cleanup batch ${progress.batchNumber}/${progress.batchCount} ` +
-              `(${Math.round(elapsedMs / 1000)}s elapsed)...`,
-          );
-          nextProgressReportMs += 10_000;
-        }
-      },
-    },
-  );
+  const startedAt = Date.now();
+  const heartbeat = setInterval(() => {
+    const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
+    report(
+      `Still waiting for cleanup batch ${progress.batchNumber}/${progress.batchCount} ` +
+        `(${elapsedSeconds}s elapsed)...`,
+    );
+  }, 10_000);
+  try {
+    await waitForReadiness(
+      `deletion mutation ${mutation.mutationId}`,
+      async () => (await readVectorsByIds(ids, target)).length === 0,
+    );
+  } finally {
+    clearInterval(heartbeat);
+  }
 }
 
 export async function deleteVectors(

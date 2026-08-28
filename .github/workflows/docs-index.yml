@@ -10,6 +10,7 @@ on:
       - '!tools/docs-indexer/src/**/*.test.ts'
       - 'tools/docs-indexer/package.json'
       - 'tools/docs-indexer/package-lock.json'
+      - 'tools/docs-indexer/tsconfig.json'
       - 'workers/mux-ai/src/**'
       - 'workers/mux-ai/package.json'
       - 'workers/mux-ai/package-lock.json'
