@@ -14,7 +14,7 @@ import {
   type VectorizeTarget,
 } from './upload';
 
-const VECTORIZE_DELETE_LIMIT = 100;
+const VECTORIZE_DELETE_LIMIT = 20;
 
 function makeTarget(root: string, overrides: Partial<VectorizeTarget>): VectorizeTarget {
   return {
@@ -165,7 +165,7 @@ test('targetFromEnv resolves workflow paths from the npm invocation directory', 
 
 test('deleteVectors dispatches sequential requests within the Vectorize ID limit', async () => {
   const target = makeTarget(os.tmpdir(), {});
-  const cases = [0, 1, 100, 101, 303];
+  const cases = [0, 1, 20, 21, 63];
 
   for (const count of cases) {
     const ids = Array.from({ length: count }, (_, index) => `id-${index}`);
@@ -189,7 +189,7 @@ test('deleteVectors dispatches sequential requests within the Vectorize ID limit
 
 test('deleteVectors stops after the first failed batch', async () => {
   const target = makeTarget(os.tmpdir(), {});
-  const ids = Array.from({ length: 303 }, (_, index) => `id-${index}`);
+  const ids = Array.from({ length: 63 }, (_, index) => `id-${index}`);
   const invocations: string[][] = [];
   const failure = new Error('Vectorize delete failed');
 
