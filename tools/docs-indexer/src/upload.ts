@@ -335,7 +335,7 @@ export async function publishIndex(
 
   console.log(`Upserting to Vectorize index "${target.indexName}"...`);
   const mutationId = await upsertToVectorize(ndjsonPath, target);
-  console.log(`Waiting for Vectorize mutation ${mutationId}...`);
+  console.log('Waiting for Vectorize upsert to become queryable...');
   await waitForMutation(mutationId, () => readVectorizeInfo(target));
   console.log('Vectorize upsert is queryable.');
 
