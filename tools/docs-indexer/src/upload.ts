@@ -243,7 +243,7 @@ export async function waitForMutation(
       // Mutation IDs are opaque UUIDs. If another writer advances the
       // watermark, queue our own no-op barrier; observing that exact barrier
       // proves every mutation submitted before it has also been processed.
-      if (options.enqueueBarrier) {
+      if (options.enqueueBarrier && awaitedMutationId === mutationId) {
         awaitedMutationId = await options.enqueueBarrier();
       }
       await pause(pollIntervalMs);
