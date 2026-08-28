@@ -70,11 +70,14 @@ npm run deploy       # wrangler deploy --env production -> mux-ai.corniedj.worke
 ## Maintenance runbook (manual deploy - nothing is automated)
 
 There are three independent kinds of change. Do the steps that match what you
-touched. The eval steps need a local dev Worker running with `--remote`:
+touched. The eval steps need a local dev Worker running with `--remote`. For
+staged records, pass the candidate namespace with `--var` so the Worker cannot
+read live records:
 
 ```bash
 # Terminal 1 (leave running for any eval):
-cd workers/mux-ai && npx wrangler dev --env development --remote
+cd workers/mux-ai && npx wrangler dev --env development --remote \
+  --var "VECTORIZE_NAMESPACE:docs-candidate-<run>"
 ```
 
 ### A. Docs changed (`mux-website/docs/**`)
@@ -84,8 +87,13 @@ not take effect until you re-index. The Worker itself does **not** need
 redeploying for docs-only changes.
 
 ```bash
-# 1. Re-embed + upsert + delete orphans + update out/manifest.json
-cd tools/docs-indexer && source .env && npm run index
+# 1. Embed and stage into a run-specific namespace.
+cd tools/docs-indexer && source .env
+export VECTORIZE_NAMESPACE="docs-candidate-$RANDOM"
+export VECTORIZE_ID_PREFIX="candidate-$RANDOM-"
+export VECTORIZE_NDJSON_PATH=out/candidate-vectors.ndjson
+export VECTORIZE_MANIFEST_PATH=out/candidate-manifest.json
+npm run index
 
 # 2. Verify retrieval is still calibrated (Terminal 2)
 cd tools/retrieval-test && npm run eval && npm run error-eval
@@ -101,6 +109,14 @@ cd tools/retrieval-test && npm run eval && npm run error-eval
 4. If the **error eval** fails because the right doc is not cited, the docs may
    have a real gap - add the missing content to the doc, re-index, re-run. Do
    not paper over it.
+
+5. After both evaluations pass, promote the exact staged records and remove
+   the candidate records:
+
+   ```bash
+   npm run publish
+   npm run cleanup
+   ```
 
 ### B. Worker code changed (`workers/mux-ai/src/**`)
 

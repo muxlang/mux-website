@@ -12,9 +12,10 @@ export interface IndexedChunk {
   vector: number[];
 }
 
-interface VectorizeRecord {
+export interface VectorizeRecord {
   id: string;
   values: number[];
+  namespace?: string;
   metadata: {
     docId: string;
     title: string;
@@ -23,7 +24,16 @@ interface VectorizeRecord {
     codes: string[];
     heading: string | null;
     text: string;
+    _muxSourceId?: string;
   };
+}
+
+export interface VectorizeTarget {
+  indexName: string;
+  namespace?: string;
+  idPrefix: string;
+  ndjsonPath: string;
+  manifestPath: string;
 }
 
 function vectorId(docId: string, chunkIndex: number): string {
@@ -32,10 +42,29 @@ function vectorId(docId: string, chunkIndex: number): string {
   return createHash('sha256').update(`${docId}:${chunkIndex}`).digest('hex');
 }
 
-function toRecord(entry: IndexedChunk): VectorizeRecord {
+function baseVectorId(docId: string, chunkIndex: number): string {
+  return vectorId(docId, chunkIndex);
+}
+
+function targetVectorId(entry: IndexedChunk, target: VectorizeTarget): string {
+  const baseId = baseVectorId(entry.doc.docId, entry.chunkIndex);
+  if (!target.idPrefix) {
+    return baseId;
+  }
+
+  const availableHashLength = 64 - target.idPrefix.length;
+  if (availableHashLength < 32) {
+    throw new Error('VECTORIZE_ID_PREFIX leaves too little room for a stable vector id');
+  }
+  return `${target.idPrefix}${baseId.slice(0, availableHashLength)}`;
+}
+
+function toRecord(entry: IndexedChunk, target: VectorizeTarget): VectorizeRecord {
+  const sourceId = baseVectorId(entry.doc.docId, entry.chunkIndex);
   return {
-    id: vectorId(entry.doc.docId, entry.chunkIndex),
+    id: targetVectorId(entry, target),
     values: entry.vector,
+    ...(target.namespace ? { namespace: target.namespace } : {}),
     metadata: {
       docId: entry.doc.docId,
       title: entry.doc.title,
@@ -44,36 +73,66 @@ function toRecord(entry: IndexedChunk): VectorizeRecord {
       codes: entry.doc.codes,
       heading: entry.chunk.heading,
       text: entry.chunk.text,
+      ...(target.idPrefix ? { _muxSourceId: sourceId } : {}),
     },
   };
 }
 
 const WORKER_DIR = path.resolve(import.meta.dirname, '..', '..', '..', 'workers', 'mux-ai');
 const OUT_DIR = path.resolve(import.meta.dirname, '..', 'out');
-const NDJSON_PATH = path.join(OUT_DIR, 'vectors.ndjson');
-// Records the full set of vector IDs from the last run so the next run can
-// delete orphans (chunks of docs that shrank or were removed). Lives in the
-// gitignored out/ dir, so cleanup is scoped to the machine that does the
-// indexing; a fresh checkout with no manifest skips deletion (never destructive
-// by surprise) and a full purge can be forced by deleting the index.
-const MANIFEST_PATH = path.join(OUT_DIR, 'manifest.json');
 // Vectorize caps deleteByIds per request; batch well under any limit.
 const DELETE_BATCH_SIZE = 500;
 
-export function writeNdjson(entries: IndexedChunk[]): string {
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-  const lines = entries.map((entry) => JSON.stringify(toRecord(entry)));
-  fs.writeFileSync(NDJSON_PATH, lines.join('\n') + '\n', 'utf8');
-  return NDJSON_PATH;
+function defaultTarget(): VectorizeTarget {
+  return {
+    indexName: process.env.VECTORIZE_INDEX_NAME ?? 'mux-docs',
+    namespace: process.env.VECTORIZE_NAMESPACE || undefined,
+    idPrefix: process.env.VECTORIZE_ID_PREFIX ?? '',
+    ndjsonPath: process.env.VECTORIZE_NDJSON_PATH ?? path.join(OUT_DIR, 'vectors.ndjson'),
+    manifestPath: process.env.VECTORIZE_MANIFEST_PATH ?? path.join(OUT_DIR, 'manifest.json'),
+  };
 }
 
-export function vectorIds(entries: IndexedChunk[]): string[] {
-  return entries.map((entry) => vectorId(entry.doc.docId, entry.chunkIndex));
+export function targetFromEnv(overrides: Partial<VectorizeTarget> = {}): VectorizeTarget {
+  return { ...defaultTarget(), ...overrides };
 }
 
-export function readManifest(): string[] | null {
+function writeAtomically(filePath: string, contents: string): void {
+  const temporaryPath = `${filePath}.${process.pid}.tmp`;
   try {
-    const parsed: unknown = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+    fs.writeFileSync(temporaryPath, contents, 'utf8');
+    fs.renameSync(temporaryPath, filePath);
+  } finally {
+    if (fs.existsSync(temporaryPath)) {
+      fs.unlinkSync(temporaryPath);
+    }
+  }
+}
+
+function writeRecords(filePath: string, records: VectorizeRecord[]): void {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const lines = records.map((record) => JSON.stringify(record));
+  writeAtomically(filePath, `${lines.join('\n')}\n`);
+}
+
+export function writeNdjson(
+  entries: IndexedChunk[],
+  target: VectorizeTarget = targetFromEnv(),
+): string {
+  writeRecords(target.ndjsonPath, entries.map((entry) => toRecord(entry, target)));
+  return target.ndjsonPath;
+}
+
+export function vectorIds(
+  entries: IndexedChunk[],
+  target: VectorizeTarget = targetFromEnv(),
+): string[] {
+  return entries.map((entry) => targetVectorId(entry, target));
+}
+
+export function readManifest(target: VectorizeTarget = targetFromEnv()): string[] | null {
+  try {
+    const parsed: unknown = JSON.parse(fs.readFileSync(target.manifestPath, 'utf8'));
     if (!Array.isArray(parsed)) {
       return null;
     }
@@ -83,9 +142,9 @@ export function readManifest(): string[] | null {
   }
 }
 
-export function writeManifest(ids: string[]): void {
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-  fs.writeFileSync(MANIFEST_PATH, JSON.stringify(ids), 'utf8');
+export function writeManifest(ids: string[], target: VectorizeTarget = targetFromEnv()): void {
+  fs.mkdirSync(path.dirname(target.manifestPath), { recursive: true });
+  writeAtomically(target.manifestPath, JSON.stringify(ids));
 }
 
 /** IDs present in the previous run but not the current one (orphans to delete). */
@@ -108,21 +167,116 @@ function wranglerEnv(): NodeJS.ProcessEnv {
   return process.env;
 }
 
-export function upsertToVectorize(ndjsonPath: string): void {
+export function upsertToVectorize(
+  ndjsonPath: string,
+  target: VectorizeTarget = targetFromEnv(),
+): void {
   execFileSync(
     WRANGLER_BIN,
-    ['vectorize', 'upsert', 'mux-docs', '--file', ndjsonPath],
+    ['vectorize', 'upsert', target.indexName, '--file', ndjsonPath],
     { cwd: WORKER_DIR, stdio: 'inherit', env: wranglerEnv() },
   );
 }
 
-export function deleteVectors(ids: string[]): void {
+export function deleteVectors(
+  ids: string[],
+  target: VectorizeTarget = targetFromEnv(),
+): void {
   for (let i = 0; i < ids.length; i += DELETE_BATCH_SIZE) {
     const batch = ids.slice(i, i + DELETE_BATCH_SIZE);
     execFileSync(
       WRANGLER_BIN,
-      ['vectorize', 'delete-vectors', 'mux-docs', '--ids', ...batch],
+      ['vectorize', 'delete-vectors', target.indexName, '--ids', ...batch],
       { cwd: WORKER_DIR, stdio: 'inherit', env: wranglerEnv() },
     );
   }
+}
+
+export function readRecords(ndjsonPath: string): VectorizeRecord[] {
+  const contents = fs.readFileSync(ndjsonPath, 'utf8');
+  return contents
+    .split('\n')
+    .filter((line) => line.length > 0)
+    .map((line, lineNumber) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(line);
+      } catch {
+        throw new Error(`Invalid vector JSON on line ${lineNumber + 1}`);
+      }
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error(`Invalid vector record on line ${lineNumber + 1}`);
+      }
+      const record = parsed as Partial<VectorizeRecord>;
+      if (
+        typeof record.id !== 'string' ||
+        !Array.isArray(record.values) ||
+        !record.values.every((value) => typeof value === 'number') ||
+        !record.metadata ||
+        typeof record.metadata !== 'object'
+      ) {
+        throw new Error(`Invalid vector record on line ${lineNumber + 1}`);
+      }
+      return record as VectorizeRecord;
+    });
+}
+
+export function publishIndex(
+  ndjsonPath: string,
+  newIds: string[],
+  target: VectorizeTarget = targetFromEnv(),
+): void {
+  const staleIds = computeStaleIds(readManifest(target), newIds);
+
+  console.log(`Upserting to Vectorize index "${target.indexName}"...`);
+  upsertToVectorize(ndjsonPath, target);
+
+  if (staleIds.length > 0) {
+    console.log(`Deleting ${staleIds.length} stale vectors from the previous run...`);
+    deleteVectors(staleIds, target);
+  } else {
+    console.log('No stale vectors to delete.');
+  }
+
+  // The manifest is the commit marker. A failed upsert or cleanup leaves the
+  // previous manifest in place so the next run retries the outstanding work.
+  writeManifest(newIds, target);
+}
+
+export function promoteRecords(
+  stagedTarget: VectorizeTarget,
+  liveTarget: VectorizeTarget,
+): string[] {
+  if (!stagedTarget.idPrefix) {
+    throw new Error('Staged vectors must have VECTORIZE_ID_PREFIX set');
+  }
+  if (liveTarget.namespace || liveTarget.idPrefix) {
+    throw new Error('Live vectors must use the default namespace and source ids');
+  }
+
+  const promoted = readRecords(stagedTarget.ndjsonPath).map((record, index) => {
+    const sourceId = record.metadata?._muxSourceId;
+    if (
+      (stagedTarget.namespace && record.namespace !== stagedTarget.namespace) ||
+      !sourceId ||
+      !/^[a-f0-9]{64}$/.test(sourceId) ||
+      !record.id.startsWith(stagedTarget.idPrefix)
+    ) {
+      throw new Error(`Staged vector ${index + 1} is missing its source id`);
+    }
+    return {
+      id: sourceId,
+      values: record.values,
+      metadata: Object.fromEntries(
+        Object.entries(record.metadata).filter(([key]) => key !== '_muxSourceId'),
+      ) as VectorizeRecord['metadata'],
+    };
+  });
+
+  const ids = promoted.map((record) => record.id);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error('Staged vectors contain duplicate source ids');
+  }
+  writeRecords(liveTarget.ndjsonPath, promoted);
+  return ids;
 }

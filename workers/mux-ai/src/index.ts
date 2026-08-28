@@ -4,6 +4,7 @@ import { log } from './logger';
 export interface Env {
   AI: Ai;
   VECTORIZE: VectorizeIndex;
+  VECTORIZE_NAMESPACE?: string;
   ALLOWED_ORIGIN: string;
   // Deploy-time only (set in wrangler.toml, never request-derived). Gates the
   // dev-only /api/search endpoint; production deploys set this to "production".
@@ -157,6 +158,9 @@ async function retrieveChunks(query: string, env: Env): Promise<SearchResult[]> 
   const queryResult = await env.VECTORIZE.query(vector, {
     topK: TOP_K,
     returnMetadata: 'all',
+    ...(env.VECTORIZE_NAMESPACE
+      ? { namespace: env.VECTORIZE_NAMESPACE }
+      : {}),
   });
 
   return queryResult.matches

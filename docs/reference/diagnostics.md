@@ -102,8 +102,8 @@ Diagnostics are sorted by file, source position, severity, and code, so output
 is stable across runs.
 
 Code generation never runs when syntax errors remain. Runtime panics are a
-separate terminating failure channel and do not receive compiler diagnostic
-codes.
+separate terminating failure channel from compiler diagnostics, but use the
+runtime E06xx registry described above.
 
 ## Denying warnings
 

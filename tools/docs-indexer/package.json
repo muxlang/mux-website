@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "index": "tsx src/index.ts",
+    "publish": "tsx src/publish.ts",
+    "cleanup": "tsx src/cleanup.ts",
+    "test": "tsx --test src/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

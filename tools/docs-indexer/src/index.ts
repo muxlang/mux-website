@@ -6,12 +6,9 @@ import { chunkContent } from './chunk';
 import { embedTexts } from './embed';
 import {
   writeNdjson,
-  upsertToVectorize,
   vectorIds,
-  readManifest,
-  writeManifest,
-  computeStaleIds,
-  deleteVectors,
+  publishIndex,
+  targetFromEnv,
   type IndexedChunk,
 } from './upload';
 
@@ -58,26 +55,11 @@ async function main(): Promise<void> {
     vector: vectors[i],
   }));
 
-  const ndjsonPath = writeNdjson(indexed);
+  const target = targetFromEnv();
+  const ndjsonPath = writeNdjson(indexed, target);
   console.log(`Wrote ${indexed.length} vectors to ${ndjsonPath}`);
 
-  // Capture orphans (old run minus new run) before overwriting the manifest.
-  const newIds = vectorIds(indexed);
-  const staleIds = computeStaleIds(readManifest(), newIds);
-
-  console.log('Upserting to Vectorize index "mux-docs"...');
-  upsertToVectorize(ndjsonPath);
-
-  if (staleIds.length > 0) {
-    console.log(`Deleting ${staleIds.length} stale vectors from the previous run...`);
-    deleteVectors(staleIds);
-  } else {
-    console.log('No stale vectors to delete.');
-  }
-
-  // Only record the new manifest after upsert + delete succeeded; if either
-  // threw, the old manifest stays so the next run retries the cleanup.
-  writeManifest(newIds);
+  publishIndex(ndjsonPath, vectorIds(indexed, target), target);
 
   console.log('Done.');
 }

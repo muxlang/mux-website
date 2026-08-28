@@ -29,6 +29,11 @@ jobs:
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # Candidate records live in an isolated namespace until both evaluations
+      # pass. The run-specific id prefix prevents cleanup from ever touching a
+      # production record with the same source hash.
+      CANDIDATE_NAMESPACE: docs-candidate-${{ github.run_id }}
+      CANDIDATE_ID_PREFIX: candidate-${{ github.run_id }}-
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -57,7 +62,12 @@ jobs:
           npm run typecheck --prefix workers/mux-ai
           npm run typecheck --prefix tools/retrieval-test
 
-      - name: Embed, upsert, and remove stale vectors
+      - name: Embed and stage candidate vectors
+        env:
+          VECTORIZE_NAMESPACE: ${{ env.CANDIDATE_NAMESPACE }}
+          VECTORIZE_ID_PREFIX: ${{ env.CANDIDATE_ID_PREFIX }}
+          VECTORIZE_NDJSON_PATH: tools/docs-indexer/out/candidate-vectors.ndjson
+          VECTORIZE_MANIFEST_PATH: tools/docs-indexer/out/candidate-manifest.json
         run: |
           set -o pipefail
           npm run index --prefix tools/docs-indexer 2>&1 | tee /tmp/mux-docs-index.log
@@ -65,7 +75,9 @@ jobs:
       - name: Run retrieval and diagnostic explanation evaluations
         run: |
           set -o pipefail
-          npm run dev --prefix workers/mux-ai -- --remote > /tmp/mux-ai-worker.log 2>&1 &
+          npm run dev --prefix workers/mux-ai -- --remote \
+            --var "VECTORIZE_NAMESPACE:${CANDIDATE_NAMESPACE}" \
+            > /tmp/mux-ai-worker.log 2>&1 &
           worker_pid=$!
           trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
           ready=0
@@ -81,6 +93,33 @@ jobs:
           SEARCH_URL=http://localhost:8787 npm run eval --prefix tools/retrieval-test 2>&1 | tee /tmp/mux-retrieval-eval.log
           WORKER_URL=http://localhost:8787 npm run error-eval --prefix tools/retrieval-test 2>&1 | tee /tmp/mux-error-eval.log
 
+      - name: Publish the validated candidate vectors
+        env:
+          VECTORIZE_NAMESPACE: ${{ env.CANDIDATE_NAMESPACE }}
+          VECTORIZE_ID_PREFIX: ${{ env.CANDIDATE_ID_PREFIX }}
+          VECTORIZE_NDJSON_PATH: tools/docs-indexer/out/candidate-vectors.ndjson
+          VECTORIZE_MANIFEST_PATH: tools/docs-indexer/out/candidate-manifest.json
+          VECTORIZE_LIVE_NDJSON_PATH: tools/docs-indexer/out/vectors.ndjson
+          VECTORIZE_LIVE_MANIFEST_PATH: tools/docs-indexer/out/manifest.json
+        run: |
+          set -o pipefail
+          npm run publish --prefix tools/docs-indexer 2>&1 | tee /tmp/mux-docs-publish.log
+
+      - name: Remove candidate vectors
+        if: always()
+        env:
+          VECTORIZE_NAMESPACE: ${{ env.CANDIDATE_NAMESPACE }}
+          VECTORIZE_ID_PREFIX: ${{ env.CANDIDATE_ID_PREFIX }}
+          VECTORIZE_NDJSON_PATH: tools/docs-indexer/out/candidate-vectors.ndjson
+          VECTORIZE_MANIFEST_PATH: tools/docs-indexer/out/candidate-manifest.json
+        run: |
+          set -o pipefail
+          if [ -f "$VECTORIZE_NDJSON_PATH" ]; then
+            npm run cleanup --prefix tools/docs-indexer 2>&1 | tee /tmp/mux-docs-cleanup.log
+          else
+            echo "No candidate vector file exists; nothing to clean up."
+          fi
+
       - name: Record indexing revision and evaluation results
         if: always()
         run: |
@@ -88,11 +127,12 @@ jobs:
             echo "## Documentation indexing"
             echo
             echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Candidate namespace: \`${CANDIDATE_NAMESPACE}\`"
             echo "- Indexer: \`$(node -p "require('./tools/docs-indexer/package.json').version")\`"
             echo "- Worker: \`$(node -p "require('./workers/mux-ai/package.json').version")\`"
             echo
             echo '```text'
-            for log in /tmp/mux-docs-index.log /tmp/mux-retrieval-eval.log /tmp/mux-error-eval.log; do
+            for log in /tmp/mux-docs-index.log /tmp/mux-retrieval-eval.log /tmp/mux-error-eval.log /tmp/mux-docs-publish.log /tmp/mux-docs-cleanup.log; do
               if [ -f "$log" ]; then
                 cat "$log"
               fi

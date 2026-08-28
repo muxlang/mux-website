@@ -39,6 +39,7 @@ const SIDEBAR_SECTIONS: Record<string, string> = {
   'reference/statements': 'Language Reference',
   'reference/operators': 'Language Reference',
   'reference/memory-model': 'Language Reference',
+  'reference/diagnostics': 'Language Reference',
 
   'language-guide/overview': 'Language Guide',
   'language-guide/types': 'Language Guide',
