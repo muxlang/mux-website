@@ -5,6 +5,9 @@ import path from 'node:path';
 import test from 'node:test';
 import {
   promoteRecords,
+  targetFromEnv,
+  writeNdjson,
+  type IndexedChunk,
   type VectorizeTarget,
 } from './upload';
 
@@ -92,6 +95,65 @@ test('promoteRecords rejects a candidate record from another namespace', () => {
 
     assert.throws(() => promoteRecords(staged, live), /missing its source id/);
   } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('targetFromEnv resolves workflow paths from the npm invocation directory', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mux-docs-indexer-'));
+  const originalInitCwd = process.env.INIT_CWD;
+  const originalNdjsonPath = process.env.VECTORIZE_NDJSON_PATH;
+  const originalManifestPath = process.env.VECTORIZE_MANIFEST_PATH;
+  try {
+    process.env.INIT_CWD = root;
+    process.env.VECTORIZE_NDJSON_PATH = 'tools/docs-indexer/out/candidate-vectors.ndjson';
+    process.env.VECTORIZE_MANIFEST_PATH = 'tools/docs-indexer/out/candidate-manifest.json';
+
+    const target = targetFromEnv();
+
+    assert.equal(
+      target.ndjsonPath,
+      path.join(root, 'tools/docs-indexer/out/candidate-vectors.ndjson'),
+    );
+    assert.equal(
+      target.manifestPath,
+      path.join(root, 'tools/docs-indexer/out/candidate-manifest.json'),
+    );
+
+    const entry: IndexedChunk = {
+      doc: {
+        docId: 'reference/diagnostics',
+        docPath: '/docs/reference/diagnostics/',
+        title: 'Diagnostics',
+        section: 'Language Reference',
+        codes: ['E0600'],
+        content: 'Runtime failures use stable codes.',
+      },
+      chunk: {
+        heading: 'Runtime failures',
+        text: 'Runtime failures use stable codes.',
+      },
+      chunkIndex: 0,
+      vector: [0.25, -0.5],
+    };
+    assert.equal(writeNdjson([entry], target), target.ndjsonPath);
+    assert.ok(fs.statSync(target.ndjsonPath).size > 0);
+  } finally {
+    if (originalInitCwd === undefined) {
+      delete process.env.INIT_CWD;
+    } else {
+      process.env.INIT_CWD = originalInitCwd;
+    }
+    if (originalNdjsonPath === undefined) {
+      delete process.env.VECTORIZE_NDJSON_PATH;
+    } else {
+      process.env.VECTORIZE_NDJSON_PATH = originalNdjsonPath;
+    }
+    if (originalManifestPath === undefined) {
+      delete process.env.VECTORIZE_MANIFEST_PATH;
+    } else {
+      process.env.VECTORIZE_MANIFEST_PATH = originalManifestPath;
+    }
     fs.rmSync(root, { recursive: true, force: true });
   }
 });

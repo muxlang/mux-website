@@ -94,7 +94,13 @@ function defaultTarget(): VectorizeTarget {
 }
 
 export function targetFromEnv(overrides: Partial<VectorizeTarget> = {}): VectorizeTarget {
-  return { ...defaultTarget(), ...overrides };
+  const target = { ...defaultTarget(), ...overrides };
+  const invocationDirectory = process.env.INIT_CWD ?? process.cwd();
+  return {
+    ...target,
+    ndjsonPath: path.resolve(invocationDirectory, target.ndjsonPath),
+    manifestPath: path.resolve(invocationDirectory, target.manifestPath),
+  };
 }
 
 function writeAtomically(filePath: string, contents: string): void {
