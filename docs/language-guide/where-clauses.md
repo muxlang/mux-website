@@ -59,7 +59,7 @@ A failed predicate panics through the unified panic path and points at the
 failing predicate:
 
 ```text
-panic: where constraint violated
+panic[E0604]: where constraint violated
 --> server.mux:3:27
 ```
 

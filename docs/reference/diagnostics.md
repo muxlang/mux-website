@@ -48,8 +48,18 @@ The registry is owned by `mux-compiler`. Codes are never reused.
 | E0313 | Error | Named nested function captures a local | nested `inner` uses `outer`'s local | Pass it as a parameter or use a lambda |
 | E0400 | Error | Module cannot be found | `import missing` | Correct the path or add it |
 | E0401 | Error | Imported module cannot be loaded | broken imported file | Fix that module |
+| E0600 | Runtime | List index out of bounds | `items[99]` | Use an index in range |
+| E0601 | Runtime | Missing map key | `values["missing"]` | Check membership first |
+| E0602 | Runtime | Division or modulo by zero | `n / 0` | Use a non-zero divisor |
+| E0603 | Runtime | Assertion failure | `assert(false, "bad")` | Fix the failed invariant |
+| E0604 | Runtime | Where-constraint violation | invalid constrained value | Satisfy the constraint |
+| E0605 | Runtime | Integer overflow | checked arithmetic overflow | Use a safe range or type |
+| E0699 | Runtime | Internal runtime failure | runtime invariant failure | Report the complete output |
 | E0900 | Error | Internal compiler failure | compiler bug | Report the complete output |
+| W0300 | Warning | Unused binding | `auto unused = 1` | Remove it, use it, or write `_` |
+| W0301 | Warning | Shadowed binding | inner `auto x` hides outer `x` | Rename the inner binding |
 | W0302 | Warning | Unreachable code | after `return` | Remove or move it |
+| W0303 | Warning | Dead assignment | `x = 1` then `x = 2` | Remove the overwritten assignment |
 | W0305 | Warning | Provably constant condition | `if 1 == 1` | Remove it or use runtime data |
 | W0306 | Warning | Safe redundant construct | `value && true` or equivalent | Apply the suggested simplification |
 
@@ -58,8 +68,13 @@ not use warnings for style preferences, guesses about performance, or ignored
 return values. A bare `_` is the intentional unused-binding escape hatch.
 `_name` is an ordinary identifier.
 
-The allocated warning numbers W0300, W0301, W0303, and W0304 are reserved for
-future analyses and are not emitted or accepted by `mux explain` yet.
+`W0300`, `W0301`, and `W0303` are emitted only after successful semantic
+analysis. `W0304` is reserved: an actual read before assignment is the error
+`E0311`, so the compiler does not downgrade it to a warning.
+
+Runtime failures are terminating diagnostics from the separately built
+runtime. They use the `E06xx` registry above and preserve a source location
+when the compiler has one.
 
 ## `mux explain`
 
