@@ -235,8 +235,9 @@ export async function waitForMutation(
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const info = await readInfo();
     // Cloudflare exposes the processed mutation as an opaque UUID, so it
-    // cannot be ordered. Index publication is serialized by the Pages
-    // concurrency group; exact equality is the only sound completion check.
+    // cannot be ordered. Exact equality is the only sound completion check;
+    // callers must serialize publication to this index. CI does so with the
+    // Pages concurrency group, and the recovery runbook requires the same.
     if (info.processedUpToMutation === mutationId) {
       return;
     }
