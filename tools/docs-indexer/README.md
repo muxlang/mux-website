@@ -94,11 +94,10 @@ problem and rerun the failed job. Candidate records are isolated from live
 search and are removed by the workflow cleanup step. Operators can recover
 locally with:
 
-Only one indexing or recovery run may publish to `mux-docs` at a time.
-Cloudflare mutation IDs are opaque, so a second publisher can advance the
-index watermark before the first publisher observes its own mutation. The
-hosted workflows enforce this with the shared `pages` concurrency group;
-coordinate the same exclusive access before starting a local recovery.
+The hosted workflows serialize publication with the shared `pages` concurrency
+group. Local recovery can safely overlap another publisher: if another mutation
+advances Cloudflare's opaque watermark, the indexer queues a harmless deletion
+barrier and waits until that ordered barrier is processed.
 
 ```bash
 cd mux-website

@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ExtractedDoc } from './extract';
@@ -101,6 +101,7 @@ export interface VectorizeIndexInfo {
 interface MutationWaitOptions {
   maxAttempts?: number;
   pollIntervalMs?: number;
+  enqueueBarrier?: () => Promise<string>;
 }
 
 type DeleteBatch = (ids: string[], target: VectorizeTarget) => Promise<void>;
@@ -231,17 +232,20 @@ export async function waitForMutation(
 ): Promise<void> {
   const pollIntervalMs = options.pollIntervalMs ?? MUTATION_POLL_INTERVAL_MS;
   const maxAttempts = options.maxAttempts ?? Math.ceil(MUTATION_WAIT_TIMEOUT_MS / pollIntervalMs);
+  let awaitedMutationId = mutationId;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const info = await readInfo();
-    // Cloudflare exposes the processed mutation as an opaque UUID, so it
-    // cannot be ordered. Exact equality is the only sound completion check;
-    // callers must serialize publication to this index. CI does so with the
-    // Pages concurrency group, and the recovery runbook requires the same.
-    if (info.processedUpToMutation === mutationId) {
+    if (info.processedUpToMutation === awaitedMutationId) {
       return;
     }
     if (attempt < maxAttempts) {
+      // Mutation IDs are opaque UUIDs. If another writer advances the
+      // watermark, queue our own no-op barrier; observing that exact barrier
+      // proves every mutation submitted before it has also been processed.
+      if (options.enqueueBarrier) {
+        awaitedMutationId = await options.enqueueBarrier();
+      }
       await pause(pollIntervalMs);
     }
   }
@@ -256,6 +260,22 @@ async function readVectorizeInfo(target: VectorizeTarget): Promise<VectorizeInde
   return vectorizeRequest<VectorizeIndexInfo>(
     `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/info`,
   );
+}
+
+async function enqueueMutationBarrier(target: VectorizeTarget): Promise<string> {
+  const { accountId } = cloudflareCredentials();
+  const mutation = await vectorizeRequest<VectorizeMutation>(
+    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/delete_by_ids`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [`mux-readiness-barrier-${randomUUID()}`] }),
+    },
+  );
+  if (!mutation.mutationId) {
+    throw new Error('Vectorize readiness barrier returned no mutation id');
+  }
+  return mutation.mutationId;
 }
 
 export async function upsertToVectorize(
@@ -293,7 +313,12 @@ async function deleteVectorBatch(ids: string[], target: VectorizeTarget): Promis
   if (!mutation.mutationId) {
     throw new Error('Vectorize deletion returned no mutation id');
   }
-  await waitForMutation(mutation.mutationId, () => readVectorizeInfo(target));
+  await waitForMutation(
+    mutation.mutationId,
+    () => readVectorizeInfo(target),
+    undefined,
+    { enqueueBarrier: () => enqueueMutationBarrier(target) },
+  );
 }
 
 export async function deleteVectors(
@@ -346,7 +371,12 @@ export async function publishIndex(
   console.log(`Upserting to Vectorize index "${target.indexName}"...`);
   const mutationId = await upsertToVectorize(ndjsonPath, target);
   console.log('Waiting for Vectorize upsert to become queryable...');
-  await waitForMutation(mutationId, () => readVectorizeInfo(target));
+  await waitForMutation(
+    mutationId,
+    () => readVectorizeInfo(target),
+    undefined,
+    { enqueueBarrier: () => enqueueMutationBarrier(target) },
+  );
   console.log('Vectorize upsert is queryable.');
 
   if (staleIds.length > 0) {

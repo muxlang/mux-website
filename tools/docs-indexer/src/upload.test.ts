@@ -278,6 +278,27 @@ test('waitForMutation does not return until Vectorize processes the target mutat
   assert.deepEqual(pauses, [25]);
 });
 
+test('waitForMutation uses an ordered barrier when another mutation advances the watermark', async () => {
+  const observedMutations = ['later-writer', 'our-barrier'];
+  let barriers = 0;
+
+  await waitForMutation(
+    'target-mutation',
+    async () => ({ processedUpToMutation: observedMutations.shift() ?? '' }),
+    async () => {},
+    {
+      maxAttempts: 3,
+      pollIntervalMs: 1,
+      enqueueBarrier: async () => {
+        barriers += 1;
+        return 'our-barrier';
+      },
+    },
+  );
+
+  assert.equal(barriers, 1);
+});
+
 test('waitForMutation fails when Vectorize never processes the target mutation', async () => {
   await assert.rejects(
     waitForMutation(
