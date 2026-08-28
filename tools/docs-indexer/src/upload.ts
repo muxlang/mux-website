@@ -286,7 +286,7 @@ async function deleteVectorBatch(ids: string[], target: VectorizeTarget): Promis
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ids),
+      body: JSON.stringify({ ids }),
     },
   );
   if (!mutation.mutationId) {

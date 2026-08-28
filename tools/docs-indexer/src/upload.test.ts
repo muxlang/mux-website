@@ -214,6 +214,54 @@ test('deleteVectors stops after the first failed batch', async () => {
   );
 });
 
+test('deleteVectors sends the Cloudflare delete-by-IDs request envelope', async () => {
+  const target = makeTarget(os.tmpdir(), {});
+  const originalAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const originalApiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const originalFetch = globalThis.fetch;
+  const requests: { url: string; init?: RequestInit }[] = [];
+
+  try {
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'account-id';
+    process.env.CLOUDFLARE_API_TOKEN = 'api-token';
+    globalThis.fetch = async (input, init) => {
+      requests.push({ url: String(input), init });
+      const result =
+        requests.length === 1
+          ? { mutationId: 'delete-mutation' }
+          : { processedUpToMutation: 'delete-mutation' };
+      return new Response(JSON.stringify({ success: true, result }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    };
+
+    await deleteVectors(['id-1', 'id-2'], target);
+
+    assert.equal(requests.length, 2);
+    assert.equal(
+      requests[0].url,
+      'https://api.cloudflare.com/client/v4/accounts/account-id/vectorize/v2/indexes/mux-docs/delete_by_ids',
+    );
+    assert.equal(requests[0].init?.method, 'POST');
+    assert.equal(new Headers(requests[0].init?.headers).get('Content-Type'), 'application/json');
+    assert.equal(requests[0].init?.body, JSON.stringify({ ids: ['id-1', 'id-2'] }));
+    assert.match(requests[1].url, /\/indexes\/mux-docs\/info$/);
+  } finally {
+    if (originalAccountId === undefined) {
+      delete process.env.CLOUDFLARE_ACCOUNT_ID;
+    } else {
+      process.env.CLOUDFLARE_ACCOUNT_ID = originalAccountId;
+    }
+    if (originalApiToken === undefined) {
+      delete process.env.CLOUDFLARE_API_TOKEN;
+    } else {
+      process.env.CLOUDFLARE_API_TOKEN = originalApiToken;
+    }
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('waitForMutation does not return until Vectorize processes the target mutation', async () => {
   const observedMutations = ['previous-mutation', 'target-mutation'];
   const pauses: number[] = [];
