@@ -8,7 +8,7 @@ import {
   promoteRecords,
   targetFromEnv,
   upsertToVectorize,
-  waitForMutation,
+  waitForReadiness,
   writeNdjson,
   type IndexedChunk,
   type VectorizeTarget,
@@ -226,10 +226,7 @@ test('deleteVectors sends the Cloudflare delete-by-IDs request envelope', async 
     process.env.CLOUDFLARE_API_TOKEN = 'api-token';
     globalThis.fetch = async (input, init) => {
       requests.push({ url: String(input), init });
-      const result =
-        requests.length === 1
-          ? { mutationId: 'delete-mutation' }
-          : { processedUpToMutation: 'delete-mutation' };
+      const result = requests.length === 1 ? { mutationId: 'delete-mutation' } : [];
       return new Response(JSON.stringify({ success: true, result }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -246,7 +243,8 @@ test('deleteVectors sends the Cloudflare delete-by-IDs request envelope', async 
     assert.equal(requests[0].init?.method, 'POST');
     assert.equal(new Headers(requests[0].init?.headers).get('Content-Type'), 'application/json');
     assert.equal(requests[0].init?.body, JSON.stringify({ ids: ['id-1', 'id-2'] }));
-    assert.match(requests[1].url, /\/indexes\/mux-docs\/info$/);
+    assert.match(requests[1].url, /\/indexes\/mux-docs\/get_by_ids$/);
+    assert.equal(requests[1].init?.body, JSON.stringify({ ids: ['id-1', 'id-2'] }));
   } finally {
     if (originalAccountId === undefined) {
       delete process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -262,13 +260,13 @@ test('deleteVectors sends the Cloudflare delete-by-IDs request envelope', async 
   }
 });
 
-test('waitForMutation does not return until Vectorize processes the target mutation', async () => {
-  const observedMutations = ['previous-mutation', 'target-mutation'];
+test('waitForReadiness does not return until the published state is queryable', async () => {
+  const observedStates = [false, true];
   const pauses: number[] = [];
 
-  await waitForMutation(
-    'target-mutation',
-    async () => ({ processedUpToMutation: observedMutations.shift() ?? '' }),
+  await waitForReadiness(
+    'test publication',
+    async () => observedStates.shift() ?? false,
     async (milliseconds) => {
       pauses.push(milliseconds);
     },
@@ -278,36 +276,15 @@ test('waitForMutation does not return until Vectorize processes the target mutat
   assert.deepEqual(pauses, [25]);
 });
 
-test('waitForMutation keeps waiting for its ordered barrier across multiple polls', async () => {
-  const observedMutations = ['later-writer', 'target-mutation', 'our-barrier'];
-  let barriers = 0;
-
-  await waitForMutation(
-    'target-mutation',
-    async () => ({ processedUpToMutation: observedMutations.shift() ?? '' }),
-    async () => {},
-    {
-      maxAttempts: 4,
-      pollIntervalMs: 1,
-      enqueueBarrier: async () => {
-        barriers += 1;
-        return 'our-barrier';
-      },
-    },
-  );
-
-  assert.equal(barriers, 1);
-});
-
-test('waitForMutation fails when Vectorize never processes the target mutation', async () => {
+test('waitForReadiness fails when the published state never becomes queryable', async () => {
   await assert.rejects(
-    waitForMutation(
-      'target-mutation',
-      async () => ({ processedUpToMutation: 'previous-mutation' }),
+    waitForReadiness(
+      'test publication',
+      async () => false,
       async () => {},
       { maxAttempts: 2, pollIntervalMs: 1 },
     ),
-    /target-mutation.*2 attempts/,
+    /test publication.*2 attempts/,
   );
 });
 

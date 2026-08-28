@@ -42,8 +42,8 @@ This will:
    (~175-450 tokens), preferring heading boundaries.
 4. Embed every chunk with Workers AI (`@cf/baai/bge-base-en-v1.5`).
 5. Write the vectors + metadata to `out/vectors.ndjson`.
-6. Upsert the vectors through the Vectorize API and wait until its mutation is
-   queryable.
+6. Upsert the vectors through the Vectorize API and wait until a run-specific
+   publication marker is queryable.
 7. Delete any orphaned vectors from the previous run, then record the new
    vector-id set in `out/manifest.json`.
 
@@ -82,10 +82,11 @@ access. The workflow reads these values from the protected `docs-indexing`
 environment. Local indexing and publication runs use the same environment
 variables.
 
-Vectorize writes are asynchronous. The indexer polls the index's
-`processedUpToMutation` value after each upsert and deletion. Retrieval
-evaluation, publication, and manifest updates therefore wait for query-visible
-state instead of treating an enqueued mutation as completed work.
+Vectorize writes are asynchronous. After an upsert, the indexer reads back a
+run-specific publication marker; after a deletion, it reads back the affected
+IDs until they are absent. Retrieval evaluation, publication, and manifest
+updates therefore wait for the exact query-visible state they need instead of
+treating an enqueued mutation as completed work.
 
 ## Manual recovery
 
@@ -95,9 +96,9 @@ search and are removed by the workflow cleanup step. Operators can recover
 locally with:
 
 The hosted workflows serialize publication with the shared `pages` concurrency
-group. Local recovery can safely overlap another publisher: if another mutation
-advances Cloudflare's opaque watermark, the indexer queues a harmless deletion
-barrier and waits until that ordered barrier is processed.
+group. Local recovery can safely overlap another publisher because readiness is
+checked against this run's records rather than the index-wide mutation
+watermark.
 
 ```bash
 cd mux-website

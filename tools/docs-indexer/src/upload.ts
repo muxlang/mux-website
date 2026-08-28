@@ -24,6 +24,7 @@ export interface VectorizeRecord {
     heading: string | null;
     text: string;
     _muxSourceId?: string;
+    _muxPublicationId?: string;
   };
 }
 
@@ -94,14 +95,9 @@ interface VectorizeMutation {
   mutationId?: string;
 }
 
-export interface VectorizeIndexInfo {
-  processedUpToMutation?: string;
-}
-
-interface MutationWaitOptions {
+interface ReadinessWaitOptions {
   maxAttempts?: number;
   pollIntervalMs?: number;
-  enqueueBarrier?: () => Promise<string>;
 }
 
 type DeleteBatch = (ids: string[], target: VectorizeTarget) => Promise<void>;
@@ -223,59 +219,48 @@ async function vectorizeRequest<T>(
   return body.result;
 }
 
-export async function waitForMutation(
-  mutationId: string,
-  readInfo: () => Promise<VectorizeIndexInfo>,
+export async function waitForReadiness(
+  description: string,
+  isReady: () => Promise<boolean>,
   pause: (milliseconds: number) => Promise<void> = (milliseconds) =>
     new Promise((resolve) => setTimeout(resolve, milliseconds)),
-  options: MutationWaitOptions = {},
+  options: ReadinessWaitOptions = {},
 ): Promise<void> {
   const pollIntervalMs = options.pollIntervalMs ?? MUTATION_POLL_INTERVAL_MS;
   const maxAttempts = options.maxAttempts ?? Math.ceil(MUTATION_WAIT_TIMEOUT_MS / pollIntervalMs);
-  let awaitedMutationId = mutationId;
-
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const info = await readInfo();
-    if (info.processedUpToMutation === awaitedMutationId) {
+    if (await isReady()) {
       return;
     }
     if (attempt < maxAttempts) {
-      // Mutation IDs are opaque UUIDs. If another writer advances the
-      // watermark, queue our own no-op barrier; observing that exact barrier
-      // proves every mutation submitted before it has also been processed.
-      if (options.enqueueBarrier && awaitedMutationId === mutationId) {
-        awaitedMutationId = await options.enqueueBarrier();
-      }
       await pause(pollIntervalMs);
     }
   }
 
-  throw new Error(
-    `Vectorize mutation ${mutationId} was not processed after ${maxAttempts} attempts`,
-  );
+  throw new Error(`Vectorize ${description} was not queryable after ${maxAttempts} attempts`);
 }
 
-async function readVectorizeInfo(target: VectorizeTarget): Promise<VectorizeIndexInfo> {
+async function readVectorsByIds(
+  ids: string[],
+  target: VectorizeTarget,
+): Promise<VectorizeRecord[]> {
   const { accountId } = cloudflareCredentials();
-  return vectorizeRequest<VectorizeIndexInfo>(
-    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/info`,
-  );
-}
-
-async function enqueueMutationBarrier(target: VectorizeTarget): Promise<string> {
-  const { accountId } = cloudflareCredentials();
-  const mutation = await vectorizeRequest<VectorizeMutation>(
-    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/delete_by_ids`,
+  return vectorizeRequest<VectorizeRecord[]>(
+    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/get_by_ids`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: [`mux-readiness-barrier-${randomUUID()}`] }),
+      body: JSON.stringify({ ids }),
     },
   );
-  if (!mutation.mutationId) {
-    throw new Error('Vectorize readiness barrier returned no mutation id');
-  }
-  return mutation.mutationId;
+}
+
+function markPublication(ndjsonPath: string, publicationId: string): void {
+  const records = readRecords(ndjsonPath).map((record) => ({
+    ...record,
+    metadata: { ...record.metadata, _muxPublicationId: publicationId },
+  }));
+  writeRecords(ndjsonPath, records);
 }
 
 export async function upsertToVectorize(
@@ -313,11 +298,9 @@ async function deleteVectorBatch(ids: string[], target: VectorizeTarget): Promis
   if (!mutation.mutationId) {
     throw new Error('Vectorize deletion returned no mutation id');
   }
-  await waitForMutation(
-    mutation.mutationId,
-    () => readVectorizeInfo(target),
-    undefined,
-    { enqueueBarrier: () => enqueueMutationBarrier(target) },
+  await waitForReadiness(
+    `deletion mutation ${mutation.mutationId}`,
+    async () => (await readVectorsByIds(ids, target)).length === 0,
   );
 }
 
@@ -367,15 +350,18 @@ export async function publishIndex(
   target: VectorizeTarget = targetFromEnv(),
 ): Promise<void> {
   const staleIds = computeStaleIds(readManifest(target), newIds);
+  const publicationId = randomUUID();
+  markPublication(ndjsonPath, publicationId);
 
   console.log(`Upserting to Vectorize index "${target.indexName}"...`);
   const mutationId = await upsertToVectorize(ndjsonPath, target);
   console.log('Waiting for Vectorize upsert to become queryable...');
-  await waitForMutation(
-    mutationId,
-    () => readVectorizeInfo(target),
-    undefined,
-    { enqueueBarrier: () => enqueueMutationBarrier(target) },
+  await waitForReadiness(
+    `upsert mutation ${mutationId}`,
+    async () => {
+      const [record] = await readVectorsByIds([newIds[0]], target);
+      return record?.metadata?._muxPublicationId === publicationId;
+    },
   );
   console.log('Vectorize upsert is queryable.');
 
