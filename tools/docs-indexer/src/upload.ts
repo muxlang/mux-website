@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ExtractedDoc } from './extract';
@@ -78,7 +77,6 @@ function toRecord(entry: IndexedChunk, target: VectorizeTarget): VectorizeRecord
   };
 }
 
-const WORKER_DIR = path.resolve(import.meta.dirname, '..', '..', '..', 'workers', 'mux-ai');
 const OUT_DIR = path.resolve(import.meta.dirname, '..', 'out');
 // Vectorize rejects delete-by-ID requests containing more than 100 IDs.
 const VECTORIZE_DELETE_BATCH_SIZE = 100;
@@ -104,6 +102,8 @@ interface MutationWaitOptions {
   maxAttempts?: number;
   pollIntervalMs?: number;
 }
+
+type DeleteBatch = (ids: string[], target: VectorizeTarget) => Promise<void>;
 
 function defaultTarget(): VectorizeTarget {
   return {
@@ -184,25 +184,6 @@ export function computeStaleIds(oldIds: string[] | null, newIds: string[]): stri
   return oldIds.filter((id) => !current.has(id));
 }
 
-// Absolute path to the wrangler binary installed in the worker package, so the
-// command does not rely on PATH resolution (which could pick up an attacker-
-// controlled `npx`/`wrangler` earlier on PATH).
-const WRANGLER_BIN = path.join(WORKER_DIR, 'node_modules', '.bin', 'wrangler');
-
-function wranglerEnv(): NodeJS.ProcessEnv {
-  // CI supplies a protected token with both Workers AI and Vectorize rights.
-  // Local runs may omit it and use an existing `wrangler login` session.
-  return process.env;
-}
-
-function runWrangler(args: string[]): void {
-  execFileSync(WRANGLER_BIN, args, {
-    cwd: WORKER_DIR,
-    stdio: 'inherit',
-    env: wranglerEnv(),
-  });
-}
-
 function cloudflareCredentials(): { accountId: string; apiToken: string } {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
@@ -224,9 +205,18 @@ async function vectorizeRequest<T>(
       ...init.headers,
     },
   });
-  const body = (await response.json()) as CloudflareApiResponse<T>;
+  const responseText = await response.text();
+  let body: CloudflareApiResponse<T>;
+  try {
+    body = JSON.parse(responseText) as CloudflareApiResponse<T>;
+  } catch {
+    throw new Error(
+      `Vectorize request failed for ${endpoint}: HTTP ${response.status} returned a non-JSON response`,
+    );
+  }
   if (!response.ok || !body.success || body.result === undefined) {
-    const message = body.errors?.map((error) => error.message).join('; ') || `HTTP ${response.status}`;
+    const message =
+      body.errors?.map((error) => error.message).join('; ') || `HTTP ${response.status}`;
     throw new Error(`Vectorize request failed: ${message}`);
   }
   return body.result;
@@ -244,6 +234,9 @@ export async function waitForMutation(
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const info = await readInfo();
+    // Cloudflare exposes the processed mutation as an opaque UUID, so it
+    // cannot be ordered. Index publication is serialized by the Pages
+    // concurrency group; exact equality is the only sound completion check.
     if (info.processedUpToMutation === mutationId) {
       return;
     }
@@ -286,14 +279,30 @@ export async function upsertToVectorize(
   return mutation.mutationId;
 }
 
-export function deleteVectors(
+async function deleteVectorBatch(ids: string[], target: VectorizeTarget): Promise<void> {
+  const { accountId } = cloudflareCredentials();
+  const mutation = await vectorizeRequest<VectorizeMutation>(
+    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/delete_by_ids`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ids),
+    },
+  );
+  if (!mutation.mutationId) {
+    throw new Error('Vectorize deletion returned no mutation id');
+  }
+  await waitForMutation(mutation.mutationId, () => readVectorizeInfo(target));
+}
+
+export async function deleteVectors(
   ids: string[],
   target: VectorizeTarget = targetFromEnv(),
-  execute: (args: string[]) => void = runWrangler,
-): void {
+  deleteBatch: DeleteBatch = deleteVectorBatch,
+): Promise<void> {
   for (let i = 0; i < ids.length; i += VECTORIZE_DELETE_BATCH_SIZE) {
     const batch = ids.slice(i, i + VECTORIZE_DELETE_BATCH_SIZE);
-    execute(['vectorize', 'delete-vectors', target.indexName, '--ids', ...batch]);
+    await deleteBatch(batch, target);
   }
 }
 
@@ -341,7 +350,7 @@ export async function publishIndex(
 
   if (staleIds.length > 0) {
     console.log(`Deleting ${staleIds.length} stale vectors from the previous run...`);
-    deleteVectors(staleIds, target);
+    await deleteVectors(staleIds, target);
   } else {
     console.log('No stale vectors to delete.');
   }

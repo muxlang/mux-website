@@ -83,8 +83,9 @@ environment. Local indexing and publication runs use the same environment
 variables.
 
 Vectorize writes are asynchronous. The indexer polls the index's
-`processedUpToMutation` value after each upsert, so retrieval evaluation and
-publication never run against an enqueued but unreadable candidate index.
+`processedUpToMutation` value after each upsert and deletion. Retrieval
+evaluation, publication, and manifest updates therefore wait for query-visible
+state instead of treating an enqueued mutation as completed work.
 
 ## Manual recovery
 
