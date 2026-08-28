@@ -21,7 +21,7 @@ It is part of the multi-repo [muxlang](https://github.com/muxlang) ecosystem.
   does not show.
 - **Understand existing code first** - read relevant components/config before
   changing anything. Follow existing patterns.
-- **No LLVM/Rust toolchain needed** - this is a JS/TS + Markdown repo. Node 20 is
+- **No LLVM/Rust toolchain needed** - this is a JS/TS + Markdown repo. Node 22 is
   the only requirement. This is intentional: docs/content work must not require
   the compiler toolchain.
 - **Remove outdated comments** - keep comments in sync with code.
