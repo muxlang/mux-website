@@ -6,7 +6,10 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'tools/docs-indexer/**'
+      - 'tools/docs-indexer/src/**'
+      - '!tools/docs-indexer/src/**/*.test.ts'
+      - 'tools/docs-indexer/package.json'
+      - 'tools/docs-indexer/package-lock.json'
       - 'workers/mux-ai/src/**'
       - 'workers/mux-ai/package.json'
       - 'workers/mux-ai/package-lock.json'
