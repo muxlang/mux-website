@@ -100,7 +100,18 @@ interface ReadinessWaitOptions {
   pollIntervalMs?: number;
 }
 
-type DeleteBatch = (ids: string[], target: VectorizeTarget) => Promise<void>;
+interface DeleteBatchProgress {
+  batchNumber: number;
+  batchCount: number;
+}
+
+type ProgressReporter = (message: string) => void;
+type DeleteBatch = (
+  ids: string[],
+  target: VectorizeTarget,
+  progress: DeleteBatchProgress,
+  report: ProgressReporter,
+) => Promise<void>;
 
 function defaultTarget(): VectorizeTarget {
   return {
@@ -285,7 +296,12 @@ export async function upsertToVectorize(
   return mutation.mutationId;
 }
 
-async function deleteVectorBatch(ids: string[], target: VectorizeTarget): Promise<void> {
+async function deleteVectorBatch(
+  ids: string[],
+  target: VectorizeTarget,
+  progress: DeleteBatchProgress,
+  report: ProgressReporter,
+): Promise<void> {
   const { accountId } = cloudflareCredentials();
   const mutation = await vectorizeRequest<VectorizeMutation>(
     `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/delete_by_ids`,
@@ -298,20 +314,48 @@ async function deleteVectorBatch(ids: string[], target: VectorizeTarget): Promis
   if (!mutation.mutationId) {
     throw new Error('Vectorize deletion returned no mutation id');
   }
-  await waitForReadiness(
-    `deletion mutation ${mutation.mutationId}`,
-    async () => (await readVectorsByIds(ids, target)).length === 0,
-  );
+  const startedAt = Date.now();
+  const heartbeat = setInterval(() => {
+    const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
+    report(
+      `Still waiting for cleanup batch ${progress.batchNumber}/${progress.batchCount} ` +
+        `(${elapsedSeconds}s elapsed)...`,
+    );
+  }, 10_000);
+  try {
+    await waitForReadiness(
+      `deletion mutation ${mutation.mutationId}`,
+      async () => (await readVectorsByIds(ids, target)).length === 0,
+    );
+  } finally {
+    clearInterval(heartbeat);
+  }
 }
 
 export async function deleteVectors(
   ids: string[],
   target: VectorizeTarget = targetFromEnv(),
   deleteBatch: DeleteBatch = deleteVectorBatch,
+  report: ProgressReporter = (message) => console.log(message),
 ): Promise<void> {
+  const batchCount = Math.ceil(ids.length / VECTORIZE_DELETE_BATCH_SIZE);
+  if (batchCount === 0) {
+    return;
+  }
+
+  report(`Removing ${ids.length} vectors in ${batchCount} batches.`);
   for (let i = 0; i < ids.length; i += VECTORIZE_DELETE_BATCH_SIZE) {
     const batch = ids.slice(i, i + VECTORIZE_DELETE_BATCH_SIZE);
-    await deleteBatch(batch, target);
+    const batchNumber = Math.floor(i / VECTORIZE_DELETE_BATCH_SIZE) + 1;
+    const progress = { batchNumber, batchCount };
+    const vectorLabel = batch.length === 1 ? 'vector' : 'vectors';
+    report(`Deleting cleanup batch ${batchNumber}/${batchCount} (${batch.length} ${vectorLabel})...`);
+    await deleteBatch(batch, target, progress, report);
+    const completedIds = Math.min(i + batch.length, ids.length);
+    report(
+      `Completed cleanup batch ${batchNumber}/${batchCount} ` +
+        `(${completedIds}/${ids.length} vectors removed).`,
+    );
   }
 }
 

@@ -171,9 +171,14 @@ test('deleteVectors dispatches sequential requests within the Vectorize ID limit
     const ids = Array.from({ length: count }, (_, index) => `id-${index}`);
     const invocations: string[][] = [];
 
-    await deleteVectors(ids, target, async (batch) => {
-      invocations.push(batch);
-    });
+    await deleteVectors(
+      ids,
+      target,
+      async (batch) => {
+        invocations.push(batch);
+      },
+      () => {},
+    );
 
     const expected = Array.from(
       { length: Math.ceil(count / VECTORIZE_DELETE_LIMIT) },
@@ -194,12 +199,17 @@ test('deleteVectors stops after the first failed batch', async () => {
   const failure = new Error('Vectorize delete failed');
 
   await assert.rejects(
-    deleteVectors(ids, target, async (batch) => {
-      invocations.push(batch);
-      if (invocations.length === 2) {
-        throw failure;
-      }
-    }),
+    deleteVectors(
+      ids,
+      target,
+      async (batch) => {
+        invocations.push(batch);
+        if (invocations.length === 2) {
+          throw failure;
+        }
+      },
+      () => {},
+    ),
     (error) => error === failure,
   );
 
@@ -212,6 +222,22 @@ test('deleteVectors stops after the first failed batch', async () => {
     invocations[1],
     ids.slice(VECTORIZE_DELETE_LIMIT, 2 * VECTORIZE_DELETE_LIMIT),
   );
+});
+
+test('deleteVectors reports live batch progress', async () => {
+  const messages: string[] = [];
+  const target = makeTarget(os.tmpdir(), {});
+  const ids = Array.from({ length: 21 }, (_, index) => `id-${index}`);
+
+  await deleteVectors(ids, target, async () => {}, (message) => messages.push(message));
+
+  assert.deepEqual(messages, [
+    'Removing 21 vectors in 2 batches.',
+    'Deleting cleanup batch 1/2 (20 vectors)...',
+    'Completed cleanup batch 1/2 (20/21 vectors removed).',
+    'Deleting cleanup batch 2/2 (1 vector)...',
+    'Completed cleanup batch 2/2 (21/21 vectors removed).',
+  ]);
 });
 
 test('deleteVectors sends the Cloudflare delete-by-IDs request envelope', async () => {
@@ -233,7 +259,7 @@ test('deleteVectors sends the Cloudflare delete-by-IDs request envelope', async 
       });
     };
 
-    await deleteVectors(['id-1', 'id-2'], target);
+    await deleteVectors(['id-1', 'id-2'], target, undefined, () => {});
 
     assert.equal(requests.length, 2);
     assert.equal(
