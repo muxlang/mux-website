@@ -80,8 +80,8 @@ function toRecord(entry: IndexedChunk, target: VectorizeTarget): VectorizeRecord
 
 const WORKER_DIR = path.resolve(import.meta.dirname, '..', '..', '..', 'workers', 'mux-ai');
 const OUT_DIR = path.resolve(import.meta.dirname, '..', 'out');
-// Vectorize caps deleteByIds per request; batch well under any limit.
-const DELETE_BATCH_SIZE = 500;
+// Vectorize rejects delete-by-ID requests containing more than 100 IDs.
+const VECTORIZE_DELETE_BATCH_SIZE = 100;
 
 function defaultTarget(): VectorizeTarget {
   return {
@@ -173,28 +173,29 @@ function wranglerEnv(): NodeJS.ProcessEnv {
   return process.env;
 }
 
+function runWrangler(args: string[]): void {
+  execFileSync(WRANGLER_BIN, args, {
+    cwd: WORKER_DIR,
+    stdio: 'inherit',
+    env: wranglerEnv(),
+  });
+}
+
 export function upsertToVectorize(
   ndjsonPath: string,
   target: VectorizeTarget = targetFromEnv(),
 ): void {
-  execFileSync(
-    WRANGLER_BIN,
-    ['vectorize', 'upsert', target.indexName, '--file', ndjsonPath],
-    { cwd: WORKER_DIR, stdio: 'inherit', env: wranglerEnv() },
-  );
+  runWrangler(['vectorize', 'upsert', target.indexName, '--file', ndjsonPath]);
 }
 
 export function deleteVectors(
   ids: string[],
   target: VectorizeTarget = targetFromEnv(),
+  execute: (args: string[]) => void = runWrangler,
 ): void {
-  for (let i = 0; i < ids.length; i += DELETE_BATCH_SIZE) {
-    const batch = ids.slice(i, i + DELETE_BATCH_SIZE);
-    execFileSync(
-      WRANGLER_BIN,
-      ['vectorize', 'delete-vectors', target.indexName, '--ids', ...batch],
-      { cwd: WORKER_DIR, stdio: 'inherit', env: wranglerEnv() },
-    );
+  for (let i = 0; i < ids.length; i += VECTORIZE_DELETE_BATCH_SIZE) {
+    const batch = ids.slice(i, i + VECTORIZE_DELETE_BATCH_SIZE);
+    execute(['vectorize', 'delete-vectors', target.indexName, '--ids', ...batch]);
   }
 }
 
