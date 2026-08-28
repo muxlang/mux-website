@@ -7,7 +7,7 @@ import {
 
 const OUT_DIR = path.resolve(import.meta.dirname, '..', 'out');
 
-function main(): void {
+async function main(): Promise<void> {
   const stagedTarget = targetFromEnv();
   const liveTarget = targetFromEnv({
     namespace: undefined,
@@ -18,13 +18,11 @@ function main(): void {
       process.env.VECTORIZE_LIVE_MANIFEST_PATH ?? path.join(OUT_DIR, 'manifest.json'),
   });
   const newIds = promoteRecords(stagedTarget, liveTarget);
-  publishIndex(liveTarget.ndjsonPath, newIds, liveTarget);
+  await publishIndex(liveTarget.ndjsonPath, newIds, liveTarget);
   console.log(`Published ${newIds.length} validated vectors.`);
 }
 
-try {
-  main();
-} catch (err: unknown) {
+main().catch((err: unknown) => {
   console.error(err instanceof Error ? err.message : err);
   process.exitCode = 1;
-}
+});

@@ -42,8 +42,8 @@ This will:
    (~175-450 tokens), preferring heading boundaries.
 4. Embed every chunk with Workers AI (`@cf/baai/bge-base-en-v1.5`).
 5. Write the vectors + metadata to `out/vectors.ndjson`.
-6. Run `wrangler vectorize upsert mux-docs --file out/vectors.ndjson` from
-   `workers/mux-ai`.
+6. Upsert the vectors through the Vectorize API and wait until its mutation is
+   queryable.
 7. Delete any orphaned vectors from the previous run, then record the new
    vector-id set in `out/manifest.json`.
 
@@ -79,7 +79,12 @@ the `mux-docs` index, then re-index.
 
 The indexing token must have Workers AI read access and Vectorize write/delete
 access. The workflow reads these values from the protected `docs-indexing`
-environment. A local run may instead use an existing `wrangler login` session.
+environment. Local indexing and publication runs use the same environment
+variables.
+
+Vectorize writes are asynchronous. The indexer polls the index's
+`processedUpToMutation` value after each upsert, so retrieval evaluation and
+publication never run against an enqueued but unreadable candidate index.
 
 ## Manual recovery
 

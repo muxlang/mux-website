@@ -82,6 +82,28 @@ const WORKER_DIR = path.resolve(import.meta.dirname, '..', '..', '..', 'workers'
 const OUT_DIR = path.resolve(import.meta.dirname, '..', 'out');
 // Vectorize rejects delete-by-ID requests containing more than 100 IDs.
 const VECTORIZE_DELETE_BATCH_SIZE = 100;
+const VECTORIZE_API_BASE_URL = 'https://api.cloudflare.com/client/v4';
+const MUTATION_POLL_INTERVAL_MS = 2_000;
+const MUTATION_WAIT_TIMEOUT_MS = 5 * 60_000;
+
+interface CloudflareApiResponse<T> {
+  success: boolean;
+  errors?: { message: string }[];
+  result?: T;
+}
+
+interface VectorizeMutation {
+  mutationId?: string;
+}
+
+export interface VectorizeIndexInfo {
+  processedUpToMutation?: string;
+}
+
+interface MutationWaitOptions {
+  maxAttempts?: number;
+  pollIntervalMs?: number;
+}
 
 function defaultTarget(): VectorizeTarget {
   return {
@@ -181,11 +203,87 @@ function runWrangler(args: string[]): void {
   });
 }
 
-export function upsertToVectorize(
+function cloudflareCredentials(): { accountId: string; apiToken: string } {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !apiToken) {
+    throw new Error('CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN must be set');
+  }
+  return { accountId, apiToken };
+}
+
+async function vectorizeRequest<T>(
+  endpoint: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const { apiToken } = cloudflareCredentials();
+  const response = await fetch(`${VECTORIZE_API_BASE_URL}${endpoint}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      ...init.headers,
+    },
+  });
+  const body = (await response.json()) as CloudflareApiResponse<T>;
+  if (!response.ok || !body.success || body.result === undefined) {
+    const message = body.errors?.map((error) => error.message).join('; ') || `HTTP ${response.status}`;
+    throw new Error(`Vectorize request failed: ${message}`);
+  }
+  return body.result;
+}
+
+export async function waitForMutation(
+  mutationId: string,
+  readInfo: () => Promise<VectorizeIndexInfo>,
+  pause: (milliseconds: number) => Promise<void> = (milliseconds) =>
+    new Promise((resolve) => setTimeout(resolve, milliseconds)),
+  options: MutationWaitOptions = {},
+): Promise<void> {
+  const pollIntervalMs = options.pollIntervalMs ?? MUTATION_POLL_INTERVAL_MS;
+  const maxAttempts = options.maxAttempts ?? Math.ceil(MUTATION_WAIT_TIMEOUT_MS / pollIntervalMs);
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const info = await readInfo();
+    if (info.processedUpToMutation === mutationId) {
+      return;
+    }
+    if (attempt < maxAttempts) {
+      await pause(pollIntervalMs);
+    }
+  }
+
+  throw new Error(
+    `Vectorize mutation ${mutationId} was not processed after ${maxAttempts} attempts`,
+  );
+}
+
+async function readVectorizeInfo(target: VectorizeTarget): Promise<VectorizeIndexInfo> {
+  const { accountId } = cloudflareCredentials();
+  return vectorizeRequest<VectorizeIndexInfo>(
+    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/info`,
+  );
+}
+
+export async function upsertToVectorize(
   ndjsonPath: string,
   target: VectorizeTarget = targetFromEnv(),
-): void {
-  runWrangler(['vectorize', 'upsert', target.indexName, '--file', ndjsonPath]);
+): Promise<string> {
+  const { accountId } = cloudflareCredentials();
+  const formData = new FormData();
+  const contents = new Uint8Array(fs.readFileSync(ndjsonPath));
+  formData.append(
+    'vectors',
+    new Blob([contents], { type: 'application/x-ndjson' }),
+    path.basename(ndjsonPath),
+  );
+  const mutation = await vectorizeRequest<VectorizeMutation>(
+    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/upsert`,
+    { method: 'POST', body: formData },
+  );
+  if (!mutation.mutationId) {
+    throw new Error('Vectorize upsert returned no mutation id');
+  }
+  return mutation.mutationId;
 }
 
 export function deleteVectors(
@@ -228,15 +326,18 @@ export function readRecords(ndjsonPath: string): VectorizeRecord[] {
     });
 }
 
-export function publishIndex(
+export async function publishIndex(
   ndjsonPath: string,
   newIds: string[],
   target: VectorizeTarget = targetFromEnv(),
-): void {
+): Promise<void> {
   const staleIds = computeStaleIds(readManifest(target), newIds);
 
   console.log(`Upserting to Vectorize index "${target.indexName}"...`);
-  upsertToVectorize(ndjsonPath, target);
+  const mutationId = await upsertToVectorize(ndjsonPath, target);
+  console.log(`Waiting for Vectorize mutation ${mutationId}...`);
+  await waitForMutation(mutationId, () => readVectorizeInfo(target));
+  console.log('Vectorize upsert is queryable.');
 
   if (staleIds.length > 0) {
     console.log(`Deleting ${staleIds.length} stale vectors from the previous run...`);

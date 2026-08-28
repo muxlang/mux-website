@@ -7,6 +7,8 @@ import {
   deleteVectors,
   promoteRecords,
   targetFromEnv,
+  upsertToVectorize,
+  waitForMutation,
   writeNdjson,
   type IndexedChunk,
   type VectorizeTarget,
@@ -214,4 +216,78 @@ test('deleteVectors stops after the first failed batch', () => {
     invocations[1].slice(4),
     ids.slice(VECTORIZE_DELETE_LIMIT, 2 * VECTORIZE_DELETE_LIMIT),
   );
+});
+
+test('waitForMutation does not return until Vectorize processes the target mutation', async () => {
+  const observedMutations = ['previous-mutation', 'target-mutation'];
+  const pauses: number[] = [];
+
+  await waitForMutation(
+    'target-mutation',
+    async () => ({ processedUpToMutation: observedMutations.shift() ?? '' }),
+    async (milliseconds) => {
+      pauses.push(milliseconds);
+    },
+    { maxAttempts: 3, pollIntervalMs: 25 },
+  );
+
+  assert.deepEqual(pauses, [25]);
+});
+
+test('waitForMutation fails when Vectorize never processes the target mutation', async () => {
+  await assert.rejects(
+    waitForMutation(
+      'target-mutation',
+      async () => ({ processedUpToMutation: 'previous-mutation' }),
+      async () => {},
+      { maxAttempts: 2, pollIntervalMs: 1 },
+    ),
+    /target-mutation.*2 attempts/,
+  );
+});
+
+test('upsertToVectorize returns the mutation id from the Vectorize API', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mux-docs-indexer-'));
+  const target = makeTarget(root, {});
+  const originalAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const originalApiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const originalFetch = globalThis.fetch;
+  let requestedUrl = '';
+  let requestedInit: RequestInit | undefined;
+
+  try {
+    fs.writeFileSync(target.ndjsonPath, '{"id":"candidate"}\n', 'utf8');
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'account-id';
+    process.env.CLOUDFLARE_API_TOKEN = 'api-token';
+    globalThis.fetch = async (input, init) => {
+      requestedUrl = String(input);
+      requestedInit = init;
+      return new Response(
+        JSON.stringify({ success: true, result: { mutationId: 'target-mutation' } }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    };
+
+    assert.equal(await upsertToVectorize(target.ndjsonPath, target), 'target-mutation');
+    assert.equal(
+      requestedUrl,
+      'https://api.cloudflare.com/client/v4/accounts/account-id/vectorize/v2/indexes/mux-docs/upsert',
+    );
+    assert.equal(requestedInit?.method, 'POST');
+    assert.equal(new Headers(requestedInit?.headers).get('Authorization'), 'Bearer api-token');
+    assert.ok(requestedInit?.body instanceof FormData);
+  } finally {
+    if (originalAccountId === undefined) {
+      delete process.env.CLOUDFLARE_ACCOUNT_ID;
+    } else {
+      process.env.CLOUDFLARE_ACCOUNT_ID = originalAccountId;
+    }
+    if (originalApiToken === undefined) {
+      delete process.env.CLOUDFLARE_API_TOKEN;
+    } else {
+      process.env.CLOUDFLARE_API_TOKEN = originalApiToken;
+    }
+    globalThis.fetch = originalFetch;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
