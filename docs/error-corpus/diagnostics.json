@@ -34,5 +34,32 @@
     "help": null,
     "category": "diagnostic",
     "relevant_docs": ["/docs/reference/diagnostics/"]
+  },
+  {
+    "id": "unused_binding",
+    "code": "W0300",
+    "source": "auto unused = 1",
+    "error": "binding 'unused' is never read",
+    "help": "Remove it, use it, or write _ intentionally",
+    "category": "diagnostic",
+    "relevant_docs": ["/docs/reference/diagnostics/"]
+  },
+  {
+    "id": "shadowed_binding",
+    "code": "W0301",
+    "source": "auto x = 1\nif true { auto x = 2 }",
+    "error": "binding 'x' shadows an outer binding",
+    "help": "Rename the inner binding if accidental",
+    "category": "diagnostic",
+    "relevant_docs": ["/docs/reference/diagnostics/"]
+  },
+  {
+    "id": "dead_assignment",
+    "code": "W0303",
+    "source": "x = 1\nx = 2",
+    "error": "assignment to 'x' is overwritten before it is read",
+    "help": "Remove the first assignment or use its value",
+    "category": "diagnostic",
+    "relevant_docs": ["/docs/reference/diagnostics/"]
   }
 ]

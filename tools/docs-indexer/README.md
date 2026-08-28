@@ -6,9 +6,11 @@ deployed site needed) and excludes `design-notes/` - internal design
 rationale, not language documentation.
 
 The `docs-index.yml` workflow runs this tool after a docs change lands on
-`main`. It fails the workflow if embedding, Vectorize upsert, stale-vector
-cleanup, or either retrieval evaluation fails. The Worker is not redeployed
-for docs-only changes.
+`main`. It stages vectors in a run-specific Vectorize namespace, evaluates the
+Worker against that namespace, and promotes the exact validated records only
+after both evaluations pass. It fails the workflow if embedding, staging,
+promotion, cleanup, or either retrieval evaluation fails. The Worker is not
+redeployed for docs-only changes.
 
 ## Setup
 
@@ -45,6 +47,25 @@ This will:
 7. Delete any orphaned vectors from the previous run, then record the new
    vector-id set in `out/manifest.json`.
 
+For a safe validation before publication, use a run-specific namespace and ID
+prefix, then run the evaluations against a Worker started with the same
+namespace:
+
+```bash
+export VECTORIZE_NAMESPACE="docs-candidate-$RANDOM"
+export VECTORIZE_ID_PREFIX="candidate-$RANDOM-"
+export VECTORIZE_NDJSON_PATH=out/candidate-vectors.ndjson
+export VECTORIZE_MANIFEST_PATH=out/candidate-manifest.json
+npm run index
+npm --prefix ../../workers/mux-ai run dev -- --remote \
+  --var "VECTORIZE_NAMESPACE:$VECTORIZE_NAMESPACE"
+```
+
+After both retrieval evaluations pass, run `npm run publish` with the staging
+variables still set. It strips the candidate IDs and namespace, promotes the
+validated records to the live namespace, and updates the live manifest. Run
+`npm run cleanup` afterward, including when validation fails.
+
 Each chunk's vector ID is a deterministic hash of its doc id and position, so
 re-running overwrites a doc's existing chunks rather than duplicating them. When
 a doc shrinks to fewer chunks or is removed, the leftover IDs no longer appear
@@ -63,15 +84,25 @@ environment. A local run may instead use an existing `wrangler login` session.
 ## Manual recovery
 
 If the workflow fails, fix the reported credential, embedding, or evaluation
-problem and rerun the failed job. Operators can recover locally with:
+problem and rerun the failed job. Candidate records are isolated from live
+search and are removed by the workflow cleanup step. Operators can recover
+locally with:
 
 ```bash
 cd mux-website
 npm --prefix workers/mux-ai ci --ignore-scripts
 npm --prefix tools/docs-indexer ci --ignore-scripts
+export VECTORIZE_NAMESPACE="docs-recovery-$RANDOM"
+export VECTORIZE_ID_PREFIX="recovery-$RANDOM-"
+export VECTORIZE_NDJSON_PATH=tools/docs-indexer/out/candidate-vectors.ndjson
+export VECTORIZE_MANIFEST_PATH=tools/docs-indexer/out/candidate-manifest.json
 npm --prefix tools/docs-indexer run index
+# Start the Worker with --var VECTORIZE_NAMESPACE:$VECTORIZE_NAMESPACE,
+# then run both retrieval evaluations before publishing.
+npm --prefix tools/docs-indexer run publish
+npm --prefix tools/docs-indexer run cleanup
 ```
 
 Run the retrieval checks against a remote development Worker before declaring
-the recovery complete. The old manifest is retained whenever upsert or stale
-deletion fails, so a retry can finish cleanup.
+the recovery complete. The old live manifest is retained whenever promotion or
+live stale deletion fails, so a retry can finish publication cleanup.
