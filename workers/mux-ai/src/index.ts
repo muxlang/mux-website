@@ -154,7 +154,11 @@ async function embedQuery(query: string, env: Env): Promise<number[]> {
   return result.data[0];
 }
 
-async function retrieveChunks(query: string, env: Env): Promise<SearchResult[]> {
+async function retrieveChunks(
+  query: string,
+  env: Env,
+  diagnosticCodeQuery = query,
+): Promise<SearchResult[]> {
   const vector = await embedQuery(query, env);
   const queryResult = await env.VECTORIZE.query(vector, {
     topK: VECTOR_QUERY_TOP_K,
@@ -164,7 +168,9 @@ async function retrieveChunks(query: string, env: Env): Promise<SearchResult[]> 
       : {}),
   });
 
-  const diagnosticCodes = new Set(query.toUpperCase().match(/\b[EW]\d{4}\b/g) ?? []);
+  const diagnosticCodes = new Set(
+    diagnosticCodeQuery.toUpperCase().match(/\b[EW]\d{4}\b/g) ?? [],
+  );
 
   return queryResult.matches
     .filter((match) => match.score >= MIN_SCORE)
@@ -325,7 +331,7 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
 
   let chunks: SearchResult[];
   try {
-    chunks = await retrieveChunks(retrievalQuery, env);
+    chunks = await retrieveChunks(retrievalQuery, env, lastUserMessage.content);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log({ event: 'retrieval_error', message });
