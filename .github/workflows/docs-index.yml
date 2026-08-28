@@ -81,14 +81,23 @@ jobs:
           worker_pid=$!
           trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
           ready=0
-          for attempt in $(seq 1 30); do
+          for attempt in $(seq 1 60); do
             if curl --fail --silent http://localhost:8787/api/chat/health > /dev/null; then
               ready=1
               break
             fi
+            if ! kill -0 "$worker_pid" 2>/dev/null; then
+              echo "Worker exited before becoming ready. Wrangler log:"
+              sed -n '1,240p' /tmp/mux-ai-worker.log
+              exit 1
+            fi
             sleep 2
           done
-          test "$ready" -eq 1
+          if [ "$ready" -ne 1 ]; then
+            echo "Worker did not become ready after $((attempt * 2)) seconds. Wrangler log:"
+            sed -n '1,240p' /tmp/mux-ai-worker.log
+            exit 1
+          fi
           echo "Worker became ready on attempt $attempt"
           SEARCH_URL=http://localhost:8787 npm run eval --prefix tools/retrieval-test 2>&1 | tee /tmp/mux-retrieval-eval.log
           WORKER_URL=http://localhost:8787 npm run error-eval --prefix tools/retrieval-test 2>&1 | tee /tmp/mux-error-eval.log
