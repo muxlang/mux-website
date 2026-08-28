@@ -103,6 +103,11 @@ npm --prefix tools/docs-indexer run publish
 npm --prefix tools/docs-indexer run cleanup
 ```
 
+Relative `VECTORIZE_NDJSON_PATH` and `VECTORIZE_MANIFEST_PATH` values resolve
+from the directory where npm was invoked. This keeps the indexer and Wrangler
+on the same file even though npm and Wrangler run their commands from different
+package directories.
+
 Run the retrieval checks against a remote development Worker before declaring
 the recovery complete. The old live manifest is retained whenever promotion or
 live stale deletion fails, so a retry can finish publication cleanup.
