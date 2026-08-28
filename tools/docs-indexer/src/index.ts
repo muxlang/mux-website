@@ -59,7 +59,7 @@ async function main(): Promise<void> {
   const ndjsonPath = writeNdjson(indexed, target);
   console.log(`Wrote ${indexed.length} vectors to ${ndjsonPath}`);
 
-  publishIndex(ndjsonPath, vectorIds(indexed, target), target);
+  await publishIndex(ndjsonPath, vectorIds(indexed, target), target);
 
   console.log('Done.');
 }

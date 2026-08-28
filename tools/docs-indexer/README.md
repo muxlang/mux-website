@@ -42,8 +42,8 @@ This will:
    (~175-450 tokens), preferring heading boundaries.
 4. Embed every chunk with Workers AI (`@cf/baai/bge-base-en-v1.5`).
 5. Write the vectors + metadata to `out/vectors.ndjson`.
-6. Run `wrangler vectorize upsert mux-docs --file out/vectors.ndjson` from
-   `workers/mux-ai`.
+6. Upsert the vectors through the Vectorize API and wait until a run-specific
+   publication marker is queryable.
 7. Delete any orphaned vectors from the previous run, then record the new
    vector-id set in `out/manifest.json`.
 
@@ -79,7 +79,14 @@ the `mux-docs` index, then re-index.
 
 The indexing token must have Workers AI read access and Vectorize write/delete
 access. The workflow reads these values from the protected `docs-indexing`
-environment. A local run may instead use an existing `wrangler login` session.
+environment. Local indexing and publication runs use the same environment
+variables.
+
+Vectorize writes are asynchronous. After an upsert, the indexer reads back a
+run-specific publication marker; after a deletion, it reads back the affected
+IDs until they are absent. Retrieval evaluation, publication, and manifest
+updates therefore wait for the exact query-visible state they need instead of
+treating an enqueued mutation as completed work.
 
 ## Manual recovery
 
@@ -87,6 +94,11 @@ If the workflow fails, fix the reported credential, embedding, or evaluation
 problem and rerun the failed job. Candidate records are isolated from live
 search and are removed by the workflow cleanup step. Operators can recover
 locally with:
+
+The hosted workflows serialize publication with the shared `pages` concurrency
+group. Local recovery can safely overlap another publisher because readiness is
+checked against this run's records rather than the index-wide mutation
+watermark.
 
 ```bash
 cd mux-website

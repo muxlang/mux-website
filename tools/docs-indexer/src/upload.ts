@@ -1,5 +1,4 @@
-import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ExtractedDoc } from './extract';
@@ -25,6 +24,7 @@ export interface VectorizeRecord {
     heading: string | null;
     text: string;
     _muxSourceId?: string;
+    _muxPublicationId?: string;
   };
 }
 
@@ -78,10 +78,29 @@ function toRecord(entry: IndexedChunk, target: VectorizeTarget): VectorizeRecord
   };
 }
 
-const WORKER_DIR = path.resolve(import.meta.dirname, '..', '..', '..', 'workers', 'mux-ai');
 const OUT_DIR = path.resolve(import.meta.dirname, '..', 'out');
 // Vectorize rejects delete-by-ID requests containing more than 100 IDs.
 const VECTORIZE_DELETE_BATCH_SIZE = 100;
+const VECTORIZE_API_BASE_URL = 'https://api.cloudflare.com/client/v4';
+const MUTATION_POLL_INTERVAL_MS = 2_000;
+const MUTATION_WAIT_TIMEOUT_MS = 5 * 60_000;
+
+interface CloudflareApiResponse<T> {
+  success: boolean;
+  errors?: { message: string }[];
+  result?: T;
+}
+
+interface VectorizeMutation {
+  mutationId?: string;
+}
+
+interface ReadinessWaitOptions {
+  maxAttempts?: number;
+  pollIntervalMs?: number;
+}
+
+type DeleteBatch = (ids: string[], target: VectorizeTarget) => Promise<void>;
 
 function defaultTarget(): VectorizeTarget {
   return {
@@ -162,40 +181,137 @@ export function computeStaleIds(oldIds: string[] | null, newIds: string[]): stri
   return oldIds.filter((id) => !current.has(id));
 }
 
-// Absolute path to the wrangler binary installed in the worker package, so the
-// command does not rely on PATH resolution (which could pick up an attacker-
-// controlled `npx`/`wrangler` earlier on PATH).
-const WRANGLER_BIN = path.join(WORKER_DIR, 'node_modules', '.bin', 'wrangler');
-
-function wranglerEnv(): NodeJS.ProcessEnv {
-  // CI supplies a protected token with both Workers AI and Vectorize rights.
-  // Local runs may omit it and use an existing `wrangler login` session.
-  return process.env;
+function cloudflareCredentials(): { accountId: string; apiToken: string } {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !apiToken) {
+    throw new Error('CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN must be set');
+  }
+  return { accountId, apiToken };
 }
 
-function runWrangler(args: string[]): void {
-  execFileSync(WRANGLER_BIN, args, {
-    cwd: WORKER_DIR,
-    stdio: 'inherit',
-    env: wranglerEnv(),
+async function vectorizeRequest<T>(
+  endpoint: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const { apiToken } = cloudflareCredentials();
+  const response = await fetch(`${VECTORIZE_API_BASE_URL}${endpoint}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      ...init.headers,
+    },
   });
+  const responseText = await response.text();
+  let body: CloudflareApiResponse<T>;
+  try {
+    body = JSON.parse(responseText) as CloudflareApiResponse<T>;
+  } catch {
+    throw new Error(
+      `Vectorize request failed for ${endpoint}: HTTP ${response.status} returned a non-JSON response`,
+    );
+  }
+  if (!response.ok || !body.success || body.result === undefined) {
+    const message =
+      body.errors?.map((error) => error.message).join('; ') || `HTTP ${response.status}`;
+    throw new Error(`Vectorize request failed: ${message}`);
+  }
+  return body.result;
 }
 
-export function upsertToVectorize(
+export async function waitForReadiness(
+  description: string,
+  isReady: () => Promise<boolean>,
+  pause: (milliseconds: number) => Promise<void> = (milliseconds) =>
+    new Promise((resolve) => setTimeout(resolve, milliseconds)),
+  options: ReadinessWaitOptions = {},
+): Promise<void> {
+  const pollIntervalMs = options.pollIntervalMs ?? MUTATION_POLL_INTERVAL_MS;
+  const maxAttempts = options.maxAttempts ?? Math.ceil(MUTATION_WAIT_TIMEOUT_MS / pollIntervalMs);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (await isReady()) {
+      return;
+    }
+    if (attempt < maxAttempts) {
+      await pause(pollIntervalMs);
+    }
+  }
+
+  throw new Error(`Vectorize ${description} was not queryable after ${maxAttempts} attempts`);
+}
+
+async function readVectorsByIds(
+  ids: string[],
+  target: VectorizeTarget,
+): Promise<VectorizeRecord[]> {
+  const { accountId } = cloudflareCredentials();
+  return vectorizeRequest<VectorizeRecord[]>(
+    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/get_by_ids`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    },
+  );
+}
+
+function markPublication(ndjsonPath: string, publicationId: string): void {
+  const records = readRecords(ndjsonPath).map((record) => ({
+    ...record,
+    metadata: { ...record.metadata, _muxPublicationId: publicationId },
+  }));
+  writeRecords(ndjsonPath, records);
+}
+
+export async function upsertToVectorize(
   ndjsonPath: string,
   target: VectorizeTarget = targetFromEnv(),
-): void {
-  runWrangler(['vectorize', 'upsert', target.indexName, '--file', ndjsonPath]);
+): Promise<string> {
+  const { accountId } = cloudflareCredentials();
+  const formData = new FormData();
+  const contents = new Uint8Array(fs.readFileSync(ndjsonPath));
+  formData.append(
+    'vectors',
+    new Blob([contents], { type: 'application/x-ndjson' }),
+    path.basename(ndjsonPath),
+  );
+  const mutation = await vectorizeRequest<VectorizeMutation>(
+    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/upsert`,
+    { method: 'POST', body: formData },
+  );
+  if (!mutation.mutationId) {
+    throw new Error('Vectorize upsert returned no mutation id');
+  }
+  return mutation.mutationId;
 }
 
-export function deleteVectors(
+async function deleteVectorBatch(ids: string[], target: VectorizeTarget): Promise<void> {
+  const { accountId } = cloudflareCredentials();
+  const mutation = await vectorizeRequest<VectorizeMutation>(
+    `/accounts/${accountId}/vectorize/v2/indexes/${encodeURIComponent(target.indexName)}/delete_by_ids`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    },
+  );
+  if (!mutation.mutationId) {
+    throw new Error('Vectorize deletion returned no mutation id');
+  }
+  await waitForReadiness(
+    `deletion mutation ${mutation.mutationId}`,
+    async () => (await readVectorsByIds(ids, target)).length === 0,
+  );
+}
+
+export async function deleteVectors(
   ids: string[],
   target: VectorizeTarget = targetFromEnv(),
-  execute: (args: string[]) => void = runWrangler,
-): void {
+  deleteBatch: DeleteBatch = deleteVectorBatch,
+): Promise<void> {
   for (let i = 0; i < ids.length; i += VECTORIZE_DELETE_BATCH_SIZE) {
     const batch = ids.slice(i, i + VECTORIZE_DELETE_BATCH_SIZE);
-    execute(['vectorize', 'delete-vectors', target.indexName, '--ids', ...batch]);
+    await deleteBatch(batch, target);
   }
 }
 
@@ -228,19 +344,30 @@ export function readRecords(ndjsonPath: string): VectorizeRecord[] {
     });
 }
 
-export function publishIndex(
+export async function publishIndex(
   ndjsonPath: string,
   newIds: string[],
   target: VectorizeTarget = targetFromEnv(),
-): void {
+): Promise<void> {
   const staleIds = computeStaleIds(readManifest(target), newIds);
+  const publicationId = randomUUID();
+  markPublication(ndjsonPath, publicationId);
 
   console.log(`Upserting to Vectorize index "${target.indexName}"...`);
-  upsertToVectorize(ndjsonPath, target);
+  const mutationId = await upsertToVectorize(ndjsonPath, target);
+  console.log('Waiting for Vectorize upsert to become queryable...');
+  await waitForReadiness(
+    `upsert mutation ${mutationId}`,
+    async () => {
+      const [record] = await readVectorsByIds([newIds[0]], target);
+      return record?.metadata?._muxPublicationId === publicationId;
+    },
+  );
+  console.log('Vectorize upsert is queryable.');
 
   if (staleIds.length > 0) {
     console.log(`Deleting ${staleIds.length} stale vectors from the previous run...`);
-    deleteVectors(staleIds, target);
+    await deleteVectors(staleIds, target);
   } else {
     console.log('No stale vectors to delete.');
   }
