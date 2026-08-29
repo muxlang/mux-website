@@ -411,7 +411,8 @@ export async function publishIndex(
   target: VectorizeTarget = targetFromEnv(),
   allowEmptyPublication = process.env.MUX_ALLOW_EMPTY_PUBLICATION === '1',
 ): Promise<void> {
-  const staleIds = computeStaleIds(readManifest(target), newIds);
+  const oldIds = readManifest(target);
+  const staleIds = computeStaleIds(oldIds, newIds);
   // Empty publications are destructive: the stale set is the entire live
   // index. Require an explicit operator opt-in so a broken crawl or embedding
   // response cannot erase every document while still reporting success.
@@ -419,6 +420,11 @@ export async function publishIndex(
     if (!allowEmptyPublication) {
       throw new Error(
         'Refusing to publish an empty Vectorize index; set MUX_ALLOW_EMPTY_PUBLICATION=1 only when intentional',
+      );
+    }
+    if (oldIds === null) {
+      throw new Error(
+        'Refusing an empty publication without the previous manifest; restore the manifest before an intentional purge',
       );
     }
     if (staleIds.length > 0) {

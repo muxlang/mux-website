@@ -37,6 +37,24 @@ test('publishIndex rejects an empty publication without explicit opt-in', async 
   }
 });
 
+test('publishIndex rejects an opted-in empty publication without a manifest', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mux-docs-indexer-'));
+  try {
+    const target = makeTarget(root, {
+      namespace: undefined,
+      idPrefix: '',
+      manifestPath: path.join(root, 'missing-manifest.json'),
+      ndjsonPath: path.join(root, 'vectors.ndjson'),
+    });
+    await assert.rejects(
+      publishIndex(target.ndjsonPath, [], target, true),
+      /without the previous manifest/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 function makeTarget(root: string, overrides: Partial<VectorizeTarget>): VectorizeTarget {
   return {
     indexName: 'mux-docs',
