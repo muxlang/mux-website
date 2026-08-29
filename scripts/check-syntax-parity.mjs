@@ -106,7 +106,7 @@ function monacoArray(src, name) {
 // dropped: we only compare literal keyword/type words.
 function wordsFromRegex(pattern) {
   const words = new Set();
-  const cleaned = pattern.replaceAll('\\b', '');
+  const cleaned = pattern.replaceAll(String.raw`\b`, '');
   for (const group of cleaned.matchAll(/\((?:\?:)?([^()]*)\)/g)) {
     for (const alt of group[1].split('|')) {
       const token = alt.trim();
