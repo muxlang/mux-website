@@ -1,100 +1,33 @@
-# mux-website: AI Agent Guidelines
+# mux-website
 
-This repo is the Docusaurus docs site for Mux (served at mux-lang.dev), plus the
-docs AI worker (`workers/mux-ai/`) and the docs indexer (`tools/docs-indexer/`).
-It is part of the multi-repo [muxlang](https://github.com/muxlang) ecosystem.
+`mux-website` is the Docusaurus documentation site and its Worker, indexer,
+and retrieval tooling. It serves the public language documentation and the
+interactive playground UI.
 
-> Cross-repo architecture, design rationale, the feature map, and the release
-> process live in [muxlang/mux-context](https://github.com/muxlang/mux-context).
+Cross-repository architecture and release facts live in
+[`mux-context`](https://github.com/muxlang/mux-context). Read its canonical
+[`SKILL.md`](https://github.com/muxlang/mux-context/blob/main/SKILL.md) before
+changing language behavior or a cross-repository generated artifact.
 
-## Critical Rules
+## Invariants
 
-- **No special characters** - avoid em-dashes, emojis, or other non-ASCII in code,
-  comments, or commit messages.
+- Documentation examples must describe the released compiler behavior used by
+  the playground; compile complete snippets before publishing them.
+- `src/shiki/mux.json` and other generated/derived syntax files must identify
+  their source and pass the parity check; do not make the website grammar a
+  second source of truth.
+- Worker requests are untrusted. Preserve authentication boundaries, message
+  and body limits, rate controls, and bounded CPU/memory work.
+- Keep indexer and retrieval tooling independently typechecked and testable
+  without production credentials.
 
-  One deliberate exception: a documentation example whose SUBJECT is multi-byte
-  text. `docs/language-guide/strings.md` shows that `length` counts characters
-  rather than bytes, and that claim cannot be demonstrated with ASCII - every
-  ASCII string has as many bytes as characters. Mux has no `\u` escape either,
-  so the character has to appear literally. Keep such examples; do not "fix"
-  them to ASCII, which would leave the page asserting something its own code
-  does not show.
-- **Understand existing code first** - read relevant components/config before
-  changing anything. Follow existing patterns.
-- **No LLVM/Rust toolchain needed** - this is a JS/TS + Markdown repo. Node 22 is
-  the only requirement. This is intentional: docs/content work must not require
-  the compiler toolchain.
-- **Remove outdated comments** - keep comments in sync with code.
-- **Ask when unsure**, especially about language semantics documented here - the
-  source of truth for the language is `mux-compiler`.
+## Quality gate
 
-## Development
+Run `npm run lint`, `npm run typecheck`, and `npm run build`. For related work,
+also run the Worker, docs-indexer, retrieval-tool, and docs-snippet checks named
+in `CONTRIBUTING.md`.
 
-```bash
-npm install
-npm start          # dev server at http://localhost:3000
-npm run build      # production build (must pass in CI)
-npm run lint       # eslint src/
-npm run typecheck  # tsc
-```
+## Documentation
 
-Before pushing: run `lint`, `typecheck`, and `build`. CI runs all three plus a
-SonarQube scan.
-
-## Structure
-
-- `docs/` - the documentation content (Markdown/MDX).
-- `src/` - site components, pages, the interactive playground.
-- `static/` - assets (logo at `static/img/mux-logo.png`).
-- `workers/mux-ai/` - Cloudflare Worker (Workers AI + Vectorize). See its README
-  for deploy + the maintenance runbook (re-index after docs changes).
-- `tools/docs-indexer/` - builds the `mux-docs` Vectorize index from `docs/`.
-  `DOCS_ROOT` in `src/index.ts` resolves to this repo's `docs/`.
-
-## Syntax highlighting on the site
-
-`.mux` code blocks are highlighted with a Shiki grammar vendored at
-`src/shiki/mux.json`. This is a GENERATED artifact: the canonical syntax spec
-lives in the `mux-syntax-highlighting` repo. When that repo's generator is wired
-up, `src/shiki/mux.json` gets a CI parity check against the published spec. Until
-then, keep it in sync manually and do not hand-edit it as the source of truth.
-
-## Docs snippets must compile against the released compiler
-
-The docs deploy from `main` on every merge, but the playground runs the RELEASED
-compiler pinned in `mux-website-api` (`Dockerfile` `ARG MUX_VERSION`). Docs that
-teach unreleased syntax go live while the playground still rejects them - this
-skew shipped once with the `{:}` empty-map literal.
-
-`scripts/check-docs-snippets.mjs` compiles every complete ```mux example and
-`EmbeddedPlayground` block in `docs/` against a `mux` binary. Run it before
-changing docs that add or alter Mux code:
-
-```bash
-MUX_BIN=/path/to/released/mux npm run check:docs-snippets
-```
-
-Fragments (fences without a `func main`) are skipped; a titled fence
-(`title="name.mux"`) is written to disk first so a later example can `import` it;
-an intentional error example opts out with `no-compile` in the fence meta. The
-`.github/workflows/docs-snippets.yml` job runs this against the playground's
-pinned release and **gates every PR touching `docs/**`** (it can also be run
-manually). If it goes red, the docs are ahead of the release the playground
-runs: hold the docs PR until that release ships (see the
-[release process](https://github.com/muxlang/mux-context/blob/main/docs/release-process.md)),
-or mark the fence `no-compile` if it is an intentional error example.
-
-## Coupling notes
-
-- The site talks to `mux-website-api` (compile/run) and the `mux-ai` worker over
-  HTTP only - no build-time coupling to the compiler.
-- User-facing install/clone/issue links point at `muxlang/mux-compiler` (the
-  flagship), not this repo.
-
-## Related repos
-
-- `mux-compiler` - compiler + CLI, the canonical language version + docs source of truth.
-- `mux-syntax-highlighting` - canonical syntax spec (feeds the Shiki grammar here).
-- `mux-website-api`, `tree-sitter-mux`.
-
-**Add to this document as you learn vital information.**
+See [`README.md`](README.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), and the
+component READMEs under `workers/` and `tools/`.
