@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
   deleteVectors,
   promoteRecords,
+  publishIndex,
   readManifest,
   targetFromEnv,
   upsertToVectorize,
@@ -16,6 +17,25 @@ import {
 } from './upload';
 
 const VECTORIZE_DELETE_LIMIT = 20;
+
+test('publishIndex rejects an empty publication without explicit opt-in', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mux-docs-indexer-'));
+  try {
+    const target = makeTarget(root, {
+      namespace: undefined,
+      idPrefix: '',
+      manifestPath: path.join(root, 'manifest.json'),
+      ndjsonPath: path.join(root, 'vectors.ndjson'),
+    });
+    fs.writeFileSync(target.manifestPath, JSON.stringify(['a'.repeat(64)]));
+    await assert.rejects(
+      publishIndex(target.ndjsonPath, [], target, false),
+      /Refusing to publish an empty Vectorize index/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 function makeTarget(root: string, overrides: Partial<VectorizeTarget>): VectorizeTarget {
   return {

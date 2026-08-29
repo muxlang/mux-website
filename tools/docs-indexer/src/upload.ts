@@ -409,13 +409,18 @@ export async function publishIndex(
   ndjsonPath: string,
   newIds: string[],
   target: VectorizeTarget = targetFromEnv(),
+  allowEmptyPublication = process.env.MUX_ALLOW_EMPTY_PUBLICATION === '1',
 ): Promise<void> {
   const staleIds = computeStaleIds(readManifest(target), newIds);
-  // An empty crawl is a valid publication (for example after removing the
-  // final document). Vectorize cannot upsert an empty NDJSON file and there is
-  // no new vector whose publication marker can be probed, so remove the stale
-  // set and advance the manifest directly.
+  // Empty publications are destructive: the stale set is the entire live
+  // index. Require an explicit operator opt-in so a broken crawl or embedding
+  // response cannot erase every document while still reporting success.
   if (newIds.length === 0) {
+    if (!allowEmptyPublication) {
+      throw new Error(
+        'Refusing to publish an empty Vectorize index; set MUX_ALLOW_EMPTY_PUBLICATION=1 only when intentional',
+      );
+    }
     if (staleIds.length > 0) {
       console.log(`Deleting ${staleIds.length} stale vectors from an empty publication...`);
       await deleteVectors(staleIds, target);
