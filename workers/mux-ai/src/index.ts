@@ -273,9 +273,35 @@ async function readJsonBody(request: Request): Promise<unknown> {
   if (declaredLength !== null && Number(declaredLength) > MAX_REQUEST_BODY_BYTES) {
     throw new Error('request body too large');
   }
-  const bytes = await request.arrayBuffer();
-  if (bytes.byteLength > MAX_REQUEST_BODY_BYTES) {
-    throw new Error('request body too large');
+
+  // Content-Length is absent for chunked requests, so arrayBuffer() would
+  // buffer an attacker-controlled body before the size check. Read through a
+  // capped stream instead and cancel as soon as the budget is exceeded.
+  const reader = request.body?.getReader();
+  if (!reader) {
+    return JSON.parse('null') as unknown;
+  }
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_REQUEST_BODY_BYTES) {
+        await reader.cancel('request body too large');
+        throw new Error('request body too large');
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
   }
   return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
 }
