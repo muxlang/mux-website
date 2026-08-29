@@ -167,15 +167,32 @@ export function vectorIds(
 }
 
 export function readManifest(target: VectorizeTarget = targetFromEnv()): string[] | null {
+  let contents: string;
   try {
-    const parsed: unknown = JSON.parse(fs.readFileSync(target.manifestPath, 'utf8'));
-    if (!Array.isArray(parsed)) {
+    contents = fs.readFileSync(target.manifestPath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      // A first publication from a clean checkout has no previous IDs. The
+      // caller deliberately skips destructive cleanup in that case.
       return null;
     }
-    return parsed.filter((id): id is string => typeof id === 'string');
-  } catch {
-    return null;
+    const wrapped = new Error(`Unable to read Vectorize manifest: ${target.manifestPath}`);
+    (wrapped as Error & { cause?: unknown }).cause = error;
+    throw wrapped;
   }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(contents);
+  } catch (error) {
+    const wrapped = new Error(`Vectorize manifest is not valid JSON: ${target.manifestPath}`);
+    (wrapped as Error & { cause?: unknown }).cause = error;
+    throw wrapped;
+  }
+  if (!Array.isArray(parsed) || !parsed.every((id): id is string => typeof id === 'string')) {
+    throw new Error(`Vectorize manifest must be a JSON string array: ${target.manifestPath}`);
+  }
+  return parsed;
 }
 
 export function writeManifest(ids: string[], target: VectorizeTarget = targetFromEnv()): void {
@@ -392,8 +409,32 @@ export async function publishIndex(
   ndjsonPath: string,
   newIds: string[],
   target: VectorizeTarget = targetFromEnv(),
+  allowEmptyPublication = process.env.MUX_ALLOW_EMPTY_PUBLICATION === '1',
 ): Promise<void> {
-  const staleIds = computeStaleIds(readManifest(target), newIds);
+  const oldIds = readManifest(target);
+  const staleIds = computeStaleIds(oldIds, newIds);
+  // Empty publications are destructive: the stale set is the entire live
+  // index. Require an explicit operator opt-in so a broken crawl or embedding
+  // response cannot erase every document while still reporting success.
+  if (newIds.length === 0) {
+    if (!allowEmptyPublication) {
+      throw new Error(
+        'Refusing to publish an empty Vectorize index; set MUX_ALLOW_EMPTY_PUBLICATION=1 only when intentional',
+      );
+    }
+    if (oldIds === null) {
+      throw new Error(
+        'Refusing an empty publication without the previous manifest; restore the manifest before an intentional purge',
+      );
+    }
+    if (staleIds.length > 0) {
+      console.log(`Deleting ${staleIds.length} stale vectors from an empty publication...`);
+      await deleteVectors(staleIds, target);
+    }
+    writeManifest([], target);
+    console.log('Published an empty Vectorize index.');
+    return;
+  }
   const publicationId = randomUUID();
   markPublication(ndjsonPath, publicationId);
 

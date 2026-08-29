@@ -6,6 +6,8 @@ import test from 'node:test';
 import {
   deleteVectors,
   promoteRecords,
+  publishIndex,
+  readManifest,
   targetFromEnv,
   upsertToVectorize,
   waitForReadiness,
@@ -15,6 +17,43 @@ import {
 } from './upload';
 
 const VECTORIZE_DELETE_LIMIT = 20;
+
+test('publishIndex rejects an empty publication without explicit opt-in', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mux-docs-indexer-'));
+  try {
+    const target = makeTarget(root, {
+      namespace: undefined,
+      idPrefix: '',
+      manifestPath: path.join(root, 'manifest.json'),
+      ndjsonPath: path.join(root, 'vectors.ndjson'),
+    });
+    fs.writeFileSync(target.manifestPath, JSON.stringify(['a'.repeat(64)]));
+    await assert.rejects(
+      publishIndex(target.ndjsonPath, [], target, false),
+      /Refusing to publish an empty Vectorize index/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('publishIndex rejects an opted-in empty publication without a manifest', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mux-docs-indexer-'));
+  try {
+    const target = makeTarget(root, {
+      namespace: undefined,
+      idPrefix: '',
+      manifestPath: path.join(root, 'missing-manifest.json'),
+      ndjsonPath: path.join(root, 'vectors.ndjson'),
+    });
+    await assert.rejects(
+      publishIndex(target.ndjsonPath, [], target, true),
+      /without the previous manifest/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 function makeTarget(root: string, overrides: Partial<VectorizeTarget>): VectorizeTarget {
   return {
@@ -159,6 +198,22 @@ test('targetFromEnv resolves workflow paths from the npm invocation directory', 
     } else {
       process.env.VECTORIZE_MANIFEST_PATH = originalManifestPath;
     }
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('readManifest distinguishes a first run from corrupt state', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mux-docs-indexer-'));
+  const target = makeTarget(root, {});
+  try {
+    assert.equal(readManifest(target), null, 'a missing manifest is a first run');
+    fs.writeFileSync(target.manifestPath, '{not-json', 'utf8');
+    assert.throws(() => readManifest(target), /not valid JSON/);
+    fs.writeFileSync(target.manifestPath, JSON.stringify(['id-1', 42]), 'utf8');
+    assert.throws(() => readManifest(target), /string array/);
+    fs.writeFileSync(target.manifestPath, JSON.stringify(['id-1', 'id-2']), 'utf8');
+    assert.deepEqual(readManifest(target), ['id-1', 'id-2']);
+  } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });

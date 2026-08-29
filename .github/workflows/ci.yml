@@ -43,6 +43,7 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
       # Verify the Monaco/Shiki keyword+type sets match the canonical
@@ -50,6 +51,70 @@ jobs:
       # HTTP by the script). Fails if the vendored copies drift.
       - run: npm run check:syntax-parity
       - run: npm run build
+
+  worker_checks:
+    name: Worker Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: workers/mux-ai/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: workers/mux-ai
+      - run: npm audit --audit-level=high
+        working-directory: workers/mux-ai
+      - run: npm test
+        working-directory: workers/mux-ai
+      - run: npm run typecheck
+        working-directory: workers/mux-ai
+
+  docs_indexer_checks:
+    name: Docs Indexer Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/docs-indexer/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: tools/docs-indexer
+      - run: npm audit --audit-level=high
+        working-directory: tools/docs-indexer
+      - run: npm test
+        working-directory: tools/docs-indexer
+      - run: npm run typecheck
+        working-directory: tools/docs-indexer
+
+  retrieval_checks:
+    name: Retrieval Tool Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/retrieval-test/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: tools/retrieval-test
+      - run: npm audit --audit-level=high
+        working-directory: tools/retrieval-test
+      - run: npm run typecheck
+        working-directory: tools/retrieval-test
 
   sonarqube:
     name: SonarQube

@@ -77,6 +77,12 @@ does the indexing. A fresh checkout with no manifest skips deletion on its first
 run (never destructive by surprise); to force a full purge, delete and recreate
 the `mux-docs` index, then re-index.
 
+The manifest is a commit marker, not an optional cache. A malformed or partially
+written manifest now aborts publication before any Vectorize mutation. Restore
+the last valid manifest from the workflow artifact or follow the manual recovery
+steps below; do not replace it with an empty array unless the live index has
+already been reconciled.
+
 The indexing token must have Workers AI read access and Vectorize write/delete
 access. The workflow reads these values from the protected `docs-indexing`
 environment. Local indexing and publication runs use the same environment

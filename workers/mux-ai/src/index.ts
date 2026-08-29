@@ -75,6 +75,10 @@ const GENERATION_HISTORY_LIMIT = 6;
 // lever: a single oversized message would inflate the embedding/generation
 // call. Generous for a question or a pasted compiler error; not a blob.
 const MAX_CONTENT_CHARS = 2000;
+// Bound the serialized request before parsing so an attacker cannot send a
+// huge JSON array of tiny messages and make parsing itself the expensive work.
+const MAX_REQUEST_BODY_BYTES = 128 * 1024;
+const MAX_MESSAGE_COUNT = 32;
 // Minimum cosine similarity for a chunk to be considered relevant. There is a
 // consistent gap between on-topic chunk scores and the highest off-topic leak;
 // this floor sits in that gap. The exact value depends on the embedding model,
@@ -264,6 +268,44 @@ function parseChatRequest(body: unknown): ChatRequest | null {
   return b as unknown as ChatRequest;
 }
 
+async function readJsonBody(request: Request): Promise<unknown> {
+  const declaredLength = request.headers.get('content-length');
+  if (declaredLength !== null && Number(declaredLength) > MAX_REQUEST_BODY_BYTES) {
+    throw new Error('request body too large');
+  }
+
+  // Content-Length is absent for chunked requests, so arrayBuffer() would
+  // buffer an attacker-controlled body before the size check. Read through a
+  // capped stream instead and cancel as soon as the budget is exceeded.
+  const reader = request.body?.getReader();
+  if (!reader) {
+    return JSON.parse('null') as unknown;
+  }
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_REQUEST_BODY_BYTES) {
+        await reader.cancel('request body too large');
+        throw new Error('request body too large');
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+}
+
 type ValidatedChat =
   | { ok: true; messages: ChatMessage[]; lastUserIndex: number }
   | { ok: false; error: string };
@@ -275,6 +317,9 @@ function validateChatBody(body: unknown): ValidatedChat {
   const chatRequest = parseChatRequest(body);
   if (!chatRequest || chatRequest.messages.length === 0) {
     return { ok: false, error: 'messages must be a non-empty array of {role, content}' };
+  }
+  if (chatRequest.messages.length > MAX_MESSAGE_COUNT) {
+    return { ok: false, error: `messages must contain at most ${MAX_MESSAGE_COUNT} items` };
   }
   if (chatRequest.messages.some((m) => m.content.length > MAX_CONTENT_CHARS)) {
     return { ok: false, error: `Each message must be at most ${MAX_CONTENT_CHARS} characters.` };
@@ -310,7 +355,7 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await readJsonBody(request);
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' } satisfies ChatResponse, env, 400);
   }
@@ -411,7 +456,7 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await readJsonBody(request);
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, env, 400);
   }

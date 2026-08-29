@@ -9,10 +9,12 @@
 // muxlang/mux-syntax-highlighting. Neither website copy references it, so they
 // silently drift when the spec changes (e.g. a new keyword landing).
 //
-// This is a PARITY CHECK ONLY, not a generator. It fails if either website copy
-// is MISSING a canonical keyword or type (the drift we care about), or if it
+// This is a parity check, not a generator. The website copies are deliberately
+// committed because Docusaurus and the playground consume their native
+// formats. It fails if either copy is MISSING a canonical keyword or type, or
 // carries an unexpected website-only token that is not on the documented
-// allowlist below. Generating the files from canonical is a follow-up.
+// allowlist below. A syntax change is incomplete until this gate passes; the
+// canonical repository remains the only place where the token set is edited.
 //
 // Canonical source resolution (first match wins):
 //   1. CLI argument: node check-syntax-parity.mjs <path-or-url>
