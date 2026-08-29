@@ -66,6 +66,8 @@ jobs:
           cache-dependency-path: workers/mux-ai/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: workers/mux-ai
+      - run: npm test
+        working-directory: workers/mux-ai
       - run: npm run typecheck
         working-directory: workers/mux-ai
 
