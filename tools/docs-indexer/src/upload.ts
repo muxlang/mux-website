@@ -167,15 +167,32 @@ export function vectorIds(
 }
 
 export function readManifest(target: VectorizeTarget = targetFromEnv()): string[] | null {
+  let contents: string;
   try {
-    const parsed: unknown = JSON.parse(fs.readFileSync(target.manifestPath, 'utf8'));
-    if (!Array.isArray(parsed)) {
+    contents = fs.readFileSync(target.manifestPath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      // A first publication from a clean checkout has no previous IDs. The
+      // caller deliberately skips destructive cleanup in that case.
       return null;
     }
-    return parsed.filter((id): id is string => typeof id === 'string');
-  } catch {
-    return null;
+    const wrapped = new Error(`Unable to read Vectorize manifest: ${target.manifestPath}`);
+    (wrapped as Error & { cause?: unknown }).cause = error;
+    throw wrapped;
   }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(contents);
+  } catch (error) {
+    const wrapped = new Error(`Vectorize manifest is not valid JSON: ${target.manifestPath}`);
+    (wrapped as Error & { cause?: unknown }).cause = error;
+    throw wrapped;
+  }
+  if (!Array.isArray(parsed) || !parsed.every((id): id is string => typeof id === 'string')) {
+    throw new Error(`Vectorize manifest must be a JSON string array: ${target.manifestPath}`);
+  }
+  return parsed;
 }
 
 export function writeManifest(ids: string[], target: VectorizeTarget = targetFromEnv()): void {

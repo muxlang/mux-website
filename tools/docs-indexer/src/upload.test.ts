@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
   deleteVectors,
   promoteRecords,
+  readManifest,
   targetFromEnv,
   upsertToVectorize,
   waitForReadiness,
@@ -159,6 +160,22 @@ test('targetFromEnv resolves workflow paths from the npm invocation directory', 
     } else {
       process.env.VECTORIZE_MANIFEST_PATH = originalManifestPath;
     }
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('readManifest distinguishes a first run from corrupt state', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mux-docs-indexer-'));
+  const target = makeTarget(root, {});
+  try {
+    assert.equal(readManifest(target), null, 'a missing manifest is a first run');
+    fs.writeFileSync(target.manifestPath, '{not-json', 'utf8');
+    assert.throws(() => readManifest(target), /not valid JSON/);
+    fs.writeFileSync(target.manifestPath, JSON.stringify(['id-1', 42]), 'utf8');
+    assert.throws(() => readManifest(target), /string array/);
+    fs.writeFileSync(target.manifestPath, JSON.stringify(['id-1', 'id-2']), 'utf8');
+    assert.deepEqual(readManifest(target), ['id-1', 'id-2']);
+  } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
