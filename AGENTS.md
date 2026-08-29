@@ -25,9 +25,9 @@ changing language behavior or a cross-repository generated artifact.
 
 Run `npm run lint`, `npm run typecheck`, and `npm run build`. For related work,
 also run the Worker, docs-indexer, retrieval-tool, and docs-snippet checks named
-in `CONTRIBUTING.md`.
+in the repository workflows under [`.github/workflows/`](.github/workflows/).
 
 ## Documentation
 
-See [`README.md`](README.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), and the
-component READMEs under `workers/` and `tools/`.
+See [`README.md`](README.md) and the component READMEs under `workers/` and
+`tools/`.
