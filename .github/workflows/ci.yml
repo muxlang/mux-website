@@ -43,6 +43,7 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
       # Verify the Monaco/Shiki keyword+type sets match the canonical
@@ -66,6 +67,8 @@ jobs:
           cache-dependency-path: workers/mux-ai/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: workers/mux-ai
+      - run: npm audit --audit-level=high
+        working-directory: workers/mux-ai
       - run: npm test
         working-directory: workers/mux-ai
       - run: npm run typecheck
@@ -86,6 +89,8 @@ jobs:
           cache-dependency-path: tools/docs-indexer/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: tools/docs-indexer
+      - run: npm audit --audit-level=high
+        working-directory: tools/docs-indexer
       - run: npm test
         working-directory: tools/docs-indexer
       - run: npm run typecheck
@@ -105,6 +110,8 @@ jobs:
           cache: npm
           cache-dependency-path: tools/retrieval-test/package-lock.json
       - run: npm ci --ignore-scripts
+        working-directory: tools/retrieval-test
+      - run: npm audit --audit-level=high
         working-directory: tools/retrieval-test
       - run: npm run typecheck
         working-directory: tools/retrieval-test
