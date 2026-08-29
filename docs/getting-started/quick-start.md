@@ -225,7 +225,8 @@ Mux is actively being developed. Here are some things to be aware of:
 - **Standard Library Available** - Core stdlib modules are published; APIs may evolve as new modules are added
 - **Breaking Changes Expected** - The language is evolving, so expect syntax and semantic changes
 
-I am working on these features, but they are not yet available. Contributions are welcome!
+These limitations are current; check the compiler issue tracker for implementation
+status and contribution opportunities.
 
 ## What's Next?
 
