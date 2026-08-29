@@ -394,6 +394,19 @@ export async function publishIndex(
   target: VectorizeTarget = targetFromEnv(),
 ): Promise<void> {
   const staleIds = computeStaleIds(readManifest(target), newIds);
+  // An empty crawl is a valid publication (for example after removing the
+  // final document). Vectorize cannot upsert an empty NDJSON file and there is
+  // no new vector whose publication marker can be probed, so remove the stale
+  // set and advance the manifest directly.
+  if (newIds.length === 0) {
+    if (staleIds.length > 0) {
+      console.log(`Deleting ${staleIds.length} stale vectors from an empty publication...`);
+      await deleteVectors(staleIds, target);
+    }
+    writeManifest([], target);
+    console.log('Published an empty Vectorize index.');
+    return;
+  }
   const publicationId = randomUUID();
   markPublication(ndjsonPath, publicationId);
 
