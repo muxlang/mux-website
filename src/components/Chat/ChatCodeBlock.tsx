@@ -8,6 +8,13 @@ interface ChatCodeBlockProps {
   language?: string;
 }
 
+interface HighlightedCode {
+  code: string;
+  language: string;
+  theme: string;
+  html: string;
+}
+
 /**
  * Static, non-interactive code block for assistant chat messages. Unlike the
  * site-wide `@theme/CodeBlock`, this never renders the runnable MuxTerminal, so
@@ -19,32 +26,32 @@ const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
   // Shiki bakes the theme's colors into inline styles, so we must re-highlight
   // when the site's color mode changes rather than snapshot it once.
   const { colorMode } = useColorMode();
-  const [html, setHtml] = useState<string | null>(null);
+  const languageName = language ?? 'mux';
+  const theme = colorMode === 'dark' ? 'github-dark' : 'github-light';
+  const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
   useEffect(() => {
     if (!isBrowser) {
       return;
     }
-    // Clear the previous snippet immediately. The old highlighted markup is
-    // not valid for the new props while the asynchronous highlighter runs.
-    /* eslint-disable react-hooks/set-state-in-effect */
-    setHtml(null);
-    /* eslint-enable react-hooks/set-state-in-effect */
     let cancelled = false;
-    const theme = colorMode === 'dark' ? 'github-dark' : 'github-light';
 
     const render = async () => {
       try {
-        const result = await highlightCode(code, language ?? 'mux', theme);
+        const result = await highlightCode(code, languageName, theme);
         if (!cancelled) {
           // highlightCode returns the raw code unchanged when the language is
           // unsupported; only treat it as highlighted markup when it produced
           // a <pre> wrapper.
-          setHtml(result.startsWith('<pre') ? result : null);
+          setHighlighted(
+            result.startsWith('<pre')
+              ? { code, language: languageName, theme, html: result }
+              : null,
+          );
         }
       } catch {
         if (!cancelled) {
-          setHtml(null);
+          setHighlighted(null);
         }
       }
     };
@@ -53,7 +60,17 @@ const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
     return () => {
       cancelled = true;
     };
-  }, [code, language, isBrowser, colorMode]);
+  }, [code, languageName, isBrowser, theme]);
+
+  // The highlighter runs asynchronously. Match its result to every input
+  // that affects the output before rendering, so a passive effect can never
+  // paint markup produced for an older snippet, language, or theme.
+  const html =
+    highlighted?.code === code &&
+    highlighted.language === languageName &&
+    highlighted.theme === theme
+      ? highlighted.html
+      : null;
 
   if (html) {
     return (

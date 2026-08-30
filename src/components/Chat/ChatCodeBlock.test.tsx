@@ -75,4 +75,29 @@ describe('ChatCodeBlock', () => {
     });
     await waitFor(() => expect(screen.getByText('second highlighted')).toBeInTheDocument());
   });
+
+  it('does not reuse markup when only the language changes', async () => {
+    const first = deferred<string>();
+    const second = deferred<string>();
+    highlightCodeMock.mockImplementation((_code: string, language: string) =>
+      language === 'mux' ? first.promise : second.promise,
+    );
+    const { container, rerender } = render(
+      <ChatCodeBlock code="answer = 42" language="mux" />,
+    );
+
+    await act(async () => {
+      first.resolve('<pre class="shiki">mux highlighted</pre>');
+    });
+    await waitFor(() => expect(screen.getByText('mux highlighted')).toBeInTheDocument());
+
+    rerender(<ChatCodeBlock code="answer = 42" language="python" />);
+    expect(container.querySelector('.mux-chat-code-block-plain')).toHaveTextContent('answer = 42');
+    expect(screen.queryByText('mux highlighted')).not.toBeInTheDocument();
+
+    await act(async () => {
+      second.resolve('<pre class="shiki">python highlighted</pre>');
+    });
+    await waitFor(() => expect(screen.getByText('python highlighted')).toBeInTheDocument());
+  });
 });
