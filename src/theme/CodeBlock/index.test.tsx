@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CodeBlock from './index';
 
@@ -35,6 +35,13 @@ beforeEach(() => {
   highlighterMocks.getHighlighter.mockReset();
   highlighterMocks.resolveShikiLanguage.mockReset();
   highlighterMocks.resolveShikiLanguage.mockReturnValue('javascript');
+  highlighterMocks.getHighlighter.mockResolvedValue({
+    codeToHtml: () => '<span>highlighted</span>',
+  });
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText: vi.fn().mockResolvedValue(undefined) },
+  });
   document.body.className = '';
   document.documentElement.dataset.theme = 'light';
 });
@@ -83,5 +90,30 @@ describe('CodeBlock', () => {
       firstRequest.resolve(firstHighlighter);
     });
     expect(container.querySelector('.shiki-wrapper')).toHaveTextContent('second highlight');
+  });
+
+  it('copies trimmed source and reports the copied state', async () => {
+    const code = 'const answer = 42;\nreturn answer;\n  ';
+    render(<CodeBlock language="javascript">{code}</CodeBlock>);
+
+    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(code.trimEnd());
+    expect(await screen.findByTitle('Copied!')).toBeInTheDocument();
+  });
+
+  it('keeps the copy control unchanged when the clipboard rejects', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('clipboard unavailable'));
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    render(<CodeBlock language="javascript">{'const answer = 42;\nreturn answer;'}</CodeBlock>);
+
+    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+
+    await expect(writeText.mock.results[0]?.value).rejects.toThrow('clipboard unavailable');
+    expect(screen.queryByTitle('Copied!')).not.toBeInTheDocument();
+    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
   });
 });
