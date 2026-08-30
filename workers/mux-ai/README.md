@@ -28,6 +28,7 @@ The assistant spans four pieces:
   per-client Durable Object cooldown, and forwards it to the Fly compile API.
   Production requires `MUX_API_ORIGIN` and the secret
   `MUX_API_ORIGIN_TOKEN`.
+- `GET /health` - health check used by the website's compile API warmup.
 - `GET /api/chat/health` - returns `{ "status": "ok" }`.
 - `POST /api/chat` - retrieval-augmented chat. Embeds the query (with the last
   few user turns for context), queries Vectorize for the top chunks above

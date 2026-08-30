@@ -128,6 +128,16 @@ test('compile proxy rejects non-POST requests', async () => {
   assert.equal(response.status, 405);
 });
 
+test('health alias supports the website API warmup path', async () => {
+  const response = await worker.fetch(
+    new Request('https://example.test/health'),
+    compileEnv(),
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: 'ok' });
+});
+
 test('compile proxy fails closed when production origin settings are absent', async () => {
   const incomplete = { ...compileEnv(), MUX_API_ORIGIN_TOKEN: undefined };
   const response = await worker.fetch(

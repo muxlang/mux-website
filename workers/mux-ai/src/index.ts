@@ -678,6 +678,10 @@ export default {
 
     const url = new URL(request.url);
 
+    if (url.pathname === '/health' && request.method === 'GET') {
+      return handleHealth(env);
+    }
+
     if (url.pathname === '/api/chat/health' && request.method === 'GET') {
       return handleHealth(env);
     }
