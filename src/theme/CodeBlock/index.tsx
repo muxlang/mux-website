@@ -236,6 +236,16 @@ function useHighlightedCode({
   return highlighted;
 }
 
+interface MultilineCodeBlockProps {
+  readonly children: string;
+  readonly className: string | undefined;
+  readonly copied: boolean;
+  readonly highlighted: HighlightedCode | null;
+  readonly highlightKey: string | null;
+  readonly onCopy: () => void;
+  readonly terminalTitle: string;
+}
+
 function MultilineCodeBlock({
   children,
   className,
@@ -244,15 +254,7 @@ function MultilineCodeBlock({
   highlightKey,
   onCopy,
   terminalTitle,
-}: {
-  children: string;
-  className: string | undefined;
-  copied: boolean;
-  highlighted: HighlightedCode | null;
-  highlightKey: string | null;
-  onCopy: () => void;
-  terminalTitle: string;
-}): ReactNode {
+}: MultilineCodeBlockProps): ReactNode {
   return (
     <div className={`terminal-code ${className || ''}`} data-filename={terminalTitle}>
       <div className="terminal-buttons">
@@ -338,14 +340,15 @@ export default function CodeBlock({
   if (isMultilineCode(children)) {
     return (
       <MultilineCodeBlock
-        children={children}
         className={className}
         copied={copied}
         highlighted={highlighted}
         highlightKey={highlightKey}
         onCopy={handleCopy}
         terminalTitle={terminalTitle}
-      />
+      >
+        {children}
+      </MultilineCodeBlock>
     );
   }
 
