@@ -7,12 +7,22 @@ const highlighterMocks = vi.hoisted(() => ({
   getHighlighter: vi.fn(),
   resolveShikiLanguage: vi.fn(() => 'javascript'),
 }));
+const routeMocks = vi.hoisted(() => ({ pathname: '/' }));
 
 vi.mock('@docusaurus/router', () => ({
-  useLocation: () => ({ pathname: '/' }),
+  useLocation: () => routeMocks,
 }));
 
 vi.mock('@site/src/shiki/highlighter', () => highlighterMocks);
+
+vi.mock('@site/src/components/MuxTerminal', () => ({
+  default: ({ initialCode, title }: { initialCode: string; title?: string }) =>
+    React.createElement('div', {
+      'data-testid': 'mux-terminal',
+      'data-code': initialCode,
+      'data-title': title,
+    }),
+}));
 
 interface Deferred<T> {
   promise: Promise<T>;
@@ -44,6 +54,7 @@ beforeEach(() => {
   });
   document.body.className = '';
   document.documentElement.dataset.theme = 'light';
+  routeMocks.pathname = '/';
 });
 
 afterEach(() => {
@@ -115,5 +126,46 @@ describe('CodeBlock', () => {
     await expect(writeText.mock.results[0]?.value).rejects.toThrow('clipboard unavailable');
     expect(screen.queryByTitle('Copied!')).not.toBeInTheDocument();
     expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
+  });
+
+  it('uses the interactive terminal for non-static Mux fences', () => {
+    const code = 'func main() {\n  return\n}\n';
+    render(
+      <CodeBlock language="mux" metastring={'title="example.mux"'}>
+        {code}
+      </CodeBlock>,
+    );
+
+    const terminal = screen.getByTestId('mux-terminal');
+    expect(terminal).toHaveAttribute('data-code', code.trimEnd());
+    expect(terminal).toHaveAttribute('data-title', 'example.mux');
+    expect(screen.queryByText('highlighted')).not.toBeInTheDocument();
+  });
+
+  it('keeps static Mux fences as highlighted code blocks', async () => {
+    const code = 'func main() {\n  return\n}';
+    const { container } = render(
+      <CodeBlock language="mux" metastring={'static title="example.mux"'}>
+        {code}
+      </CodeBlock>,
+    );
+
+    expect(screen.queryByTestId('mux-terminal')).not.toBeInTheDocument();
+    expect(container.querySelector('.terminal-code')).toHaveAttribute(
+      'data-filename',
+      'example.mux',
+    );
+    expect(await screen.findByText('highlighted')).toBeInTheDocument();
+  });
+
+  it('keeps Mux fences on blog routes as highlighted code blocks', async () => {
+    routeMocks.pathname = '/blog/release-notes';
+    const { container } = render(
+      <CodeBlock language="mux">{'func main() {\n  return\n}'}</CodeBlock>,
+    );
+
+    expect(screen.queryByTestId('mux-terminal')).not.toBeInTheDocument();
+    expect(container.querySelector('.terminal-code')).toBeInTheDocument();
+    expect(await screen.findByText('highlighted')).toBeInTheDocument();
   });
 });
