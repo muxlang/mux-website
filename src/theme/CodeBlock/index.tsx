@@ -132,6 +132,36 @@ function useTheme(isBrowser: boolean): boolean | null {
   return isDark;
 }
 
+function canHighlight({
+  children,
+  isBrowser,
+  isDark,
+  isMuxCode,
+}: Pick<Parameters<typeof useHighlightedCode>[0], 'children' | 'isBrowser' | 'isDark' | 'isMuxCode'>): boolean {
+  return (
+    !isMuxCode &&
+    isBrowser &&
+    isDark !== null &&
+    typeof children === 'string' &&
+    children.includes('\n')
+  );
+}
+
+async function highlightCode(
+  code: string,
+  detectedLang: string | undefined,
+  theme: 'github-dark' | 'github-light',
+): Promise<string | null> {
+  const effectiveLang = resolveShikiLanguage(detectedLang || 'mux');
+  if (!effectiveLang) return null;
+
+  const highlighter = await getHighlighter();
+  return highlighter.codeToHtml(code, {
+    lang: effectiveLang,
+    theme,
+  });
+}
+
 function useHighlightedCode({
   children,
   detectedLang,
@@ -150,34 +180,20 @@ function useHighlightedCode({
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
   useEffect(() => {
-    if (
-      isMuxCode ||
-      !isBrowser ||
-      isDark === null ||
-      typeof children !== 'string' ||
-      !children.includes('\n')
-    ) {
-      return undefined;
-    }
+    if (!canHighlight({ children, isBrowser, isDark, isMuxCode })) return undefined;
 
-    const trimmedCode = children.trimEnd();
+    const trimmedCode = (children as string).trimEnd();
     const theme = isDark ? 'github-dark' : 'github-light';
     const requestKey = highlightKey;
     let active = true;
 
     const doHighlight = async () => {
       try {
-        const effectiveLang = resolveShikiLanguage(detectedLang || 'mux');
-        if (!effectiveLang) {
+        const html = await highlightCode(trimmedCode, detectedLang, theme);
+        if (!html) {
           setHighlighted(null);
           return;
         }
-
-        const highlighter = await getHighlighter();
-        const html = highlighter.codeToHtml(trimmedCode, {
-          lang: effectiveLang,
-          theme,
-        });
         if (active && requestKey) {
           setHighlighted({ key: requestKey, html });
         }
