@@ -8,6 +8,11 @@ export default defineConfig({
     // Point Vitest at a minimal browser-test default so hooks can be tested
     // without booting the full Docusaurus client.
     alias: {
+      '@site': new URL('./', import.meta.url).pathname,
+      '@docusaurus/BrowserOnly': new URL(
+        './test/mocks/BrowserOnly.tsx',
+        import.meta.url,
+      ).pathname,
       '@docusaurus/useDocusaurusContext': new URL(
         './test/mocks/useDocusaurusContext.ts',
         import.meta.url,
