@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import useMuxExecutor from './useMuxExecutor';
+import type { ExecuteResponse } from '../lib/executeTypes';
 
 vi.mock('@docusaurus/useDocusaurusContext', () => ({
   default: () => ({
@@ -51,6 +52,46 @@ describe('useMuxExecutor', () => {
     });
 
     expect(result.current.error).toBe('Compilation failed');
+  });
+
+  it('sets loading immediately and clears stale errors while a request is pending', async () => {
+    let resolvePending!: (response: Response) => void;
+    const pendingResponse = new Promise<Response>((resolve) => {
+      resolvePending = resolve;
+    });
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Compilation failed' }), {
+        status: 400,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    fetchMock.mockImplementationOnce(() => pendingResponse);
+    const { result } = renderHook(() => useMuxExecutor());
+
+    await act(async () => {
+      await result.current.executeCode('first');
+    });
+    expect(result.current.error).toBe('Compilation failed');
+
+    let secondRequest!: Promise<ExecuteResponse>;
+    act(() => {
+      secondRequest = result.current.executeCode('second');
+    });
+    expect(result.current.loading).toBe(true);
+    expect(result.current.error).toBeNull();
+
+    await act(async () => {
+      resolvePending(
+        new Response(JSON.stringify({ output: 'ok' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+      await secondRequest;
+    });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
   });
 
   it('maps rate limits and empty responses to actionable errors', async () => {
