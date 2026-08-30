@@ -103,7 +103,11 @@ describe('MuxTerminal', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument());
+    await expect(writeText.mock.results[0]?.value).rejects.toThrow('clipboard unavailable');
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Copied' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    });
     expect(writeText).toHaveBeenCalledWith('println(1)');
   });
 });
