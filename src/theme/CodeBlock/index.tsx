@@ -105,6 +105,97 @@ function getThemeFromBody(): 'github-dark' | 'github-light' {
   return 'github-light';
 }
 
+function useTheme(isBrowser: boolean): boolean | null {
+  const [isDark, setIsDark] = useState<boolean | null>(() =>
+    typeof document === 'undefined' ? null : getThemeFromBody() === 'github-dark',
+  );
+
+  useEffect(() => {
+    if (!isBrowser) return undefined;
+
+    const observer = new MutationObserver(() => {
+      setIsDark(getThemeFromBody() === 'github-dark');
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    return () => observer.disconnect();
+  }, [isBrowser]);
+
+  return isDark;
+}
+
+function useHighlightedCode({
+  children,
+  detectedLang,
+  isBrowser,
+  isDark,
+  isMuxCode,
+  highlightKey,
+}: {
+  children: ReactNode;
+  detectedLang: string | undefined;
+  isBrowser: boolean;
+  isDark: boolean | null;
+  isMuxCode: boolean;
+  highlightKey: string | null;
+}): HighlightedCode | null {
+  const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
+
+  useEffect(() => {
+    if (
+      isMuxCode ||
+      !isBrowser ||
+      isDark === null ||
+      typeof children !== 'string' ||
+      !children.includes('\n')
+    ) {
+      return undefined;
+    }
+
+    const trimmedCode = children.trimEnd();
+    const theme = isDark ? 'github-dark' : 'github-light';
+    const requestKey = highlightKey;
+    let active = true;
+
+    const doHighlight = async () => {
+      try {
+        const effectiveLang = resolveShikiLanguage(detectedLang || 'mux');
+        if (!effectiveLang) {
+          setHighlighted(null);
+          return;
+        }
+
+        const highlighter = await getHighlighter();
+        const html = highlighter.codeToHtml(trimmedCode, {
+          lang: effectiveLang,
+          theme,
+        });
+        if (active && requestKey) {
+          setHighlighted({ key: requestKey, html });
+        }
+      } catch (err) {
+        console.error('Highlighting error:', err);
+      }
+    };
+
+    doHighlight();
+
+    return () => {
+      active = false;
+    };
+  }, [children, detectedLang, highlightKey, isBrowser, isDark, isMuxCode]);
+
+  return highlighted;
+}
+
 export default function CodeBlock({
   children: rawChildren,
   title: titleProp,
@@ -115,7 +206,6 @@ export default function CodeBlock({
   ...props
 }: Props): ReactNode {
   const [copied, setCopied] = useState(false);
-  const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
   const isBrowser = useIsBrowser();
   const { pathname } = useLocation();
   const isBlogRoute = pathname.startsWith('/blog');
@@ -126,9 +216,7 @@ export default function CodeBlock({
   // on that flag left isDark stuck at null until some unrelated DOM mutation
   // happened to trip the observer below - the async highlight effect (guarded
   // on `isDark !== null`) could then never run, leaving code unhighlighted.
-  const [isDark, setIsDark] = useState<boolean | null>(() =>
-    typeof document === 'undefined' ? null : getThemeFromBody() === 'github-dark',
-  );
+  const isDark = useTheme(isBrowser);
 
   const parsedMeta = parseMetastring(metastring);
   const title = titleProp || parsedMeta.title;
@@ -159,67 +247,14 @@ export default function CodeBlock({
     });
   };
 
-  useEffect(() => {
-    if (isBrowser) {
-      const observer = new MutationObserver(() => {
-        const newTheme = getThemeFromBody();
-        setIsDark(newTheme === 'github-dark');
-      });
-
-      observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme'],
-      });
-
-      return () => observer.disconnect();
-    }
-  }, [isBrowser]);
-
-  useEffect(() => {
-    if (
-      !isMuxCode &&
-      isBrowser &&
-      isDark !== null &&
-      typeof children === 'string' &&
-      children.includes('\n')
-    ) {
-      const trimmedCode = children.trimEnd();
-      const theme = isDark ? 'github-dark' : 'github-light';
-      const requestKey = highlightKey;
-      let active = true;
-
-      const doHighlight = async () => {
-        try {
-          const effectiveLang = resolveShikiLanguage(detectedLang || 'mux');
-          if (!effectiveLang) {
-            setHighlighted(null);
-            return;
-          }
-
-          const highlighter = await getHighlighter();
-          const html = highlighter.codeToHtml(trimmedCode, {
-            lang: effectiveLang,
-            theme,
-          });
-          if (active && requestKey) {
-            setHighlighted({ key: requestKey, html });
-          }
-        } catch (err) {
-          console.error('Highlighting error:', err);
-        }
-      };
-
-      doHighlight();
-
-      return () => {
-        active = false;
-      };
-    }
-  }, [children, language, className, isDark, isBrowser, detectedLang, isMuxCode, highlightKey]);
+  const highlighted = useHighlightedCode({
+    children,
+    detectedLang,
+    isBrowser,
+    isDark,
+    isMuxCode,
+    highlightKey,
+  });
 
   if (typeof children === 'string' && isMuxCode) {
     return <MuxTerminal initialCode={children.trimEnd()} title={terminalTitle} />;
