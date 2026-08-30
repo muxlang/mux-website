@@ -119,6 +119,36 @@ describe('CodeBlock', () => {
     );
   });
 
+  it('resets copy feedback when the code payload changes', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    const { rerender } = render(
+      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByTitle('Copy to clipboard'));
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+
+    rerender(
+      <CodeBlock language="javascript">{'second\nline'}</CodeBlock>,
+    );
+    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTitle('Copy to clipboard'));
+      await Promise.resolve();
+    });
+    expect(writeText).toHaveBeenLastCalledWith('second\nline');
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+  });
+
   it('keeps the copy control unchanged when the clipboard rejects', async () => {
     const writeText = vi.fn().mockRejectedValue(new Error('clipboard unavailable'));
     Object.defineProperty(navigator, 'clipboard', {

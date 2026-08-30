@@ -7,23 +7,30 @@ interface CopyFeedback {
 }
 
 export default function useCopyFeedback(text: string): CopyFeedback {
-  const [copied, setCopied] = useState(false);
-  const [copyCount, setCopyCount] = useState(0);
+  const [feedback, setFeedback] = useState({ text, copied: false, copyCount: 0 });
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (resetTimer.current) clearTimeout(resetTimer.current);
-  }, []);
+  useEffect(() => {
+    return () => {
+      if (resetTimer.current) clearTimeout(resetTimer.current);
+      resetTimer.current = null;
+    };
+  }, [text]);
 
   const copy = useCallback(() => {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        setCopied(true);
-        setCopyCount((count) => count + 1);
+        setFeedback((previous) => ({
+          text,
+          copied: true,
+          copyCount: previous.text === text ? previous.copyCount + 1 : 1,
+        }));
         if (resetTimer.current) clearTimeout(resetTimer.current);
         resetTimer.current = setTimeout(() => {
-          setCopied(false);
+          setFeedback((previous) => (
+            previous.text === text ? { ...previous, copied: false } : previous
+          ));
           resetTimer.current = null;
         }, 2000);
       })
@@ -32,11 +39,13 @@ export default function useCopyFeedback(text: string): CopyFeedback {
       });
   }, [text]);
 
-  const announcement = copyCount === 0
-    ? ''
-    : copyCount === 1
-      ? 'Copied to clipboard'
-      : 'Copied to clipboard again';
+  const copied = feedback.text === text && feedback.copied;
+  let announcement = '';
+  if (copied && feedback.copyCount === 1) {
+    announcement = 'Copied to clipboard';
+  } else if (copied && feedback.copyCount > 1) {
+    announcement = 'Copied to clipboard again';
+  }
 
   return { copied, announcement, copy };
 }
