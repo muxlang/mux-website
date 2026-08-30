@@ -95,6 +95,30 @@ function languageLabel(lang: string | undefined): string {
   return LANGUAGE_LABELS[key] ?? key.toUpperCase();
 }
 
+function isMultilineCode(children: ReactNode): children is string {
+  return typeof children === 'string' && children.includes('\n');
+}
+
+function shouldUseMuxTerminal(
+  detectedLang: string | undefined,
+  isStatic: boolean | undefined,
+  isBlogRoute: boolean,
+): boolean {
+  const isMuxLanguage = detectedLang === 'mux' || detectedLang === 'source.mux';
+  return isMuxLanguage && !isStatic && !isBlogRoute;
+}
+
+function makeHighlightKey(
+  children: ReactNode,
+  detectedLang: string | undefined,
+  className: string | undefined,
+  isDark: boolean | null,
+  isMuxCode: boolean,
+): string | null {
+  if (!isMultilineCode(children)) return null;
+  return JSON.stringify([children, detectedLang, className, isDark, isMuxCode]);
+}
+
 function getThemeFromBody(): 'github-dark' | 'github-light' {
   if (typeof document !== 'undefined') {
     return document.body.classList.contains('theme-dark') ||
@@ -212,6 +236,47 @@ function useHighlightedCode({
   return highlighted;
 }
 
+function MultilineCodeBlock({
+  children,
+  className,
+  copied,
+  highlighted,
+  highlightKey,
+  onCopy,
+  terminalTitle,
+}: {
+  children: string;
+  className: string | undefined;
+  copied: boolean;
+  highlighted: HighlightedCode | null;
+  highlightKey: string | null;
+  onCopy: () => void;
+  terminalTitle: string;
+}): ReactNode {
+  return (
+    <div className={`terminal-code ${className || ''}`} data-filename={terminalTitle}>
+      <div className="terminal-buttons">
+        <button
+          className="terminal-copy-button"
+          onClick={onCopy}
+          aria-label={copied ? 'Copied' : 'Copy code to clipboard'}
+          title={copied ? 'Copied!' : 'Copy to clipboard'}
+          type="button"
+        >
+          {copied ? <CheckIcon /> : <CopyIcon />}
+        </button>
+      </div>
+      {highlighted?.key === highlightKey ? (
+        <div className="shiki-wrapper" dangerouslySetInnerHTML={{ __html: highlighted.html }} />
+      ) : (
+        <pre className="shiki-pre">
+          <code>{children.trimEnd()}</code>
+        </pre>
+      )}
+    </div>
+  );
+}
+
 export default function CodeBlock({
   children: rawChildren,
   title: titleProp,
@@ -243,15 +308,9 @@ export default function CodeBlock({
   // Blog posts and any fence marked "static" get the same non-interactive
   // terminal rendering as every other language - a page full of separate
   // Monaco editors is heavier than a blog post needs.
-  const isMuxCode =
-    (detectedLang === 'mux' || detectedLang === 'source.mux') &&
-    !parsedMeta.static &&
-    !isBlogRoute;
+  const isMuxCode = shouldUseMuxTerminal(detectedLang, parsedMeta.static, isBlogRoute);
   const terminalTitle = typeof title === 'string' ? title : languageLabel(detectedLang);
-  const highlightKey =
-    typeof children === 'string' && children.includes('\n')
-      ? JSON.stringify([children, detectedLang, className, isDark, isMuxCode])
-      : null;
+  const highlightKey = makeHighlightKey(children, detectedLang, className, isDark, isMuxCode);
 
   const handleCopy = () => {
     const textToCopy = getCodeString(rawChildren);
@@ -272,38 +331,21 @@ export default function CodeBlock({
     highlightKey,
   });
 
-  if (typeof children === 'string' && isMuxCode) {
+  if (isMuxCode && typeof children === 'string') {
     return <MuxTerminal initialCode={children.trimEnd()} title={terminalTitle} />;
   }
 
-  if (typeof children === 'string' && children.includes('\n')) {
+  if (isMultilineCode(children)) {
     return (
-      <div
-        className={`terminal-code ${className || ''}`}
-        data-filename={terminalTitle}
-      >
-        <div className="terminal-buttons">
-          <button
-            className="terminal-copy-button"
-            onClick={handleCopy}
-            aria-label={copied ? 'Copied' : 'Copy code to clipboard'}
-            title={copied ? 'Copied!' : 'Copy to clipboard'}
-            type="button"
-          >
-            {copied ? <CheckIcon /> : <CopyIcon />}
-          </button>
-        </div>
-        {highlighted?.key === highlightKey ? (
-          <div
-            className="shiki-wrapper"
-            dangerouslySetInnerHTML={{ __html: highlighted.html }}
-          />
-        ) : (
-          <pre className="shiki-pre">
-            <code>{children.trimEnd()}</code>
-          </pre>
-        )}
-      </div>
+      <MultilineCodeBlock
+        children={children}
+        className={className}
+        copied={copied}
+        highlighted={highlighted}
+        highlightKey={highlightKey}
+        onCopy={handleCopy}
+        terminalTitle={terminalTitle}
+      />
     );
   }
 
