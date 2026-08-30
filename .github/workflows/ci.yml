@@ -46,6 +46,7 @@ jobs:
       - run: npm audit --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm test
       # Verify the Monaco/Shiki keyword+type sets match the canonical
       # syntax-matrix.json in muxlang/mux-syntax-highlighting (fetched over
       # HTTP by the script). Fails if the vendored copies drift.
