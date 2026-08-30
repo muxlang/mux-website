@@ -1,58 +1,58 @@
-import { createHighlighter, type Highlighter } from 'shiki';
-import muxGrammar from './mux.json';
-import bash from '@shikijs/langs/bash';
-import powershell from '@shikijs/langs/powershell';
-import typescript from '@shikijs/langs/typescript';
-import javascript from '@shikijs/langs/javascript';
+import { createHighlighter, type Highlighter } from "shiki";
+import muxGrammar from "./mux.json";
+import bash from "@shikijs/langs/bash";
+import powershell from "@shikijs/langs/powershell";
+import typescript from "@shikijs/langs/typescript";
+import javascript from "@shikijs/langs/javascript";
 
 let highlighterInstance: Highlighter | null = null;
 let highlighterPromise: Promise<Highlighter> | null = null;
 
 const SUPPORTED_LANGUAGES = new Set([
-  'source.mux',
-  'bash',
-  'powershell',
-  'typescript',
-  'javascript',
+  "source.mux",
+  "bash",
+  "powershell",
+  "typescript",
+  "javascript",
 ]);
 
 export function resolveShikiLanguage(rawLanguage: string | undefined): string | null {
   if (!rawLanguage) {
-    return 'source.mux';
+    return "source.mux";
   }
 
   const trimmed = rawLanguage.trim().toLowerCase();
   if (!trimmed) {
-    return 'source.mux';
+    return "source.mux";
   }
 
   if (
-    trimmed.includes('=') ||
+    trimmed.includes("=") ||
     trimmed.includes('"') ||
     trimmed.includes("'") ||
-    trimmed.includes(' ')
+    trimmed.includes(" ")
   ) {
     return null;
   }
 
-  if (trimmed === 'mux' || trimmed === 'source.mux') {
-    return 'source.mux';
+  if (trimmed === "mux" || trimmed === "source.mux") {
+    return "source.mux";
   }
 
-  if (trimmed === 'sh' || trimmed === 'shell' || trimmed === 'console') {
-    return 'bash';
+  if (trimmed === "sh" || trimmed === "shell" || trimmed === "console") {
+    return "bash";
   }
 
-  if (trimmed === 'ps1' || trimmed === 'pwsh') {
-    return 'powershell';
+  if (trimmed === "ps1" || trimmed === "pwsh") {
+    return "powershell";
   }
 
-  if (trimmed === 'ts') {
-    return 'typescript';
+  if (trimmed === "ts") {
+    return "typescript";
   }
 
-  if (trimmed === 'js') {
-    return 'javascript';
+  if (trimmed === "js") {
+    return "javascript";
   }
 
   return SUPPORTED_LANGUAGES.has(trimmed) ? trimmed : null;
@@ -64,21 +64,21 @@ export async function getHighlighter(): Promise<Highlighter> {
   }
 
   highlighterPromise ??= (async () => {
-      const highlighter = await createHighlighter({
-        themes: ['github-light', 'github-dark'],
-        langs: [],
-      });
-      await highlighter.loadLanguage({
-        ...muxGrammar,
-        name: 'source.mux',
-      });
-      await highlighter.loadLanguage(bash[0]);
-      await highlighter.loadLanguage(powershell[0]);
-      await highlighter.loadLanguage(javascript[0]);
-      await highlighter.loadLanguage(typescript[0]);
-      highlighterInstance = highlighter;
-      return highlighter;
-    })();
+    const highlighter = await createHighlighter({
+      themes: ["github-light", "github-dark"],
+      langs: [],
+    });
+    await highlighter.loadLanguage({
+      ...muxGrammar,
+      name: "source.mux",
+    });
+    await highlighter.loadLanguage(bash[0]);
+    await highlighter.loadLanguage(powershell[0]);
+    await highlighter.loadLanguage(javascript[0]);
+    await highlighter.loadLanguage(typescript[0]);
+    highlighterInstance = highlighter;
+    return highlighter;
+  })();
 
   return highlighterPromise;
 }
@@ -86,7 +86,7 @@ export async function getHighlighter(): Promise<Highlighter> {
 export async function highlightCode(
   code: string,
   lang: string,
-  theme: 'github-light' | 'github-dark' = 'github-light',
+  theme: "github-light" | "github-dark" = "github-light",
 ): Promise<string> {
   const highlighter = await getHighlighter();
   const resolvedLanguage = resolveShikiLanguage(lang);

@@ -1,11 +1,11 @@
-import React, {type ReactNode} from 'react';
-import clsx from 'clsx';
-import LineToken from '@theme/CodeBlock/Line/Token';
-import type {Props} from '@theme/CodeBlock/Line';
+import React, { type ReactNode } from "react";
+import clsx from "clsx";
+import LineToken from "@theme/CodeBlock/Line/Token";
+import type { Props } from "@theme/CodeBlock/Line";
 
-import styles from './styles.module.css';
+import styles from "./styles.module.css";
 
-type Token = Props['line'][number];
+type Token = Props["line"][number];
 
 function getTokenKey(token: Token, index: number): string {
   return `${index}-${token.content}`;
@@ -14,11 +14,10 @@ function getTokenKey(token: Token, index: number): string {
 // Replaces '\n' by ''
 // Historical code, not sure why we even need this :/
 function fixLineBreak(line: Token[]) {
-  const singleLineBreakToken =
-    line.length === 1 && line[0].content === '\n' ? line[0] : undefined;
+  const singleLineBreakToken = line.length === 1 && line[0].content === "\n" ? line[0] : undefined;
 
   if (singleLineBreakToken) {
-    return [{...singleLineBreakToken, content: ''}];
+    return [{ ...singleLineBreakToken, content: "" }];
   }
 
   return line;
@@ -39,7 +38,7 @@ export default function CodeBlockLine({
   });
 
   const lineTokens = line.map((token, index) => {
-    const tokenProps = getTokenProps({token});
+    const tokenProps = getTokenProps({ token });
     return (
       <LineToken key={getTokenKey(token, index)} {...tokenProps} line={line} token={token}>
         {tokenProps.children}

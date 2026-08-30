@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import ChatMessage from './ChatMessage';
-import ChatInput from './ChatInput';
-import ChatTypingIndicator from './ChatTypingIndicator';
-import useChat from '../../hooks/useChat';
+import React, { useEffect, useRef } from "react";
+import ChatMessage from "./ChatMessage";
+import ChatInput from "./ChatInput";
+import ChatTypingIndicator from "./ChatTypingIndicator";
+import useChat from "../../hooks/useChat";
 
 interface ChatDrawerProps {
   open: boolean;

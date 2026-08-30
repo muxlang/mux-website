@@ -1,5 +1,5 @@
-import React from 'react';
-import MuxTerminal from '../MuxTerminal';
+import React from "react";
+import MuxTerminal from "../MuxTerminal";
 
 interface EmbeddedPlaygroundProps {
   initialCode: string;
@@ -8,7 +8,7 @@ interface EmbeddedPlaygroundProps {
 
 const EmbeddedPlayground: React.FC<EmbeddedPlaygroundProps> = ({
   initialCode,
-  title = 'Try it yourself',
+  title = "Try it yourself",
 }) => {
   return <MuxTerminal initialCode={initialCode} title={title} />;
 };

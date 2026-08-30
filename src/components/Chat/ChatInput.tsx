@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
@@ -6,7 +6,7 @@ interface ChatInputProps {
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -14,7 +14,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
       return;
     }
     onSend(value);
-    setValue('');
+    setValue("");
   };
 
   return (
@@ -31,11 +31,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
         // so the user gets instant feedback instead of a round-trip 400.
         maxLength={2000}
       />
-      <button
-        type="submit"
-        className="mux-chat-send-button"
-        disabled={disabled || !value.trim()}
-      >
+      <button type="submit" className="mux-chat-send-button" disabled={disabled || !value.trim()}>
         Send
       </button>
     </form>

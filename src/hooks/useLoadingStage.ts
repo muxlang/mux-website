@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 const COLD_START_DELAY_MS = 3000;
 
-export type LoadingStage = 'running' | 'cold-start';
+export type LoadingStage = "running" | "cold-start";
 
 /**
  * Tracks how long a request has been pending so the UI can switch from a
@@ -12,16 +12,16 @@ export type LoadingStage = 'running' | 'cold-start';
  * makes the playground look stuck.
  */
 function useLoadingStage(loading: boolean): LoadingStage {
-  const [stage, setStage] = useState<LoadingStage>('running');
+  const [stage, setStage] = useState<LoadingStage>("running");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    setStage('running');
+    setStage("running");
 
     if (loading) {
       timerRef.current = setTimeout(() => {
-        setStage('cold-start');
+        setStage("cold-start");
       }, COLD_START_DELAY_MS);
     }
 

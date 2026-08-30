@@ -1,4 +1,4 @@
-const EMBEDDING_MODEL = '@cf/baai/bge-base-en-v1.5';
+const EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5";
 const MAX_BATCH_SIZE = 100;
 
 interface WorkersAiEmbeddingResponse {
@@ -18,10 +18,10 @@ async function embedBatch(
   const res = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${EMBEDDING_MODEL}`,
     {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${apiToken}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ text: texts }),
     },
@@ -30,7 +30,7 @@ async function embedBatch(
   const data = (await res.json()) as WorkersAiEmbeddingResponse;
 
   if (!res.ok || !data.success || !data.result) {
-    const message = data.errors?.map((e) => e.message).join('; ') || `HTTP ${res.status}`;
+    const message = data.errors?.map((e) => e.message).join("; ") || `HTTP ${res.status}`;
     throw new Error(`Workers AI embedding request failed: ${message}`);
   }
 

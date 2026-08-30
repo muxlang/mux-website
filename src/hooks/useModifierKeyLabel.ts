@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from "react";
 
 /**
  * Returns the label for the "run" modifier key, matching the user's OS: the
@@ -15,13 +15,12 @@ const noopSubscribe = () => () => {};
 
 function getClientSnapshot(): string {
   const platform =
-    (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData
-      ?.platform ||
+    (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ||
     navigator.platform ||
-    '';
-  return /mac|iphone|ipad|ipod/i.test(platform) ? '⌘' : 'Ctrl';
+    "";
+  return /mac|iphone|ipad|ipod/i.test(platform) ? "⌘" : "Ctrl";
 }
 
 export default function useModifierKeyLabel(): string {
-  return useSyncExternalStore(noopSubscribe, getClientSnapshot, () => 'Ctrl');
+  return useSyncExternalStore(noopSubscribe, getClientSnapshot, () => "Ctrl");
 }

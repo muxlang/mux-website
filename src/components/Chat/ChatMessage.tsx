@@ -1,14 +1,14 @@
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import type { Components } from 'react-markdown';
-import ChatCodeBlock from './ChatCodeBlock';
-import type { ChatMessage as ChatMessageType } from '../../lib/chatTypes';
+import React from "react";
+import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
+import ChatCodeBlock from "./ChatCodeBlock";
+import type { ChatMessage as ChatMessageType } from "../../lib/chatTypes";
 
 interface ChatMessageProps {
   message: ChatMessageType;
 }
 
-const SITE_BASE = 'https://mux-lang.dev';
+const SITE_BASE = "https://mux-lang.dev";
 
 // Render assistant markdown with a static, non-interactive code block. Using the
 // site-wide @theme/CodeBlock would turn fenced `mux` snippets into the runnable
@@ -18,11 +18,9 @@ const SITE_BASE = 'https://mux-lang.dev';
 const markdownComponents: Components = {
   pre: ({ children }) => <>{children}</>,
   code({ className, children }) {
-    const match = /language-(\w+)/.exec(className ?? '');
+    const match = /language-(\w+)/.exec(className ?? "");
     if (match) {
-      return (
-        <ChatCodeBlock language={match[1]} code={String(children).replace(/\n$/, '')} />
-      );
+      return <ChatCodeBlock language={match[1]} code={String(children).replace(/\n$/, "")} />;
     }
     return <code className="mux-chat-inline-code">{children}</code>;
   },
@@ -34,7 +32,7 @@ const markdownComponents: Components = {
 };
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
-  const isAssistant = message.role === 'assistant';
+  const isAssistant = message.role === "assistant";
   const hasSources = isAssistant && message.sources && message.sources.length > 0;
 
   return (

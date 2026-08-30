@@ -1,26 +1,26 @@
-import React from 'react';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import CodeBlock from './index';
+import React from "react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import CodeBlock from "./index";
 
 const highlighterMocks = vi.hoisted(() => ({
   getHighlighter: vi.fn(),
-  resolveShikiLanguage: vi.fn(() => 'javascript'),
+  resolveShikiLanguage: vi.fn(() => "javascript"),
 }));
-const routeMocks = vi.hoisted(() => ({ pathname: '/' }));
+const routeMocks = vi.hoisted(() => ({ pathname: "/" }));
 
-vi.mock('@docusaurus/router', () => ({
+vi.mock("@docusaurus/router", () => ({
   useLocation: () => routeMocks,
 }));
 
-vi.mock('@site/src/shiki/highlighter', () => highlighterMocks);
+vi.mock("@site/src/shiki/highlighter", () => highlighterMocks);
 
-vi.mock('@site/src/components/MuxTerminal', () => ({
+vi.mock("@site/src/components/MuxTerminal", () => ({
   default: ({ initialCode, title }: { initialCode: string; title?: string }) =>
-    React.createElement('div', {
-      'data-testid': 'mux-terminal',
-      'data-code': initialCode,
-      'data-title': title,
+    React.createElement("div", {
+      "data-testid": "mux-terminal",
+      "data-code": initialCode,
+      "data-title": title,
     }),
 }));
 
@@ -44,243 +44,244 @@ function deferred<T>(): Deferred<T> {
 beforeEach(() => {
   highlighterMocks.getHighlighter.mockReset();
   highlighterMocks.resolveShikiLanguage.mockReset();
-  highlighterMocks.resolveShikiLanguage.mockReturnValue('javascript');
+  highlighterMocks.resolveShikiLanguage.mockReturnValue("javascript");
   highlighterMocks.getHighlighter.mockResolvedValue({
-    codeToHtml: () => '<span>highlighted</span>',
+    codeToHtml: () => "<span>highlighted</span>",
   });
-  Object.defineProperty(navigator, 'clipboard', {
+  Object.defineProperty(navigator, "clipboard", {
     configurable: true,
     value: { writeText: vi.fn().mockResolvedValue(undefined) },
   });
-  document.body.className = '';
-  document.documentElement.dataset.theme = 'light';
-  routeMocks.pathname = '/';
+  document.body.className = "";
+  document.documentElement.dataset.theme = "light";
+  routeMocks.pathname = "/";
 });
 
 afterEach(() => {
   cleanup();
-  document.body.className = '';
+  document.body.className = "";
   delete document.documentElement.dataset.theme;
 });
 
-describe('CodeBlock', () => {
-  it('does not display stale highlighting when code changes during an async request', async () => {
+describe("CodeBlock", () => {
+  it("does not display stale highlighting when code changes during an async request", async () => {
     const firstRequest = deferred<Highlighter>();
     const secondRequest = deferred<Highlighter>();
     highlighterMocks.getHighlighter
       .mockReturnValueOnce(firstRequest.promise)
       .mockReturnValueOnce(secondRequest.promise);
 
-    const firstCode = 'const first = 1;\nconsole.log(first);';
-    const secondCode = 'const second = 2;\nconsole.log(second);';
-    const firstHighlighter = { codeToHtml: () => '<span>first highlight</span>' };
-    const secondHighlighter = { codeToHtml: () => '<span>second highlight</span>' };
+    const firstCode = "const first = 1;\nconsole.log(first);";
+    const secondCode = "const second = 2;\nconsole.log(second);";
+    const firstHighlighter = {
+      codeToHtml: () => "<span>first highlight</span>",
+    };
+    const secondHighlighter = {
+      codeToHtml: () => "<span>second highlight</span>",
+    };
     const { container, rerender } = render(
       <CodeBlock language="javascript">{firstCode}</CodeBlock>,
     );
 
-    expect(container.querySelector('.shiki-wrapper')).not.toBeInTheDocument();
-    expect(container.querySelector('pre code')).toHaveTextContent(/const first = 1;\s*console\.log\(first\);/);
+    expect(container.querySelector(".shiki-wrapper")).not.toBeInTheDocument();
+    expect(container.querySelector("pre code")).toHaveTextContent(
+      /const first = 1;\s*console\.log\(first\);/,
+    );
     await waitFor(() => expect(highlighterMocks.getHighlighter).toHaveBeenCalledOnce());
 
     rerender(<CodeBlock language="javascript">{secondCode}</CodeBlock>);
-    expect(container.querySelector('.shiki-wrapper')).not.toBeInTheDocument();
-    expect(container.querySelector('pre code')).toHaveTextContent(/const second = 2;\s*console\.log\(second\);/);
+    expect(container.querySelector(".shiki-wrapper")).not.toBeInTheDocument();
+    expect(container.querySelector("pre code")).toHaveTextContent(
+      /const second = 2;\s*console\.log\(second\);/,
+    );
     await waitFor(() => expect(highlighterMocks.getHighlighter).toHaveBeenCalledTimes(2));
 
     await act(async () => {
       secondRequest.resolve(secondHighlighter);
     });
     await waitFor(() => {
-      const wrapper = container.querySelector('.shiki-wrapper');
+      const wrapper = container.querySelector(".shiki-wrapper");
       expect(wrapper).not.toBeNull();
-      expect(wrapper).toHaveTextContent('second highlight');
+      expect(wrapper).toHaveTextContent("second highlight");
     });
 
     await act(async () => {
       firstRequest.resolve(firstHighlighter);
     });
-    expect(container.querySelector('.shiki-wrapper')).toHaveTextContent('second highlight');
+    expect(container.querySelector(".shiki-wrapper")).toHaveTextContent("second highlight");
   });
 
-  it('copies trimmed source and reports the copied state', async () => {
-    const code = 'const answer = 42;\nreturn answer;\n  ';
+  it("copies trimmed source and reports the copied state", async () => {
+    const code = "const answer = 42;\nreturn answer;\n  ";
     render(<CodeBlock language="javascript">{code}</CodeBlock>);
 
-    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+    fireEvent.click(screen.getByTitle("Copy to clipboard"));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(code.trimEnd());
-    expect(await screen.findByTitle('Copied!')).toBeInTheDocument();
-    expect(screen.getByTitle('Copied!')).toHaveAttribute('aria-label', 'Copy code to clipboard');
-    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
-    expect(screen.getByTitle('Copied!').querySelector('svg')).toHaveAttribute(
-      'aria-hidden',
-      'true',
+    expect(await screen.findByTitle("Copied!")).toBeInTheDocument();
+    expect(screen.getByTitle("Copied!")).toHaveAttribute("aria-label", "Copy code to clipboard");
+    expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard");
+    expect(screen.getByTitle("Copied!").querySelector("svg")).toHaveAttribute(
+      "aria-hidden",
+      "true",
     );
   });
 
-  it('resets copy feedback when the code payload changes', async () => {
+  it("resets copy feedback when the code payload changes", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
+    Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText },
     });
-    const { rerender } = render(
-      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
-    );
+    const { rerender } = render(<CodeBlock language="javascript">{"first\nline"}</CodeBlock>);
 
     await act(async () => {
-      fireEvent.click(screen.getByTitle('Copy to clipboard'));
+      fireEvent.click(screen.getByTitle("Copy to clipboard"));
       await Promise.resolve();
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+    expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard");
 
-    rerender(
-      <CodeBlock language="javascript">{'second\nline'}</CodeBlock>,
-    );
-    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    rerender(<CodeBlock language="javascript">{"second\nline"}</CodeBlock>);
+    expect(screen.getByTitle("Copy to clipboard")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
 
     await act(async () => {
-      fireEvent.click(screen.getByTitle('Copy to clipboard'));
+      fireEvent.click(screen.getByTitle("Copy to clipboard"));
       await Promise.resolve();
     });
-    expect(writeText).toHaveBeenLastCalledWith('second\nline');
-    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+    expect(writeText).toHaveBeenLastCalledWith("second\nline");
+    expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard");
 
-    rerender(
-      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
-    );
-    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    rerender(<CodeBlock language="javascript">{"first\nline"}</CodeBlock>);
+    expect(screen.getByTitle("Copy to clipboard")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
-  it('keeps newer copy feedback when an older clipboard write completes later', async () => {
+  it("keeps newer copy feedback when an older clipboard write completes later", async () => {
     const firstWrite = deferred<void>();
     const secondWrite = deferred<void>();
-    const writeText = vi.fn()
+    const writeText = vi
+      .fn()
       .mockReturnValueOnce(firstWrite.promise)
       .mockReturnValueOnce(secondWrite.promise);
-    Object.defineProperty(navigator, 'clipboard', {
+    Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText },
     });
-    const { rerender } = render(
-      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
-    );
+    const { rerender } = render(<CodeBlock language="javascript">{"first\nline"}</CodeBlock>);
 
-    fireEvent.click(screen.getByTitle('Copy to clipboard'));
-    rerender(
-      <CodeBlock language="javascript">{'second\nline'}</CodeBlock>,
-    );
-    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+    fireEvent.click(screen.getByTitle("Copy to clipboard"));
+    rerender(<CodeBlock language="javascript">{"second\nline"}</CodeBlock>);
+    fireEvent.click(screen.getByTitle("Copy to clipboard"));
 
     await act(async () => {
       secondWrite.resolve(undefined);
       await Promise.resolve();
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+    expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard");
 
     await act(async () => {
       firstWrite.resolve(undefined);
       await Promise.resolve();
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+    expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard");
   });
 
-  it('keeps the copy control unchanged when the clipboard rejects', async () => {
-    const writeText = vi.fn().mockRejectedValue(new Error('clipboard unavailable'));
-    Object.defineProperty(navigator, 'clipboard', {
+  it("keeps the copy control unchanged when the clipboard rejects", async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error("clipboard unavailable"));
+    Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText },
     });
-    render(<CodeBlock language="javascript">{'const answer = 42;\nreturn answer;'}</CodeBlock>);
+    render(<CodeBlock language="javascript">{"const answer = 42;\nreturn answer;"}</CodeBlock>);
 
-    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+    fireEvent.click(screen.getByTitle("Copy to clipboard"));
 
-    await expect(writeText.mock.results[0]?.value).rejects.toThrow('clipboard unavailable');
-    expect(screen.queryByTitle('Copied!')).not.toBeInTheDocument();
-    expect(screen.getByTitle('Copy to clipboard'))
-      .toHaveAttribute('aria-label', 'Copy code to clipboard');
+    await expect(writeText.mock.results[0]?.value).rejects.toThrow("clipboard unavailable");
+    expect(screen.queryByTitle("Copied!")).not.toBeInTheDocument();
+    expect(screen.getByTitle("Copy to clipboard")).toHaveAttribute(
+      "aria-label",
+      "Copy code to clipboard",
+    );
   });
 
-  it('announces repeated successful copies and keeps the latest timeout', async () => {
+  it("announces repeated successful copies and keeps the latest timeout", async () => {
     vi.useFakeTimers();
     try {
       const writeText = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, 'clipboard', {
+      Object.defineProperty(navigator, "clipboard", {
         configurable: true,
         value: { writeText },
       });
-      render(<CodeBlock language="javascript">{'const answer = 42;\nreturn answer;'}</CodeBlock>);
-      const button = screen.getByTitle('Copy to clipboard');
+      render(<CodeBlock language="javascript">{"const answer = 42;\nreturn answer;"}</CodeBlock>);
+      const button = screen.getByTitle("Copy to clipboard");
 
       await act(async () => {
         fireEvent.click(button);
         await Promise.resolve();
       });
-      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+      expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard");
 
       act(() => vi.advanceTimersByTime(1500));
       await act(async () => {
-        fireEvent.click(screen.getByTitle('Copied!'));
+        fireEvent.click(screen.getByTitle("Copied!"));
         await Promise.resolve();
       });
-      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again');
+      expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard again");
 
       await act(async () => {
-        fireEvent.click(screen.getByTitle('Copied!'));
+        fireEvent.click(screen.getByTitle("Copied!"));
         await Promise.resolve();
       });
-      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again (3 times)');
+      expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard again (3 times)");
 
       act(() => vi.advanceTimersByTime(500));
-      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again (3 times)');
+      expect(screen.getByRole("status")).toHaveTextContent("Copied to clipboard again (3 times)");
       act(() => vi.advanceTimersByTime(1500));
-      expect(screen.getByRole('status')).toBeEmptyDOMElement();
+      expect(screen.getByRole("status")).toBeEmptyDOMElement();
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it('uses the interactive terminal for non-static Mux fences', () => {
-    const code = 'func main() {\n  return\n}\n';
+  it("uses the interactive terminal for non-static Mux fences", () => {
+    const code = "func main() {\n  return\n}\n";
     render(
       <CodeBlock language="mux" metastring={'title="example.mux"'}>
         {code}
       </CodeBlock>,
     );
 
-    const terminal = screen.getByTestId('mux-terminal');
-    expect(terminal).toHaveAttribute('data-code', code.trimEnd());
-    expect(terminal).toHaveAttribute('data-title', 'example.mux');
-    expect(screen.queryByText('highlighted')).not.toBeInTheDocument();
+    const terminal = screen.getByTestId("mux-terminal");
+    expect(terminal).toHaveAttribute("data-code", code.trimEnd());
+    expect(terminal).toHaveAttribute("data-title", "example.mux");
+    expect(screen.queryByText("highlighted")).not.toBeInTheDocument();
   });
 
-  it('keeps static Mux fences as highlighted code blocks', async () => {
-    const code = 'func main() {\n  return\n}';
+  it("keeps static Mux fences as highlighted code blocks", async () => {
+    const code = "func main() {\n  return\n}";
     const { container } = render(
       <CodeBlock language="mux" metastring={'static title="example.mux"'}>
         {code}
       </CodeBlock>,
     );
 
-    expect(screen.queryByTestId('mux-terminal')).not.toBeInTheDocument();
-    expect(container.querySelector('.terminal-code')).toHaveAttribute(
-      'data-filename',
-      'example.mux',
+    expect(screen.queryByTestId("mux-terminal")).not.toBeInTheDocument();
+    expect(container.querySelector(".terminal-code")).toHaveAttribute(
+      "data-filename",
+      "example.mux",
     );
-    expect(await screen.findByText('highlighted')).toBeInTheDocument();
+    expect(await screen.findByText("highlighted")).toBeInTheDocument();
   });
 
-  it('keeps Mux fences on blog routes as highlighted code blocks', async () => {
-    routeMocks.pathname = '/blog/release-notes';
+  it("keeps Mux fences on blog routes as highlighted code blocks", async () => {
+    routeMocks.pathname = "/blog/release-notes";
     const { container } = render(
-      <CodeBlock language="mux">{'func main() {\n  return\n}'}</CodeBlock>,
+      <CodeBlock language="mux">{"func main() {\n  return\n}"}</CodeBlock>,
     );
 
-    expect(screen.queryByTestId('mux-terminal')).not.toBeInTheDocument();
-    expect(container.querySelector('.terminal-code')).toBeInTheDocument();
-    expect(await screen.findByText('highlighted')).toBeInTheDocument();
+    expect(screen.queryByTestId("mux-terminal")).not.toBeInTheDocument();
+    expect(container.querySelector(".terminal-code")).toBeInTheDocument();
+    expect(await screen.findByText("highlighted")).toBeInTheDocument();
   });
 });

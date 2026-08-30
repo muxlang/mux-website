@@ -21,15 +21,15 @@
 //   2. env MUX_SYNTAX_MATRIX (a local file path)
 //   3. fetch the published spec from CANONICAL_URL (default; used in CI)
 
-import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve, sep } from 'node:path';
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve, sep } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(__dirname, '..');
+const REPO_ROOT = resolve(__dirname, "..");
 
 const CANONICAL_URL =
-  'https://raw.githubusercontent.com/muxlang/mux-syntax-highlighting/main/shared/syntax-matrix.json';
+  "https://raw.githubusercontent.com/muxlang/mux-syntax-highlighting/main/shared/syntax-matrix.json";
 
 // Tokens the website intentionally treats as keywords/types even though the
 // canonical spec does not list them as such. Keep this list small and justified.
@@ -40,10 +40,10 @@ const CANONICAL_URL =
 // ref: a reference marker highlighted as a keyword in the playground; canonical
 //   models references via the '&' (Ref) operator symbol, not a word keyword.
 const ALLOWED_EXTRA = {
-  'monaco:keywords': new Set(['ok', 'err', 'some', 'ref']),
-  'monaco:types': new Set(),
-  'shiki:keywords': new Set(),
-  'shiki:types': new Set(),
+  "monaco:keywords": new Set(["ok", "err", "some", "ref"]),
+  "monaco:types": new Set(),
+  "shiki:keywords": new Set(),
+  "shiki:types": new Set(),
 };
 
 const IDENT = /^[a-zA-Z_]\w*$/;
@@ -58,7 +58,7 @@ async function loadCanonical() {
     if (resolved !== REPO_ROOT && !resolved.startsWith(REPO_ROOT + sep)) {
       throw new Error(`local canonical path must be inside the repo: ${source}`);
     }
-    const raw = await readFile(resolved, 'utf8');
+    const raw = await readFile(resolved, "utf8");
     return { matrix: JSON.parse(raw), from: resolved };
   }
   const url = source || CANONICAL_URL;
@@ -106,9 +106,9 @@ function monacoArray(src, name) {
 // dropped: we only compare literal keyword/type words.
 function wordsFromRegex(pattern) {
   const words = new Set();
-  const cleaned = pattern.replaceAll(String.raw`\b`, '');
+  const cleaned = pattern.replaceAll(String.raw`\b`, "");
   for (const group of cleaned.matchAll(/\((?:\?:)?([^()]*)\)/g)) {
-    for (const alt of group[1].split('|')) {
+    for (const alt of group[1].split("|")) {
       const token = alt.trim();
       if (IDENT.test(token)) words.add(token);
     }
@@ -124,7 +124,7 @@ function shikiKeywords(grammar) {
     // Collect keyword-scoped and language-constant patterns; the lone
     // `storage.type` -> `\bauto\b` entry is redundant (auto is already a
     // declaration keyword) and skipped to avoid noise.
-    if (p.name?.startsWith('keyword.') || p.name === 'constant.language') {
+    if (p.name?.startsWith("keyword.") || p.name === "constant.language") {
       for (const w of wordsFromRegex(p.match)) set.add(w);
     }
   }
@@ -135,7 +135,7 @@ function shikiTypes(grammar) {
   const set = new Set();
   const patterns = grammar.repository?.types?.patterns ?? [];
   for (const p of patterns) {
-    if (p.name === 'storage.type' && p.match) {
+    if (p.name === "storage.type" && p.match) {
       for (const w of wordsFromRegex(p.match)) set.add(w);
     }
   }
@@ -158,14 +158,15 @@ function compare(label, canonical, actual, errors) {
     return;
   }
   const lines = [`FAIL ${label}`];
-  if (missing.length) lines.push(`    missing from website (present in canonical): ${missing.join(', ')}`);
+  if (missing.length)
+    lines.push(`    missing from website (present in canonical): ${missing.join(", ")}`);
   if (extra.length) {
     lines.push(
-      `    unexpected website-only tokens (not canonical, not allowlisted): ${extra.join(', ')}`,
-      '    -> add them to canonical syntax-matrix.json, or to ALLOWED_EXTRA with a reason.',
+      `    unexpected website-only tokens (not canonical, not allowlisted): ${extra.join(", ")}`,
+      "    -> add them to canonical syntax-matrix.json, or to ALLOWED_EXTRA with a reason.",
     );
   }
-  errors.push(lines.join('\n'));
+  errors.push(lines.join("\n"));
 }
 
 async function main() {
@@ -175,22 +176,22 @@ async function main() {
   const canonKeywords = canonicalKeywords(matrix);
   const canonTypes = canonicalTypes(matrix);
 
-  const monacoSrc = await readFile(resolve(REPO_ROOT, 'src/monaco/muxLanguage.ts'), 'utf8');
-  const shikiGrammar = JSON.parse(await readFile(resolve(REPO_ROOT, 'src/shiki/mux.json'), 'utf8'));
+  const monacoSrc = await readFile(resolve(REPO_ROOT, "src/monaco/muxLanguage.ts"), "utf8");
+  const shikiGrammar = JSON.parse(await readFile(resolve(REPO_ROOT, "src/shiki/mux.json"), "utf8"));
 
   const errors = [];
-  compare('monaco:keywords', canonKeywords, monacoArray(monacoSrc, 'keywords'), errors);
-  compare('monaco:types', canonTypes, monacoArray(monacoSrc, 'typeKeywords'), errors);
-  compare('shiki:keywords', canonKeywords, shikiKeywords(shikiGrammar), errors);
-  compare('shiki:types', canonTypes, shikiTypes(shikiGrammar), errors);
+  compare("monaco:keywords", canonKeywords, monacoArray(monacoSrc, "keywords"), errors);
+  compare("monaco:types", canonTypes, monacoArray(monacoSrc, "typeKeywords"), errors);
+  compare("shiki:keywords", canonKeywords, shikiKeywords(shikiGrammar), errors);
+  compare("shiki:types", canonTypes, shikiTypes(shikiGrammar), errors);
 
   if (errors.length) {
-    console.error('\nSyntax parity check FAILED:\n');
-    console.error(errors.join('\n\n'));
-    console.error('\nThe website copies have drifted from canonical syntax-matrix.json.');
+    console.error("\nSyntax parity check FAILED:\n");
+    console.error(errors.join("\n\n"));
+    console.error("\nThe website copies have drifted from canonical syntax-matrix.json.");
     process.exit(1);
   }
-  console.log('\nSyntax parity check passed: Monaco and Shiki are in sync with canonical.');
+  console.log("\nSyntax parity check passed: Monaco and Shiki are in sync with canonical.");
 }
 
 try {

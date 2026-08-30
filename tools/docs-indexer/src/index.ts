@@ -1,18 +1,12 @@
-import path from 'node:path';
-import 'dotenv/config';
-import { crawlDocs } from './crawl';
-import { extractDoc } from './extract';
-import { chunkContent } from './chunk';
-import { embedTexts } from './embed';
-import {
-  writeNdjson,
-  vectorIds,
-  publishIndex,
-  targetFromEnv,
-  type IndexedChunk,
-} from './upload';
+import path from "node:path";
+import "dotenv/config";
+import { crawlDocs } from "./crawl";
+import { extractDoc } from "./extract";
+import { chunkContent } from "./chunk";
+import { embedTexts } from "./embed";
+import { writeNdjson, vectorIds, publishIndex, targetFromEnv, type IndexedChunk } from "./upload";
 
-const DOCS_ROOT = path.resolve(import.meta.dirname, '..', '..', '..', 'docs');
+const DOCS_ROOT = path.resolve(import.meta.dirname, "..", "..", "..", "docs");
 
 async function main(): Promise<void> {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -20,7 +14,7 @@ async function main(): Promise<void> {
 
   if (!accountId || !apiToken) {
     throw new Error(
-      'CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN must be set (see tools/docs-indexer/.env)',
+      "CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN must be set (see tools/docs-indexer/.env)",
     );
   }
 
@@ -29,7 +23,11 @@ async function main(): Promise<void> {
 
   const docs = files.map(extractDoc);
 
-  const pending: { doc: (typeof docs)[number]; chunk: ReturnType<typeof chunkContent>[number]; chunkIndex: number }[] = [];
+  const pending: {
+    doc: (typeof docs)[number];
+    chunk: ReturnType<typeof chunkContent>[number];
+    chunkIndex: number;
+  }[] = [];
   for (const doc of docs) {
     const chunks = chunkContent(doc.content);
     chunks.forEach((chunk, chunkIndex) => {
@@ -39,13 +37,11 @@ async function main(): Promise<void> {
   console.log(`Chunked into ${pending.length} chunks`);
 
   const texts = pending.map((entry) => entry.chunk.text);
-  console.log('Generating embeddings via Workers AI...');
+  console.log("Generating embeddings via Workers AI...");
   const vectors = await embedTexts(texts, accountId, apiToken);
 
   if (vectors.length !== pending.length) {
-    throw new Error(
-      `Embedding count mismatch: expected ${pending.length}, got ${vectors.length}`,
-    );
+    throw new Error(`Embedding count mismatch: expected ${pending.length}, got ${vectors.length}`);
   }
 
   const indexed: IndexedChunk[] = pending.map((entry, i) => ({
@@ -61,7 +57,7 @@ async function main(): Promise<void> {
 
   await publishIndex(ndjsonPath, vectorIds(indexed, target), target);
 
-  console.log('Done.');
+  console.log("Done.");
 }
 
 main().catch((err: unknown) => {

@@ -25,13 +25,13 @@ interface Section {
 }
 
 function splitIntoSections(content: string): Section[] {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   const sections: Section[] = [];
   let currentHeading: string | null = null;
   let currentLines: string[] = [];
 
   const flush = () => {
-    const text = currentLines.join('\n').trim();
+    const text = currentLines.join("\n").trim();
     if (text) {
       sections.push({ heading: currentHeading, text });
     }
@@ -54,7 +54,7 @@ function splitIntoSections(content: string): Section[] {
 function splitOversizedSection(section: Section): Section[] {
   const paragraphs = section.text.split(/\n{2,}/);
   const result: Section[] = [];
-  let buffer = '';
+  let buffer = "";
 
   for (const paragraph of paragraphs) {
     const candidate = buffer ? `${buffer}\n\n${paragraph}` : paragraph;

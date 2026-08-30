@@ -1,7 +1,7 @@
-import fs from 'node:fs';
-import { load as loadYaml } from 'js-yaml';
-import type { DocFile } from './crawl';
-import { sectionForDocId } from './sidebarSections';
+import fs from "node:fs";
+import { load as loadYaml } from "js-yaml";
+import type { DocFile } from "./crawl";
+import { sectionForDocId } from "./sidebarSections";
 
 export interface ExtractedDoc {
   docId: string;
@@ -20,7 +20,10 @@ function extractDiagnosticCodes(content: string): string[] {
   );
 }
 
-function parseFrontMatter(raw: string): { frontMatter: Record<string, unknown>; content: string } {
+function parseFrontMatter(raw: string): {
+  frontMatter: Record<string, unknown>;
+  content: string;
+} {
   const match = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(raw.slice(0, 10240));
   if (!match) {
     return { frontMatter: {}, content: raw.trim() };
@@ -28,7 +31,7 @@ function parseFrontMatter(raw: string): { frontMatter: Record<string, unknown>; 
 
   try {
     const parsed = loadYaml(match[1]);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       return {
         frontMatter: parsed as Record<string, unknown>,
         content: raw.slice(match[0].length).trim(),
@@ -42,7 +45,7 @@ function parseFrontMatter(raw: string): { frontMatter: Record<string, unknown>; 
 }
 
 function deriveTitle(docId: string, frontMatter: Record<string, unknown>, content: string): string {
-  if (typeof frontMatter.title === 'string' && frontMatter.title.trim()) {
+  if (typeof frontMatter.title === "string" && frontMatter.title.trim()) {
     return frontMatter.title.trim();
   }
 
@@ -51,22 +54,22 @@ function deriveTitle(docId: string, frontMatter: Record<string, unknown>, conten
     return headingMatch[1].trim();
   }
 
-  const lastSegment = docId.split('/').pop() ?? docId;
+  const lastSegment = docId.split("/").pop() ?? docId;
   return lastSegment
-    .split('-')
+    .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
 function docPathForId(docId: string): string {
-  if (docId === 'index') {
-    return '/docs/';
+  if (docId === "index") {
+    return "/docs/";
   }
   return `/docs/${docId}/`;
 }
 
 export function extractDoc(file: DocFile): ExtractedDoc {
-  const raw = fs.readFileSync(file.absPath, 'utf8');
+  const raw = fs.readFileSync(file.absPath, "utf8");
   const { frontMatter, content } = parseFrontMatter(raw);
   const title = deriveTitle(file.docId, frontMatter, content);
 

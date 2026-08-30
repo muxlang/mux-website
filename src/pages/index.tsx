@@ -1,127 +1,176 @@
-import type {ReactNode} from 'react';
-import {useState} from 'react';
-import clsx from 'clsx';
-import Link from '@docusaurus/Link';
-import Layout from '@theme/Layout';
-import Heading from '@theme/Heading';
-import CodeBlock from '@theme/CodeBlock';
-import {CopyIcon, CheckIcon} from '@site/src/components/CodeIcons';
-import useCopyFeedback from '@site/src/hooks/useCopyFeedback';
+import type { ReactNode } from "react";
+import { useState } from "react";
+import clsx from "clsx";
+import Link from "@docusaurus/Link";
+import Layout from "@theme/Layout";
+import Heading from "@theme/Heading";
+import CodeBlock from "@theme/CodeBlock";
+import { CopyIcon, CheckIcon } from "@site/src/components/CodeIcons";
+import useCopyFeedback from "@site/src/hooks/useCopyFeedback";
 
-import styles from './index.module.css';
+import styles from "./index.module.css";
 
-type Platform = 'unix' | 'windows';
+type Platform = "unix" | "windows";
 
 const installCommands: Record<Platform, string> = {
-  unix: 'curl -fsSL https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.sh | sh',
-  windows: 'iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.ps1 | iex',
+  unix: "curl -fsSL https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.sh | sh",
+  windows:
+    "iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.ps1 | iex",
 };
 
 function detectPlatform(): Platform {
-  if (typeof navigator === 'undefined') return 'unix';
-  const platform = navigator.platform?.toLowerCase() || '';
-  const userAgent = navigator.userAgent?.toLowerCase() || '';
+  if (typeof navigator === "undefined") return "unix";
+  const platform = navigator.platform?.toLowerCase() || "";
+  const userAgent = navigator.userAgent?.toLowerCase() || "";
 
-  if (platform.includes('win') || userAgent.includes('win')) return 'windows';
-  return 'unix';
+  if (platform.includes("win") || userAgent.includes("win")) return "windows";
+  return "unix";
 }
 
 // Feature icons as simple SVG components
 const features = [
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
       </svg>
     ),
-    title: 'Simple & Intuitive',
-    description: 'Clean syntax without semicolons, Python-like readability with Go-inspired simplicity. Write code that is easy to understand and maintain.'
+    title: "Simple & Intuitive",
+    description:
+      "Clean syntax without semicolons, Python-like readability with Go-inspired simplicity. Write code that is easy to understand and maintain.",
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <path d="M9 12l2 2 4-4"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" />
       </svg>
     ),
-    title: 'Type Safe',
-    description: 'Strong static typing with no implicit conversions. Catch errors at compile time with powerful generics and exhaustive pattern matching.'
+    title: "Type Safe",
+    description:
+      "Strong static typing with no implicit conversions. Catch errors at compile time with powerful generics and exhaustive pattern matching.",
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
       </svg>
     ),
-    title: 'Fast & Native',
-    description: 'LLVM-powered compilation delivers native performance. Reference-counted memory management provides safety without GC pauses or complex ownership.'
+    title: "Fast & Native",
+    description:
+      "LLVM-powered compilation delivers native performance. Reference-counted memory management provides safety without GC pauses or complex ownership.",
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <line x1="3" y1="9" x2="21" y2="9"/>
-        <line x1="9" y1="21" x2="9" y2="9"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <line x1="3" y1="9" x2="21" y2="9" />
+        <line x1="9" y1="21" x2="9" y2="9" />
       </svg>
     ),
-    title: 'Pattern Matching',
-    description: 'Expressive match expressions with guards for enums, Result types, and Optional types. Exhaustiveness checking ensures you handle all cases.'
+    title: "Pattern Matching",
+    description:
+      "Expressive match expressions with guards for enums, Result types, and Optional types. Exhaustiveness checking ensures you handle all cases.",
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
       </svg>
     ),
-    title: 'Modern Features',
-    description: 'Full-featured with generics, interfaces, tagged unions, collection literals, and first-class functions. Everything you need for modern development.'
+    title: "Modern Features",
+    description:
+      "Full-featured with generics, interfaces, tagged unions, collection literals, and first-class functions. Everything you need for modern development.",
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
-    title: 'Developer Friendly',
-    description: 'Built for humans with helpful error messages, built-in tooling, and comprehensive documentation. Start writing code in minutes, not hours.'
-  }
+    title: "Developer Friendly",
+    description:
+      "Built for humans with helpful error messages, built-in tooling, and comprehensive documentation. Start writing code in minutes, not hours.",
+  },
 ];
 
 function HomepageHeader() {
   const [platform, setPlatform] = useState<Platform>(() => detectPlatform());
-  const {copied, announcement, copy: handleCopy} = useCopyFeedback(installCommands[platform]);
+  const { copied, announcement, copy: handleCopy } = useCopyFeedback(installCommands[platform]);
 
   return (
-    <header className={clsx('hero', styles.heroBanner)}>
+    <header className={clsx("hero", styles.heroBanner)}>
       <div className="container">
         <div className={styles.heroContent}>
           <div className={styles.logoContainer}>
             <img src="/img/mux-logo.png" alt="Mux Logo" className={styles.heroLogo} />
           </div>
           <Heading as="h1" className={styles.heroTitle}>
-            The Programming Language<br />
+            The Programming Language
+            <br />
             <span className={styles.heroTitleHighlight}>For Everyone</span>
           </Heading>
           <p className={styles.heroSubtitle}>
-            Mux combines Python's readability, Go's simplicity, and Rust's type safety
-            into one powerful language. Write fast, safe, and maintainable code
-            without the complexity.
+            Mux combines Python's readability, Go's simplicity, and Rust's type safety into one
+            powerful language. Write fast, safe, and maintainable code without the complexity.
           </p>
 
           {/* Install command bar */}
           <div className={styles.installBar}>
             <div className={styles.installToggle}>
-              {platform === 'unix' ? (
+              {platform === "unix" ? (
                 <button
                   className={clsx(styles.toggleOption, styles.toggleOptionActive)}
-                  onClick={() => setPlatform('unix')}
+                  onClick={() => setPlatform("unix")}
                   type="button"
                 >
                   MacOS / Linux
@@ -129,16 +178,16 @@ function HomepageHeader() {
               ) : (
                 <button
                   className={styles.toggleOption}
-                  onClick={() => setPlatform('unix')}
+                  onClick={() => setPlatform("unix")}
                   type="button"
                 >
                   MacOS / Linux
                 </button>
               )}
-              {platform === 'windows' ? (
+              {platform === "windows" ? (
                 <button
                   className={clsx(styles.toggleOption, styles.toggleOptionActive)}
-                  onClick={() => setPlatform('windows')}
+                  onClick={() => setPlatform("windows")}
                   type="button"
                 >
                   Windows
@@ -146,7 +195,7 @@ function HomepageHeader() {
               ) : (
                 <button
                   className={styles.toggleOption}
-                  onClick={() => setPlatform('windows')}
+                  onClick={() => setPlatform("windows")}
                   type="button"
                 >
                   Windows
@@ -155,9 +204,7 @@ function HomepageHeader() {
             </div>
             <div className={styles.installCommandRow}>
               <div className={styles.installCommandScroll}>
-                <code className={styles.installCommand}>
-                  {installCommands[platform]}
-                </code>
+                <code className={styles.installCommand}>{installCommands[platform]}</code>
               </div>
               <button
                 className={styles.copyButton}
@@ -172,18 +219,18 @@ function HomepageHeader() {
                 role="status"
                 aria-live="polite"
                 style={{
-                  position: 'absolute',
+                  position: "absolute",
                   width: 1,
                   height: 1,
                   padding: 0,
                   margin: -1,
-                  overflow: 'hidden',
-                  clip: 'rect(0, 0, 0, 0)',
-                  whiteSpace: 'nowrap',
+                  overflow: "hidden",
+                  clip: "rect(0, 0, 0, 0)",
+                  whiteSpace: "nowrap",
                   border: 0,
                 }}
               >
-                {copied ? announcement : ''}
+                {copied ? announcement : ""}
               </span>
             </div>
           </div>
@@ -196,18 +243,21 @@ function HomepageHeader() {
 
           <div className={styles.heroButtons}>
             <Link
-              className={clsx('button', 'button--primary', 'button--lg', styles.ctaButton)}
-              to="/docs/getting-started/quick-start">
+              className={clsx("button", "button--primary", "button--lg", styles.ctaButton)}
+              to="/docs/getting-started/quick-start"
+            >
               Get Started
             </Link>
             <Link
-              className={clsx('button', 'button--secondary', 'button--lg', styles.secondaryButton)}
-              to="https://github.com/muxlang/mux-compiler">
+              className={clsx("button", "button--secondary", "button--lg", styles.secondaryButton)}
+              to="https://github.com/muxlang/mux-compiler"
+            >
               View on GitHub
             </Link>
-                      <Link
-              className={clsx('button', 'button--secondary', 'button--lg', styles.secondaryButton)}
-              to="/playground">
+            <Link
+              className={clsx("button", "button--secondary", "button--lg", styles.secondaryButton)}
+              to="/playground"
+            >
               Try in Playground
             </Link>
           </div>
@@ -225,13 +275,15 @@ function QuickStartSection() {
           <div className={styles.quickStartContent}>
             <Heading as="h2">Write Your First Program</Heading>
             <p className={styles.quickStartDescription}>
-              Mux is designed to be instantly familiar. Here is a complete program 
-              that demonstrates error handling, pattern matching, and type safety.
+              Mux is designed to be instantly familiar. Here is a complete program that demonstrates
+              error handling, pattern matching, and type safety.
             </p>
             <div className={styles.quickStartSteps}>
               <div className={styles.step}>
                 <span className={styles.stepNumber}>1</span>
-                <span>Create a file called <code>hello.mux</code></span>
+                <span>
+                  Create a file called <code>hello.mux</code>
+                </span>
               </div>
               <div className={styles.step}>
                 <span className={styles.stepNumber}>2</span>
@@ -239,22 +291,26 @@ function QuickStartSection() {
               </div>
               <div className={styles.step}>
                 <span className={styles.stepNumber}>3</span>
-                <span>Run with <code>mux run hello.mux</code></span>
+                <span>
+                  Run with <code>mux run hello.mux</code>
+                </span>
               </div>
             </div>
             <Link
-              className={clsx('button', 'button--primary')}
-              to="/docs/getting-started/quick-start">
+              className={clsx("button", "button--primary")}
+              to="/docs/getting-started/quick-start"
+            >
               Read the Quick Start Guide
             </Link>
           </div>
-          
+
           <div className={styles.codeBlockWrapper}>
             <CodeBlock
               title="error-handling.mux"
               className={`language-mux ${styles.featuredCode}`}
-              metastring="static">
-{`func divide(float a, float b) returns result<float, string> {
+              metastring="static"
+            >
+              {`func divide(float a, float b) returns result<float, string> {
     if b == 0.to_float() {
         return err("division by zero")
     }
@@ -289,10 +345,8 @@ function FeaturesSection() {
         <Heading as="h2" className={styles.sectionTitle}>
           Why Developers Love Mux
         </Heading>
-        <p className={styles.sectionSubtitle}>
-          Built with modern software development in mind
-        </p>
-        
+        <p className={styles.sectionSubtitle}>Built with modern software development in mind</p>
+
         <div className={styles.featuresGrid}>
           {features.map((feature) => (
             <div key={feature.title} className={styles.featureCard}>
@@ -314,15 +368,13 @@ function CodeExamplesSection() {
         <Heading as="h2" className={styles.sectionTitle}>
           See Mux in Action
         </Heading>
-        <p className={styles.sectionSubtitle}>
-          Real code that showcases Mux's powerful features
-        </p>
+        <p className={styles.sectionSubtitle}>Real code that showcases Mux's powerful features</p>
 
         <div className={styles.examplesGrid}>
           <div className={styles.exampleSection}>
             <Heading as="h3">Generics & Collections</Heading>
             <CodeBlock title="stack.mux" className={`language-mux ${styles.exampleCode}`}>
-{`class Stack<T> {
+              {`class Stack<T> {
     list<T> items
 
     func push(T item) returns void {
@@ -354,7 +406,7 @@ match stack.pop() {
           <div className={styles.exampleSection}>
             <Heading as="h3">Pattern Matching</Heading>
             <CodeBlock title="enums.mux" className={`language-mux ${styles.exampleCode}`}>
-{`enum Shape {
+              {`enum Shape {
     Circle(float radius),
     Rectangle(float width, float height),
     Square(float size)
@@ -394,23 +446,23 @@ function CTASection() {
         <div className={styles.ctaContent}>
           <Heading as="h2">Ready to Start Building?</Heading>
           <p className={styles.ctaDescription}>
-            Join the growing community of developers using Mux to build 
-            fast, reliable, and maintainable applications.
+            Join the growing community of developers using Mux to build fast, reliable, and
+            maintainable applications.
           </p>
           <div className={styles.ctaButtons}>
             <Link
-              className={clsx('button', 'button--primary', 'button--lg')}
-              to="/docs/getting-started/quick-start">
+              className={clsx("button", "button--primary", "button--lg")}
+              to="/docs/getting-started/quick-start"
+            >
               Get Started
             </Link>
             <Link
-              className={clsx('button', 'button--secondary', 'button--lg')}
-              to="/docs/language-guide/overview">
+              className={clsx("button", "button--secondary", "button--lg")}
+              to="/docs/language-guide/overview"
+            >
               Explore the Language
             </Link>
-            <Link
-              className={clsx('button', 'button--secondary', 'button--lg')}
-              to="/docs/examples">
+            <Link className={clsx("button", "button--secondary", "button--lg")} to="/docs/examples">
               Browse Examples
             </Link>
           </div>
@@ -431,7 +483,8 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title="Mux - The Programming Language For Everyone"
-      description="Mux is a statically-typed, reference-counted programming language combining Python's readability, Go's simplicity, and Rust's type safety">
+      description="Mux is a statically-typed, reference-counted programming language combining Python's readability, Go's simplicity, and Rust's type safety"
+    >
       <HomepageHeader />
       <main>
         <QuickStartSection />

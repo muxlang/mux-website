@@ -1,42 +1,39 @@
-import React, {type ComponentProps, type ReactNode} from 'react';
-import clsx from 'clsx';
-import {useCodeBlockContext} from '@docusaurus/theme-common/internal';
-import {usePrismTheme} from '@docusaurus/theme-common';
-import {Highlight} from 'prism-react-renderer';
-import type {Props} from '@theme/CodeBlock/Content';
-import Line from '@theme/CodeBlock/Line';
+import React, { type ComponentProps, type ReactNode } from "react";
+import clsx from "clsx";
+import { useCodeBlockContext } from "@docusaurus/theme-common/internal";
+import { usePrismTheme } from "@docusaurus/theme-common";
+import { Highlight } from "prism-react-renderer";
+import type { Props } from "@theme/CodeBlock/Content";
+import Line from "@theme/CodeBlock/Line";
 
-import styles from './styles.module.css';
+import styles from "./styles.module.css";
 
 type PrismToken = { content: string };
 
 function getLineKey(line: PrismToken[], index: number): string {
-  const content = line.map(token => token.content).join('');
+  const content = line.map((token) => token.content).join("");
   return `${index}-${content}`;
 }
 
-const Pre = React.forwardRef<HTMLPreElement, ComponentProps<'pre'>>(
-  (props, ref) => {
-    return (
-      <pre
-        ref={ref}
-        {...props}
-        className={clsx(props.className, styles.codeBlock, 'thin-scrollbar')}
-      />
-    );
-  },
-);
+const Pre = React.forwardRef<HTMLPreElement, ComponentProps<"pre">>((props, ref) => {
+  return (
+    <pre
+      ref={ref}
+      {...props}
+      className={clsx(props.className, styles.codeBlock, "thin-scrollbar")}
+    />
+  );
+});
 
-function Code(props: ComponentProps<'code'>) {
-  const {metadata} = useCodeBlockContext();
+function Code(props: ComponentProps<"code">) {
+  const { metadata } = useCodeBlockContext();
   return (
     <code
       {...props}
       className={clsx(
         props.className,
         styles.codeBlockLines,
-        metadata.lineNumbersStart !== undefined &&
-          styles.codeBlockLinesWithNumbering,
+        metadata.lineNumbersStart !== undefined && styles.codeBlockLinesWithNumbering,
       )}
       style={{
         ...props.style,
@@ -49,19 +46,14 @@ function Code(props: ComponentProps<'code'>) {
   );
 }
 
-export default function CodeBlockContent({
-  className: classNameProp,
-}: Readonly<Props>): ReactNode {
-  const {metadata, wordWrap} = useCodeBlockContext();
+export default function CodeBlockContent({ className: classNameProp }: Readonly<Props>): ReactNode {
+  const { metadata, wordWrap } = useCodeBlockContext();
   const prismTheme = usePrismTheme();
-  const {code, language, lineNumbersStart, lineClassNames} = metadata;
+  const { code, language, lineNumbersStart, lineClassNames } = metadata;
   return (
     <Highlight theme={prismTheme} code={code} language={language}>
-      {({className, style, tokens: lines, getLineProps, getTokenProps}) => (
-        <Pre
-          ref={wordWrap.codeBlockRef}
-          className={clsx(classNameProp, className)}
-          style={style}>
+      {({ className, style, tokens: lines, getLineProps, getTokenProps }) => (
+        <Pre ref={wordWrap.codeBlockRef} className={clsx(classNameProp, className)} style={style}>
           <Code>
             {lines.map((line, i) => (
               <Line

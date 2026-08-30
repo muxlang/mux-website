@@ -1,10 +1,10 @@
-import { deleteVectors, readRecords, targetFromEnv } from './upload';
+import { deleteVectors, readRecords, targetFromEnv } from "./upload";
 
 async function main(): Promise<void> {
   const target = targetFromEnv();
   const ids = readRecords(target.ndjsonPath).map((record) => record.id);
   if (ids.length === 0) {
-    console.log('No staged vectors to remove.');
+    console.log("No staged vectors to remove.");
     return;
   }
   await deleteVectors(ids, target);

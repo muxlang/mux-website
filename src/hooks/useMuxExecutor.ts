@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import type { ExecuteResponse } from '../lib/executeTypes';
-import { resolveApiUrl } from '../lib/apiUrl';
+import { useState, useCallback } from "react";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import type { ExecuteResponse } from "../lib/executeTypes";
+import { resolveApiUrl } from "../lib/apiUrl";
 
 async function readExecuteResponse(res: Response): Promise<ExecuteResponse> {
-  const contentType = res.headers.get('content-type') || '';
-  if (contentType.includes('application/json')) {
+  const contentType = res.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
     try {
       return (await res.json()) as ExecuteResponse;
     } catch {
@@ -16,7 +16,7 @@ async function readExecuteResponse(res: Response): Promise<ExecuteResponse> {
   const text = (await res.text()).trim();
 
   if (res.status === 429) {
-    return { error: 'Too many requests. Please wait and try again.' };
+    return { error: "Too many requests. Please wait and try again." };
   }
 
   if (text) {
@@ -32,34 +32,37 @@ const useMuxExecutor = () => {
   const { siteConfig } = useDocusaurusContext();
   const apiUrl = resolveApiUrl(siteConfig.customFields);
 
-  const executeCode = useCallback(async (source: string): Promise<ExecuteResponse> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${apiUrl}/api/compile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: source }),
-      });
+  const executeCode = useCallback(
+    async (source: string): Promise<ExecuteResponse> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${apiUrl}/api/compile`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: source }),
+        });
 
-      const data = await readExecuteResponse(res);
-      if (res.ok && data.output === undefined && !data.error) {
-        const msg = 'Server returned an unexpected response';
+        const data = await readExecuteResponse(res);
+        if (res.ok && data.output === undefined && !data.error) {
+          const msg = "Server returned an unexpected response";
+          setError(msg);
+          return { error: msg };
+        }
+        if (!res.ok || data.error) {
+          setError(data.error || "Request failed");
+        }
+        return data;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Unknown error";
         setError(msg);
         return { error: msg };
+      } finally {
+        setLoading(false);
       }
-      if (!res.ok || data.error) {
-        setError(data.error || 'Request failed');
-      }
-      return data;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      setError(msg);
-      return { error: msg };
-    } finally {
-      setLoading(false);
-    }
-  }, [apiUrl]);
+    },
+    [apiUrl],
+  );
 
   return {
     executeCode,

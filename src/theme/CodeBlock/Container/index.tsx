@@ -1,11 +1,11 @@
-import React, {type ReactNode} from 'react';
-import clsx from 'clsx';
-import {ThemeClassNames, usePrismTheme} from '@docusaurus/theme-common';
-import {getPrismCssVariables} from '@docusaurus/theme-common/internal';
-import styles from './styles.module.css';
+import React, { type ReactNode } from "react";
+import clsx from "clsx";
+import { ThemeClassNames, usePrismTheme } from "@docusaurus/theme-common";
+import { getPrismCssVariables } from "@docusaurus/theme-common/internal";
+import styles from "./styles.module.css";
 
 interface CodeBlockContainerProps {
-  as: 'div' | 'pre';
+  as: "div" | "pre";
   children: ReactNode;
   className?: string;
   tabIndex?: number;
@@ -22,11 +22,7 @@ export default function CodeBlockContainer({
   return (
     <As
       style={prismCssVariables}
-      className={clsx(
-        className,
-        styles.codeBlockContainer,
-        ThemeClassNames.common.codeBlock,
-      )}
+      className={clsx(className, styles.codeBlockContainer, ThemeClassNames.common.codeBlock)}
       tabIndex={tabIndex}
     >
       {children}

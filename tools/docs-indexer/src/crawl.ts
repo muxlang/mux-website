@@ -1,7 +1,7 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
-const EXCLUDED_SOURCES = new Set(['design-notes']);
+const EXCLUDED_SOURCES = new Set(["design-notes"]);
 
 export interface DocFile {
   absPath: string;
@@ -25,7 +25,7 @@ function walk(dir: string, root: string, results: DocFile[]): void {
       continue;
     }
 
-    if (!entry.name.endsWith('.md') && !entry.name.endsWith('.mdx')) {
+    if (!entry.name.endsWith(".md") && !entry.name.endsWith(".mdx")) {
       continue;
     }
 
@@ -35,7 +35,10 @@ function walk(dir: string, root: string, results: DocFile[]): void {
       continue;
     }
 
-    const docId = relPath.replace(/\.mdx?$/, '').split(path.sep).join('/');
+    const docId = relPath
+      .replace(/\.mdx?$/, "")
+      .split(path.sep)
+      .join("/");
     results.push({ absPath: fullPath, docId });
   }
 }

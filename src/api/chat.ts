@@ -1,5 +1,5 @@
-import type { ChatMessage, ChatResponse } from '../lib/chatTypes';
-import { resolveApiUrl } from '../lib/apiUrl';
+import type { ChatMessage, ChatResponse } from "../lib/chatTypes";
+import { resolveApiUrl } from "../lib/apiUrl";
 
 async function readChatResponse(res: Response): Promise<ChatResponse> {
   // Read the body exactly once, then try to parse it as JSON. Reading the
@@ -15,7 +15,10 @@ async function readChatResponse(res: Response): Promise<ChatResponse> {
   }
 
   if (res.status === 429) {
-    return { error: 'Too many requests. Please wait and try again.', errorCode: 'RATE_LIMIT' };
+    return {
+      error: "Too many requests. Please wait and try again.",
+      errorCode: "RATE_LIMIT",
+    };
   }
 
   if (text) {
@@ -28,14 +31,14 @@ async function readChatResponse(res: Response): Promise<ChatResponse> {
 export async function sendChat(apiUrl: string, messages: ChatMessage[]): Promise<ChatResponse> {
   const baseUrl = resolveApiUrl({ apiUrl });
   const res = await fetch(`${baseUrl}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),
   });
 
   const data = await readChatResponse(res);
   if (res.ok && !data.message && !data.error) {
-    return { error: 'Server returned an unexpected response' };
+    return { error: "Server returned an unexpected response" };
   }
   return data;
 }
