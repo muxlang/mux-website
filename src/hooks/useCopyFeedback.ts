@@ -7,6 +7,8 @@ interface CopyFeedback {
 }
 
 export default function useCopyFeedback(text: string): CopyFeedback {
+  // A fresh identity for each payload transition prevents feedback from
+  // reappearing when a previously copied value is selected again.
   const payload = useMemo(() => ({ text }), [text]);
 
   const [feedback, setFeedback] = useState({
