@@ -86,6 +86,9 @@ const MAX_CONTENT_CHARS = 2000;
 // Bound the serialized request before parsing so an attacker cannot send a
 // huge JSON array of tiny messages and make parsing itself the expensive work.
 const MAX_REQUEST_BODY_BYTES = 128 * 1024;
+// Compile source is validated after JSON decoding. Leave room for escaping
+// overhead while matching the API's 512 KiB request cap.
+const MAX_COMPILE_REQUEST_BODY_BYTES = 512 * 1024;
 const MAX_MESSAGE_COUNT = 32;
 // Minimum cosine similarity for a chunk to be considered relevant. There is a
 // consistent gap between on-topic chunk scores and the highest off-topic leak;
@@ -338,14 +341,20 @@ function parseChatRequest(body: unknown): ChatRequest | null {
   return b as unknown as ChatRequest;
 }
 
-async function readJsonBody(request: Request): Promise<unknown> {
-  const bytes = await readBodyBytes(request);
+async function readJsonBody(
+  request: Request,
+  maxBytes = MAX_REQUEST_BODY_BYTES,
+): Promise<unknown> {
+  const bytes = await readBodyBytes(request, maxBytes);
   return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
 }
 
-async function readBodyBytes(request: Request): Promise<Uint8Array> {
+async function readBodyBytes(
+  request: Request,
+  maxBytes: number,
+): Promise<Uint8Array> {
   const declaredLength = request.headers.get('content-length');
-  if (declaredLength !== null && Number(declaredLength) > MAX_REQUEST_BODY_BYTES) {
+  if (declaredLength !== null && Number(declaredLength) > maxBytes) {
     throw new Error('request body too large');
   }
 
@@ -363,7 +372,7 @@ async function readBodyBytes(request: Request): Promise<Uint8Array> {
       const { done, value } = await reader.read();
       if (done) break;
       total += value.byteLength;
-      if (total > MAX_REQUEST_BODY_BYTES) {
+      if (total > maxBytes) {
         await reader.cancel('request body too large');
         throw new Error('request body too large');
       }
@@ -410,7 +419,7 @@ async function handleCompile(request: Request, env: Env): Promise<Response> {
 
   let body: unknown;
   try {
-    body = await readJsonBody(request);
+    body = await readJsonBody(request, MAX_COMPILE_REQUEST_BODY_BYTES);
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, env, 400);
   }

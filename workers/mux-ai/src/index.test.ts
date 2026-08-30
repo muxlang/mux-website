@@ -196,3 +196,31 @@ test('compile proxy rejects oversized source before contacting the origin', asyn
     globalThis.fetch = originalFetch;
   }
 });
+
+test('compile proxy permits escaped source within the decoded source limit', async () => {
+  const originalFetch = globalThis.fetch;
+  let called = false;
+  globalThis.fetch = async () => {
+    called = true;
+    return new Response(JSON.stringify({ output: 'ok' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  try {
+    const code = '\\'.repeat(50 * 1024);
+    const response = await worker.fetch(
+      new Request('https://example.test/api/compile', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      }),
+      compileEnv(),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(called, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
