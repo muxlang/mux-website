@@ -424,7 +424,10 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   const rateLimit = await consumeRateLimit(ip, env);
   if (!rateLimit.available) {
     return jsonResponse(
-      { error: 'The rate-limit service is temporarily unavailable.' },
+      {
+        error: 'The rate-limit service is temporarily unavailable.',
+        errorCode: 'MODEL_UNAVAILABLE',
+      } satisfies ChatResponse,
       env,
       503,
     );

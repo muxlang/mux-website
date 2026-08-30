@@ -71,7 +71,9 @@ test('production rejects valid chat requests when the durable limiter is absent'
   const response = await worker.fetch(request, env);
 
   assert.equal(response.status, 503);
-  assert.match(await response.text(), /rate-limit service/);
+  const body = (await response.json()) as { error?: string; errorCode?: string };
+  assert.match(body.error ?? '', /rate-limit service/);
+  assert.equal(body.errorCode, 'MODEL_UNAVAILABLE');
 });
 
 test('durable limiter admits a request then applies the cooldown', async () => {
