@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface CopyFeedback {
   readonly copied: boolean;
@@ -7,7 +7,13 @@ interface CopyFeedback {
 }
 
 export default function useCopyFeedback(text: string): CopyFeedback {
-  const [feedback, setFeedback] = useState({ text, copied: false, copyCount: 0 });
+  const payload = useMemo(() => ({ text }), [text]);
+
+  const [feedback, setFeedback] = useState({
+    payload,
+    copied: false,
+    copyCount: 0,
+  });
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -22,14 +28,14 @@ export default function useCopyFeedback(text: string): CopyFeedback {
       .writeText(text)
       .then(() => {
         setFeedback((previous) => ({
-          text,
+          payload,
           copied: true,
-          copyCount: previous.text === text ? previous.copyCount + 1 : 1,
+          copyCount: previous.payload === payload ? previous.copyCount + 1 : 1,
         }));
         if (resetTimer.current) clearTimeout(resetTimer.current);
         resetTimer.current = setTimeout(() => {
           setFeedback((previous) => (
-            previous.text === text ? { ...previous, copied: false } : previous
+            previous.payload === payload ? { ...previous, copied: false } : previous
           ));
           resetTimer.current = null;
         }, 2000);
@@ -37,14 +43,17 @@ export default function useCopyFeedback(text: string): CopyFeedback {
       .catch(() => {
         // Clipboard write failed, for example in a non-HTTPS context.
       });
-  }, [text]);
+  }, [payload, text]);
 
-  const copied = feedback.text === text && feedback.copied;
+  const copied = feedback.payload === payload && feedback.copied;
   let announcement = '';
   if (copied && feedback.copyCount === 1) {
     announcement = 'Copied to clipboard';
   } else if (copied && feedback.copyCount > 1) {
     announcement = 'Copied to clipboard again';
+    if (feedback.copyCount > 2) {
+      announcement += ` (${feedback.copyCount} times)`;
+    }
   }
 
   return { copied, announcement, copy };

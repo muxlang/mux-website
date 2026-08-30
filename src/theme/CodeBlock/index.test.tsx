@@ -147,6 +147,12 @@ describe('CodeBlock', () => {
     });
     expect(writeText).toHaveBeenLastCalledWith('second\nline');
     expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+
+    rerender(
+      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
+    );
+    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 
   it('keeps the copy control unchanged when the clipboard rejects', async () => {
@@ -189,8 +195,14 @@ describe('CodeBlock', () => {
       });
       expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again');
 
+      await act(async () => {
+        fireEvent.click(screen.getByTitle('Copied!'));
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again (3 times)');
+
       act(() => vi.advanceTimersByTime(500));
-      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again');
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again (3 times)');
       act(() => vi.advanceTimersByTime(1500));
       expect(screen.getByRole('status')).toBeEmptyDOMElement();
     } finally {
