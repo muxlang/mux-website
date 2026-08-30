@@ -33,7 +33,7 @@ describe('ChatDrawer', () => {
   });
 
   it('shows typing state while sending and then renders the assistant response', async () => {
-    let resolveResponse!: (response: ChatResponse) => void;
+    let resolveResponse: ((response: ChatResponse) => void) | undefined;
     sendChatMock.mockReturnValue(
       new Promise<ChatResponse>((resolve) => {
         resolveResponse = resolve;
@@ -42,9 +42,13 @@ describe('ChatDrawer', () => {
     const onClose = vi.fn();
     render(<ChatDrawer open onClose={onClose} />);
     const input = screen.getByRole('textbox', { name: 'Chat message' });
+    const form = input.closest('form');
+    if (!form) {
+      throw new Error('ChatInput form is missing from ChatDrawer');
+    }
 
     fireEvent.change(input, { target: { value: '  Explain maps  ' } });
-    fireEvent.submit(input.closest('form')!);
+    fireEvent.submit(form);
 
     expect(screen.getByText('Explain maps')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
@@ -52,6 +56,9 @@ describe('ChatDrawer', () => {
     expect(screen.getByLabelText('Mux AI is typing')).toBeInTheDocument();
 
     await act(async () => {
+      if (!resolveResponse) {
+        throw new Error('Chat response resolver was not initialized');
+      }
       resolveResponse({ message: 'Maps associate keys with values.' });
     });
 
@@ -72,9 +79,13 @@ describe('ChatDrawer', () => {
     const onClose = vi.fn();
     render(<ChatDrawer open onClose={onClose} />);
     const input = screen.getByRole('textbox', { name: 'Chat message' });
+    const form = input.closest('form');
+    if (!form) {
+      throw new Error('ChatInput form is missing from ChatDrawer');
+    }
 
     fireEvent.change(input, { target: { value: 'question' } });
-    fireEvent.submit(input.closest('form')!);
+    fireEvent.submit(form);
 
     expect(await screen.findByText(/AI assistant is temporarily unavailable/)).toBeInTheDocument();
     expect(screen.getByText('question')).toBeInTheDocument();
