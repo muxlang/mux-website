@@ -235,6 +235,7 @@ export default function CodeBlock({
           <button
             className="terminal-copy-button"
             onClick={handleCopy}
+            aria-label={copied ? 'Copied' : 'Copy code to clipboard'}
             title={copied ? 'Copied!' : 'Copy to clipboard'}
             type="button"
           >

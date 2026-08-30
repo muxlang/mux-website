@@ -111,6 +111,11 @@ describe('CodeBlock', () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(code.trimEnd());
     expect(await screen.findByTitle('Copied!')).toBeInTheDocument();
+    expect(screen.getByTitle('Copied!')).toHaveAttribute('aria-label', 'Copied');
+    expect(screen.getByTitle('Copied!').querySelector('svg')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
   });
 
   it('keeps the copy control unchanged when the clipboard rejects', async () => {
@@ -125,7 +130,8 @@ describe('CodeBlock', () => {
 
     await expect(writeText.mock.results[0]?.value).rejects.toThrow('clipboard unavailable');
     expect(screen.queryByTitle('Copied!')).not.toBeInTheDocument();
-    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
+    expect(screen.getByTitle('Copy to clipboard'))
+      .toHaveAttribute('aria-label', 'Copy code to clipboard');
   });
 
   it('uses the interactive terminal for non-static Mux fences', () => {
