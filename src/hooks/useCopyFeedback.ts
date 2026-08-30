@@ -16,6 +16,7 @@ export default function useCopyFeedback(text: string): CopyFeedback {
     copied: false,
     copyCount: 0,
   });
+  const latestRequestPayload = useRef(payload);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -26,16 +27,21 @@ export default function useCopyFeedback(text: string): CopyFeedback {
   }, [text]);
 
   const copy = useCallback(() => {
+    latestRequestPayload.current = payload;
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        setFeedback((previous) => ({
-          payload,
-          copied: true,
-          copyCount: previous.payload === payload ? previous.copyCount + 1 : 1,
-        }));
+        if (latestRequestPayload.current !== payload) return;
+        setFeedback((previous) => {
+          return {
+            payload,
+            copied: true,
+            copyCount: previous.payload === payload ? previous.copyCount + 1 : 1,
+          };
+        });
         if (resetTimer.current) clearTimeout(resetTimer.current);
         resetTimer.current = setTimeout(() => {
+          if (latestRequestPayload.current !== payload) return;
           setFeedback((previous) => (
             previous.payload === payload ? { ...previous, copied: false } : previous
           ));

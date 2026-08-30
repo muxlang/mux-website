@@ -155,6 +155,39 @@ describe('CodeBlock', () => {
     expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 
+  it('keeps newer copy feedback when an older clipboard write completes later', async () => {
+    const firstWrite = deferred<void>();
+    const secondWrite = deferred<void>();
+    const writeText = vi.fn()
+      .mockReturnValueOnce(firstWrite.promise)
+      .mockReturnValueOnce(secondWrite.promise);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    const { rerender } = render(
+      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
+    );
+
+    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+    rerender(
+      <CodeBlock language="javascript">{'second\nline'}</CodeBlock>,
+    );
+    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+
+    await act(async () => {
+      secondWrite.resolve(undefined);
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+
+    await act(async () => {
+      firstWrite.resolve(undefined);
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+  });
+
   it('keeps the copy control unchanged when the clipboard rejects', async () => {
     const writeText = vi.fn().mockRejectedValue(new Error('clipboard unavailable'));
     Object.defineProperty(navigator, 'clipboard', {
