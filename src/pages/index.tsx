@@ -6,6 +6,7 @@ import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import CodeBlock from '@theme/CodeBlock';
 import {CopyIcon, CheckIcon} from '@site/src/components/CodeIcons';
+import useCopyFeedback from '@site/src/hooks/useCopyFeedback';
 
 import styles from './index.module.css';
 
@@ -94,18 +95,8 @@ const features = [
 ];
 
 function HomepageHeader() {
-  const [copied, setCopied] = useState(false);
   const [platform, setPlatform] = useState<Platform>(() => detectPlatform());
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(installCommands[platform]);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard unavailable or permission denied
-    }
-  };
+  const {copied, announcement, copy: handleCopy} = useCopyFeedback(installCommands[platform]);
 
   return (
     <header className={clsx('hero', styles.heroBanner)}>
@@ -192,7 +183,7 @@ function HomepageHeader() {
                   border: 0,
                 }}
               >
-                {copied ? 'Copied to clipboard' : ''}
+                {copied ? announcement : ''}
               </span>
             </div>
           </div>

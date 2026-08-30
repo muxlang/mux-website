@@ -5,6 +5,7 @@ import type { Props } from '@theme/CodeBlock';
 import { CopyIcon, CheckIcon } from '@site/src/components/CodeIcons';
 import { getHighlighter, resolveShikiLanguage } from '@site/src/shiki/highlighter';
 import MuxTerminal from '@site/src/components/MuxTerminal';
+import useCopyFeedback from '@site/src/hooks/useCopyFeedback';
 
 function parseLanguage(className: string | undefined): string | undefined {
   if (!className) return undefined;
@@ -252,6 +253,7 @@ interface MultilineCodeBlockProps {
   readonly children: string;
   readonly className: string | undefined;
   readonly copied: boolean;
+  readonly announcement: string;
   readonly highlighted: HighlightedCode | null;
   readonly highlightKey: string | null;
   readonly onCopy: () => void;
@@ -262,6 +264,7 @@ function MultilineCodeBlock({
   children,
   className,
   copied,
+  announcement,
   highlighted,
   highlightKey,
   onCopy,
@@ -280,7 +283,7 @@ function MultilineCodeBlock({
           {copied ? <CheckIcon /> : <CopyIcon />}
         </button>
         <span role="status" aria-live="polite" style={visuallyHiddenStyle}>
-          {copied ? 'Copied to clipboard' : ''}
+          {copied ? announcement : ''}
         </span>
       </div>
       {highlighted?.key === highlightKey ? (
@@ -303,7 +306,6 @@ export default function CodeBlock({
   metastring,
   ...props
 }: Props): ReactNode {
-  const [copied, setCopied] = useState(false);
   const isBrowser = useIsBrowser();
   const { pathname } = useLocation();
   const isBlogRoute = pathname.startsWith('/blog');
@@ -329,15 +331,7 @@ export default function CodeBlock({
   const terminalTitle = typeof title === 'string' ? title : languageLabel(detectedLang);
   const highlightKey = makeHighlightKey(children, detectedLang, className, isDark, isMuxCode);
 
-  const handleCopy = () => {
-    const textToCopy = getCodeString(rawChildren);
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      // Clipboard write failed (e.g., non-HTTPS context)
-    });
-  };
+  const { copied, announcement, copy: handleCopy } = useCopyFeedback(getCodeString(rawChildren));
 
   const highlighted = useHighlightedCode({
     children,
@@ -357,6 +351,7 @@ export default function CodeBlock({
       <MultilineCodeBlock
         className={className}
         copied={copied}
+        announcement={announcement}
         highlighted={highlighted}
         highlightKey={highlightKey}
         onCopy={handleCopy}

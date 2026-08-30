@@ -135,6 +135,39 @@ describe('CodeBlock', () => {
       .toHaveAttribute('aria-label', 'Copy code to clipboard');
   });
 
+  it('announces repeated successful copies and keeps the latest timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText },
+      });
+      render(<CodeBlock language="javascript">{'const answer = 42;\nreturn answer;'}</CodeBlock>);
+      const button = screen.getByTitle('Copy to clipboard');
+
+      await act(async () => {
+        fireEvent.click(button);
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+
+      act(() => vi.advanceTimersByTime(1500));
+      await act(async () => {
+        fireEvent.click(screen.getByTitle('Copied!'));
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again');
+
+      act(() => vi.advanceTimersByTime(500));
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again');
+      act(() => vi.advanceTimersByTime(1500));
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('uses the interactive terminal for non-static Mux fences', () => {
     const code = 'func main() {\n  return\n}\n';
     render(
