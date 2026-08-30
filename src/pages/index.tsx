@@ -6,6 +6,7 @@ import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import CodeBlock from '@theme/CodeBlock';
 import {CopyIcon, CheckIcon} from '@site/src/components/CodeIcons';
+import useCopyFeedback from '@site/src/hooks/useCopyFeedback';
 
 import styles from './index.module.css';
 
@@ -94,18 +95,8 @@ const features = [
 ];
 
 function HomepageHeader() {
-  const [copied, setCopied] = useState(false);
   const [platform, setPlatform] = useState<Platform>(() => detectPlatform());
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(installCommands[platform]);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard unavailable or permission denied
-    }
-  };
+  const {copied, announcement, copy: handleCopy} = useCopyFeedback(installCommands[platform]);
 
   return (
     <header className={clsx('hero', styles.heroBanner)}>
@@ -171,11 +162,29 @@ function HomepageHeader() {
               <button
                 className={styles.copyButton}
                 onClick={handleCopy}
+                aria-label="Copy install command to clipboard"
                 title={copied ? "Copied!" : "Copy to clipboard"}
                 type="button"
               >
                 {copied ? <CheckIcon /> : <CopyIcon />}
               </button>
+              <span
+                role="status"
+                aria-live="polite"
+                style={{
+                  position: 'absolute',
+                  width: 1,
+                  height: 1,
+                  padding: 0,
+                  margin: -1,
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  whiteSpace: 'nowrap',
+                  border: 0,
+                }}
+              >
+                {copied ? announcement : ''}
+              </span>
             </div>
           </div>
 

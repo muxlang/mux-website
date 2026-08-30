@@ -5,6 +5,7 @@ import type { Props } from '@theme/CodeBlock';
 import { CopyIcon, CheckIcon } from '@site/src/components/CodeIcons';
 import { getHighlighter, resolveShikiLanguage } from '@site/src/shiki/highlighter';
 import MuxTerminal from '@site/src/components/MuxTerminal';
+import useCopyFeedback from '@site/src/hooks/useCopyFeedback';
 
 function parseLanguage(className: string | undefined): string | undefined {
   if (!className) return undefined;
@@ -89,10 +90,46 @@ interface HighlightedCode {
   html: string;
 }
 
+const visuallyHiddenStyle: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
 function languageLabel(lang: string | undefined): string {
   if (!lang) return 'Code';
   const key = lang.trim().toLowerCase();
   return LANGUAGE_LABELS[key] ?? key.toUpperCase();
+}
+
+function isMultilineCode(children: ReactNode): children is string {
+  return typeof children === 'string' && children.includes('\n');
+}
+
+function shouldUseMuxTerminal(
+  detectedLang: string | undefined,
+  isStatic: boolean | undefined,
+  isBlogRoute: boolean,
+): boolean {
+  const isMuxLanguage = detectedLang === 'mux' || detectedLang === 'source.mux';
+  return isMuxLanguage && !isStatic && !isBlogRoute;
+}
+
+function makeHighlightKey(
+  children: ReactNode,
+  detectedLang: string | undefined,
+  className: string | undefined,
+  isDark: boolean | null,
+  isMuxCode: boolean,
+): string | null {
+  if (!isMultilineCode(children)) return null;
+  return JSON.stringify([children, detectedLang, className, isDark, isMuxCode]);
 }
 
 function getThemeFromBody(): 'github-dark' | 'github-light' {
@@ -105,6 +142,161 @@ function getThemeFromBody(): 'github-dark' | 'github-light' {
   return 'github-light';
 }
 
+function useTheme(isBrowser: boolean): boolean | null {
+  const [isDark, setIsDark] = useState<boolean | null>(() =>
+    typeof document === 'undefined' ? null : getThemeFromBody() === 'github-dark',
+  );
+
+  useEffect(() => {
+    if (!isBrowser) return undefined;
+
+    const observer = new MutationObserver(() => {
+      setIsDark(getThemeFromBody() === 'github-dark');
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    return () => observer.disconnect();
+  }, [isBrowser]);
+
+  return isDark;
+}
+
+function canHighlight({
+  children,
+  isBrowser,
+  isDark,
+  isMuxCode,
+}: Pick<Parameters<typeof useHighlightedCode>[0], 'children' | 'isBrowser' | 'isDark' | 'isMuxCode'>): boolean {
+  return (
+    !isMuxCode &&
+    isBrowser &&
+    isDark !== null &&
+    typeof children === 'string' &&
+    children.includes('\n')
+  );
+}
+
+async function highlightCode(
+  code: string,
+  detectedLang: string | undefined,
+  theme: 'github-dark' | 'github-light',
+): Promise<string | null> {
+  const effectiveLang = resolveShikiLanguage(detectedLang || 'mux');
+  if (!effectiveLang) return null;
+
+  const highlighter = await getHighlighter();
+  return highlighter.codeToHtml(code, {
+    lang: effectiveLang,
+    theme,
+  });
+}
+
+function useHighlightedCode({
+  children,
+  detectedLang,
+  isBrowser,
+  isDark,
+  isMuxCode,
+  highlightKey,
+}: {
+  children: ReactNode;
+  detectedLang: string | undefined;
+  isBrowser: boolean;
+  isDark: boolean | null;
+  isMuxCode: boolean;
+  highlightKey: string | null;
+}): HighlightedCode | null {
+  const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
+
+  useEffect(() => {
+    if (!canHighlight({ children, isBrowser, isDark, isMuxCode })) return undefined;
+
+    const trimmedCode = (children as string).trimEnd();
+    const theme = isDark ? 'github-dark' : 'github-light';
+    const requestKey = highlightKey;
+    let active = true;
+
+    const doHighlight = async () => {
+      try {
+        const html = await highlightCode(trimmedCode, detectedLang, theme);
+        if (!html) {
+          setHighlighted(null);
+          return;
+        }
+        if (active && requestKey) {
+          setHighlighted({ key: requestKey, html });
+        }
+      } catch (err) {
+        console.error('Highlighting error:', err);
+      }
+    };
+
+    doHighlight();
+
+    return () => {
+      active = false;
+    };
+  }, [children, detectedLang, highlightKey, isBrowser, isDark, isMuxCode]);
+
+  return highlighted;
+}
+
+interface MultilineCodeBlockProps {
+  readonly children: string;
+  readonly className: string | undefined;
+  readonly copied: boolean;
+  readonly announcement: string;
+  readonly highlighted: HighlightedCode | null;
+  readonly highlightKey: string | null;
+  readonly onCopy: () => void;
+  readonly terminalTitle: string;
+}
+
+function MultilineCodeBlock({
+  children,
+  className,
+  copied,
+  announcement,
+  highlighted,
+  highlightKey,
+  onCopy,
+  terminalTitle,
+}: MultilineCodeBlockProps): ReactNode {
+  return (
+    <div className={`terminal-code ${className || ''}`} data-filename={terminalTitle}>
+      <div className="terminal-buttons">
+        <button
+          className="terminal-copy-button"
+          onClick={onCopy}
+          aria-label="Copy code to clipboard"
+          title={copied ? 'Copied!' : 'Copy to clipboard'}
+          type="button"
+        >
+          {copied ? <CheckIcon /> : <CopyIcon />}
+        </button>
+        <span role="status" aria-live="polite" style={visuallyHiddenStyle}>
+          {copied ? announcement : ''}
+        </span>
+      </div>
+      {highlighted?.key === highlightKey ? (
+        <div className="shiki-wrapper" dangerouslySetInnerHTML={{ __html: highlighted.html }} />
+      ) : (
+        <pre className="shiki-pre">
+          <code>{children.trimEnd()}</code>
+        </pre>
+      )}
+    </div>
+  );
+}
+
 export default function CodeBlock({
   children: rawChildren,
   title: titleProp,
@@ -114,8 +306,6 @@ export default function CodeBlock({
   metastring,
   ...props
 }: Props): ReactNode {
-  const [copied, setCopied] = useState(false);
-  const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
   const isBrowser = useIsBrowser();
   const { pathname } = useLocation();
   const isBlogRoute = pathname.startsWith('/blog');
@@ -126,9 +316,7 @@ export default function CodeBlock({
   // on that flag left isDark stuck at null until some unrelated DOM mutation
   // happened to trip the observer below - the async highlight effect (guarded
   // on `isDark !== null`) could then never run, leaving code unhighlighted.
-  const [isDark, setIsDark] = useState<boolean | null>(() =>
-    typeof document === 'undefined' ? null : getThemeFromBody() === 'github-dark',
-  );
+  const isDark = useTheme(isBrowser);
 
   const parsedMeta = parseMetastring(metastring);
   const title = titleProp || parsedMeta.title;
@@ -139,119 +327,38 @@ export default function CodeBlock({
   // Blog posts and any fence marked "static" get the same non-interactive
   // terminal rendering as every other language - a page full of separate
   // Monaco editors is heavier than a blog post needs.
-  const isMuxCode =
-    (detectedLang === 'mux' || detectedLang === 'source.mux') &&
-    !parsedMeta.static &&
-    !isBlogRoute;
+  const isMuxCode = shouldUseMuxTerminal(detectedLang, parsedMeta.static, isBlogRoute);
   const terminalTitle = typeof title === 'string' ? title : languageLabel(detectedLang);
-  const highlightKey =
-    typeof children === 'string' && children.includes('\n')
-      ? JSON.stringify([children, detectedLang, className, isDark, isMuxCode])
-      : null;
+  const highlightKey = makeHighlightKey(children, detectedLang, className, isDark, isMuxCode);
 
-  const handleCopy = () => {
-    const textToCopy = getCodeString(rawChildren);
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      // Clipboard write failed (e.g., non-HTTPS context)
-    });
-  };
+  const { copied, announcement, copy: handleCopy } = useCopyFeedback(getCodeString(rawChildren));
 
-  useEffect(() => {
-    if (isBrowser) {
-      const observer = new MutationObserver(() => {
-        const newTheme = getThemeFromBody();
-        setIsDark(newTheme === 'github-dark');
-      });
+  const highlighted = useHighlightedCode({
+    children,
+    detectedLang,
+    isBrowser,
+    isDark,
+    isMuxCode,
+    highlightKey,
+  });
 
-      observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme'],
-      });
-
-      return () => observer.disconnect();
-    }
-  }, [isBrowser]);
-
-  useEffect(() => {
-    if (
-      !isMuxCode &&
-      isBrowser &&
-      isDark !== null &&
-      typeof children === 'string' &&
-      children.includes('\n')
-    ) {
-      const trimmedCode = children.trimEnd();
-      const theme = isDark ? 'github-dark' : 'github-light';
-      const requestKey = highlightKey;
-      let active = true;
-
-      const doHighlight = async () => {
-        try {
-          const effectiveLang = resolveShikiLanguage(detectedLang || 'mux');
-          if (!effectiveLang) {
-            setHighlighted(null);
-            return;
-          }
-
-          const highlighter = await getHighlighter();
-          const html = highlighter.codeToHtml(trimmedCode, {
-            lang: effectiveLang,
-            theme,
-          });
-          if (active && requestKey) {
-            setHighlighted({ key: requestKey, html });
-          }
-        } catch (err) {
-          console.error('Highlighting error:', err);
-        }
-      };
-
-      doHighlight();
-
-      return () => {
-        active = false;
-      };
-    }
-  }, [children, language, className, isDark, isBrowser, detectedLang, isMuxCode, highlightKey]);
-
-  if (typeof children === 'string' && isMuxCode) {
+  if (isMuxCode && typeof children === 'string') {
     return <MuxTerminal initialCode={children.trimEnd()} title={terminalTitle} />;
   }
 
-  if (typeof children === 'string' && children.includes('\n')) {
+  if (isMultilineCode(children)) {
     return (
-      <div
-        className={`terminal-code ${className || ''}`}
-        data-filename={terminalTitle}
+      <MultilineCodeBlock
+        className={className}
+        copied={copied}
+        announcement={announcement}
+        highlighted={highlighted}
+        highlightKey={highlightKey}
+        onCopy={handleCopy}
+        terminalTitle={terminalTitle}
       >
-        <div className="terminal-buttons">
-          <button
-            className="terminal-copy-button"
-            onClick={handleCopy}
-            title={copied ? 'Copied!' : 'Copy to clipboard'}
-            type="button"
-          >
-            {copied ? <CheckIcon /> : <CopyIcon />}
-          </button>
-        </div>
-        {highlighted?.key === highlightKey ? (
-          <div
-            className="shiki-wrapper"
-            dangerouslySetInnerHTML={{ __html: highlighted.html }}
-          />
-        ) : (
-          <pre className="shiki-pre">
-            <code>{children.trimEnd()}</code>
-          </pre>
-        )}
-      </div>
+        {children}
+      </MultilineCodeBlock>
     );
   }
 

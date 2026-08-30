@@ -111,6 +111,81 @@ describe('CodeBlock', () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(code.trimEnd());
     expect(await screen.findByTitle('Copied!')).toBeInTheDocument();
+    expect(screen.getByTitle('Copied!')).toHaveAttribute('aria-label', 'Copy code to clipboard');
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+    expect(screen.getByTitle('Copied!').querySelector('svg')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+  });
+
+  it('resets copy feedback when the code payload changes', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    const { rerender } = render(
+      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByTitle('Copy to clipboard'));
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+
+    rerender(
+      <CodeBlock language="javascript">{'second\nline'}</CodeBlock>,
+    );
+    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTitle('Copy to clipboard'));
+      await Promise.resolve();
+    });
+    expect(writeText).toHaveBeenLastCalledWith('second\nline');
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+
+    rerender(
+      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
+    );
+    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
+  it('keeps newer copy feedback when an older clipboard write completes later', async () => {
+    const firstWrite = deferred<void>();
+    const secondWrite = deferred<void>();
+    const writeText = vi.fn()
+      .mockReturnValueOnce(firstWrite.promise)
+      .mockReturnValueOnce(secondWrite.promise);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    const { rerender } = render(
+      <CodeBlock language="javascript">{'first\nline'}</CodeBlock>,
+    );
+
+    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+    rerender(
+      <CodeBlock language="javascript">{'second\nline'}</CodeBlock>,
+    );
+    fireEvent.click(screen.getByTitle('Copy to clipboard'));
+
+    await act(async () => {
+      secondWrite.resolve(undefined);
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+
+    await act(async () => {
+      firstWrite.resolve(undefined);
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
   });
 
   it('keeps the copy control unchanged when the clipboard rejects', async () => {
@@ -125,7 +200,47 @@ describe('CodeBlock', () => {
 
     await expect(writeText.mock.results[0]?.value).rejects.toThrow('clipboard unavailable');
     expect(screen.queryByTitle('Copied!')).not.toBeInTheDocument();
-    expect(screen.getByTitle('Copy to clipboard')).toBeInTheDocument();
+    expect(screen.getByTitle('Copy to clipboard'))
+      .toHaveAttribute('aria-label', 'Copy code to clipboard');
+  });
+
+  it('announces repeated successful copies and keeps the latest timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText },
+      });
+      render(<CodeBlock language="javascript">{'const answer = 42;\nreturn answer;'}</CodeBlock>);
+      const button = screen.getByTitle('Copy to clipboard');
+
+      await act(async () => {
+        fireEvent.click(button);
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard');
+
+      act(() => vi.advanceTimersByTime(1500));
+      await act(async () => {
+        fireEvent.click(screen.getByTitle('Copied!'));
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again');
+
+      await act(async () => {
+        fireEvent.click(screen.getByTitle('Copied!'));
+        await Promise.resolve();
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again (3 times)');
+
+      act(() => vi.advanceTimersByTime(500));
+      expect(screen.getByRole('status')).toHaveTextContent('Copied to clipboard again (3 times)');
+      act(() => vi.advanceTimersByTime(1500));
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('uses the interactive terminal for non-static Mux fences', () => {
