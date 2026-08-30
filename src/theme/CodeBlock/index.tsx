@@ -84,6 +84,11 @@ const LANGUAGE_LABELS: Record<string, string> = {
   plaintext: 'Output',
 };
 
+interface HighlightedCode {
+  key: string;
+  html: string;
+}
+
 function languageLabel(lang: string | undefined): string {
   if (!lang) return 'Code';
   const key = lang.trim().toLowerCase();
@@ -110,7 +115,7 @@ export default function CodeBlock({
   ...props
 }: Props): ReactNode {
   const [copied, setCopied] = useState(false);
-  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
   const isBrowser = useIsBrowser();
   const { pathname } = useLocation();
   const isBlogRoute = pathname.startsWith('/blog');
@@ -139,6 +144,10 @@ export default function CodeBlock({
     !parsedMeta.static &&
     !isBlogRoute;
   const terminalTitle = typeof title === 'string' ? title : languageLabel(detectedLang);
+  const highlightKey =
+    typeof children === 'string' && children.includes('\n')
+      ? JSON.stringify([children, detectedLang, className, isDark, isMuxCode])
+      : null;
 
   const handleCopy = () => {
     const textToCopy = getCodeString(rawChildren);
@@ -180,6 +189,8 @@ export default function CodeBlock({
     ) {
       const trimmedCode = children.trimEnd();
       const theme = isDark ? 'github-dark' : 'github-light';
+      const requestKey = highlightKey;
+      let active = true;
 
       const doHighlight = async () => {
         try {
@@ -194,16 +205,21 @@ export default function CodeBlock({
             lang: effectiveLang,
             theme,
           });
-          setHighlighted(html);
+          if (active && requestKey) {
+            setHighlighted({ key: requestKey, html });
+          }
         } catch (err) {
           console.error('Highlighting error:', err);
-          setHighlighted(null);
         }
       };
 
       doHighlight();
+
+      return () => {
+        active = false;
+      };
     }
-  }, [children, language, className, isDark, isBrowser, detectedLang, isMuxCode]);
+  }, [children, language, className, isDark, isBrowser, detectedLang, isMuxCode, highlightKey]);
 
   if (typeof children === 'string' && isMuxCode) {
     return <MuxTerminal initialCode={children.trimEnd()} title={terminalTitle} />;
@@ -225,10 +241,10 @@ export default function CodeBlock({
             {copied ? <CheckIcon /> : <CopyIcon />}
           </button>
         </div>
-        {highlighted ? (
+        {highlighted?.key === highlightKey ? (
           <div
             className="shiki-wrapper"
-            dangerouslySetInnerHTML={{ __html: highlighted }}
+            dangerouslySetInnerHTML={{ __html: highlighted.html }}
           />
         ) : (
           <pre className="shiki-pre">
