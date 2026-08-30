@@ -4,8 +4,9 @@ const supported = /^(src|scripts|workers|tools)\/.*\.(?:ts|tsx|js|jsx|mjs|css)$/
 
 function gitFiles(args) {
   try {
-    return execFileSync("git", ["diff", "--name-only", "--diff-filter=ACMR", ...args], {
+    return execFileSync("/usr/bin/git", ["diff", "--name-only", "--diff-filter=ACMR", ...args], {
       encoding: "utf8",
+      env: { ...process.env, PATH: "/usr/bin:/bin" },
     })
       .split("\n")
       .map((file) => file.trim())
@@ -28,4 +29,8 @@ if (formatFiles.length === 0) {
   process.exit(0);
 }
 
-execFileSync("npx", ["prettier", "--check", ...formatFiles], { stdio: "inherit" });
+const prettier = new URL("../node_modules/prettier/bin/prettier.cjs", import.meta.url);
+execFileSync(process.execPath, [prettier, "--check", ...formatFiles], {
+  stdio: "inherit",
+  env: { ...process.env, PATH: "/usr/bin:/bin" },
+});
