@@ -7,6 +7,7 @@
 type LogEvent =
   | { event: 'chat_request'; turn_count: number }
   | { event: 'rate_limit' }
+  | { event: 'rate_limit_backend_unavailable'; message?: string }
   | { event: 'retrieval_result'; chunk_count: number; top_score: number; query_length: number }
   | { event: 'no_results'; query_length: number }
   | { event: 'retrieval_error'; message: string }

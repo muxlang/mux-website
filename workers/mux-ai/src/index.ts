@@ -5,6 +5,10 @@ export interface Env {
   AI: Ai;
   VECTORIZE: VectorizeIndex;
   VECTORIZE_NAMESPACE?: string;
+  // Production uses a per-client Durable Object so the cooldown survives
+  // isolate eviction and is consistent across Cloudflare points of presence.
+  // Development intentionally keeps this optional for local Wrangler runs.
+  CHAT_RATE_LIMITER?: DurableObjectNamespace;
   ALLOWED_ORIGIN: string;
   // Deploy-time only (set in wrangler.toml, never request-derived). Gates the
   // dev-only /api/search endpoint; production deploys set this to "production".
@@ -97,6 +101,25 @@ const RATE_LIMIT_MAP_CAP = 10000;
 // the goal is basic abuse prevention, not perfect rate limiting across all PoPs.
 const lastRequestByIp = new Map<string, number>();
 
+export class ChatRateLimiter implements DurableObject {
+  constructor(private readonly state: DurableObjectState) {}
+
+  async fetch(request: Request): Promise<Response> {
+    if (request.method !== 'POST') {
+      return new Response('method not allowed', { status: 405 });
+    }
+
+    const now = Date.now();
+    const last = await this.state.storage.get<number>('lastRequestAt');
+    if (last !== undefined && now - last < RATE_LIMIT_MS) {
+      return new Response(null, { status: 429 });
+    }
+
+    await this.state.storage.put('lastRequestAt', now);
+    return new Response(null, { status: 204 });
+  }
+}
+
 function corsHeaders(env: Env): HeadersInit {
   if (!env.ALLOWED_ORIGIN) {
     throw new Error('ALLOWED_ORIGIN is not configured for this environment');
@@ -142,6 +165,47 @@ function isWithinCooldown(ip: string): boolean {
 
 function markRequest(ip: string): void {
   lastRequestByIp.set(ip, Date.now());
+}
+
+type RateLimitDecision =
+  | { available: true; allowed: boolean }
+  | { available: false; allowed: false };
+
+async function consumeRateLimit(ip: string, env: Env): Promise<RateLimitDecision> {
+  if (env.ENVIRONMENT !== 'production') {
+    if (isWithinCooldown(ip)) {
+      return { available: true, allowed: false };
+    }
+    markRequest(ip);
+    return { available: true, allowed: true };
+  }
+
+  if (!env.CHAT_RATE_LIMITER) {
+    log({ event: 'rate_limit_backend_unavailable' });
+    return { available: false, allowed: false };
+  }
+
+  try {
+    const id = env.CHAT_RATE_LIMITER.idFromName(ip);
+    const response = await env.CHAT_RATE_LIMITER.get(id).fetch(
+      'https://rate-limit/check',
+      { method: 'POST' },
+    );
+    if (response.status === 429) {
+      return { available: true, allowed: false };
+    }
+    if (!response.ok) {
+      log({ event: 'rate_limit_backend_unavailable' });
+      return { available: false, allowed: false };
+    }
+    return { available: true, allowed: true };
+  } catch (err) {
+    log({
+      event: 'rate_limit_backend_unavailable',
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { available: false, allowed: false };
+  }
 }
 
 async function embedQuery(query: string, env: Env): Promise<number[]> {
@@ -341,17 +405,6 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   const start = Date.now();
 
   const ip = clientIp(request);
-  if (isWithinCooldown(ip)) {
-    log({ event: 'rate_limit' });
-    return jsonResponse(
-      {
-        error: 'Too many requests. Please wait a moment before sending another message.',
-        errorCode: 'RATE_LIMIT',
-      } satisfies ChatResponse,
-      env,
-      429,
-    );
-  }
 
   let body: unknown;
   try {
@@ -368,7 +421,25 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   const lastUserMessage = messages[lastUserIndex];
 
   // Request is valid and about to hit the AI calls; consume the cooldown slot now.
-  markRequest(ip);
+  const rateLimit = await consumeRateLimit(ip, env);
+  if (!rateLimit.available) {
+    return jsonResponse(
+      { error: 'The rate-limit service is temporarily unavailable.' },
+      env,
+      503,
+    );
+  }
+  if (!rateLimit.allowed) {
+    log({ event: 'rate_limit' });
+    return jsonResponse(
+      {
+        error: 'Too many requests. Please wait a moment before sending another message.',
+        errorCode: 'RATE_LIMIT',
+      } satisfies ChatResponse,
+      env,
+      429,
+    );
+  }
 
   log({ event: 'chat_request', turn_count: messages.length });
 
