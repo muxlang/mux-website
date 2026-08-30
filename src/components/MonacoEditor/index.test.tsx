@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MonacoEditorComponent from './index';
 
@@ -81,6 +81,8 @@ describe('MonacoEditorComponent', () => {
     const { rerender } = render(
       <MonacoEditorComponent value="func main()" onChange={onChange} onRun={firstRun} />,
     );
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    await waitFor(() => expect(monacoEditorMock.props).toBeDefined());
     const props = monacoEditorMock.props;
     if (!props) {
       throw new Error('Monaco editor props were not captured');
@@ -124,6 +126,7 @@ describe('MonacoEditorComponent', () => {
     const { editor } = createEditor(1);
     const monaco: MonacoMock = { KeyMod: { CtrlCmd: 1 }, KeyCode: { Enter: 2 } };
     render(<MonacoEditorComponent value="" onChange={vi.fn()} />);
+    await waitFor(() => expect(monacoEditorMock.props).toBeDefined());
     const props = monacoEditorMock.props;
     if (!props) {
       throw new Error('Monaco editor props were not captured');
@@ -138,9 +141,10 @@ describe('MonacoEditorComponent', () => {
     await waitFor(() => expect(monacoEditorMock.props?.theme).toBe('vs-dark'));
   });
 
-  it('uses the container height when fill sizing is requested', () => {
+  it('uses the container height when fill sizing is requested', async () => {
     render(<MonacoEditorComponent value="" onChange={vi.fn()} sizing="fill" />);
 
+    await waitFor(() => expect(monacoEditorMock.props).toBeDefined());
     expect(monacoEditorMock.props?.height).toBe('100%');
     expect(monacoEditorMock.props?.options).toEqual(
       expect.objectContaining({ automaticLayout: true, fontLigatures: false }),
