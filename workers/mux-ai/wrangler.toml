@@ -24,12 +24,13 @@ new_sqlite_classes = ["ChatRateLimiter"]
 [vars]
 ENVIRONMENT = "production"
 ALLOWED_ORIGIN = "https://mux-lang.dev"
+MUX_API_ORIGIN = "https://mux-lang-api.fly.dev"
 
 [env.production]
 # Override the default "<name>-<env>" naming so deploys target the "mux-ai"
 # Worker created in the dashboard rather than creating "mux-ai-production".
 name = "mux-ai"
-vars = { ENVIRONMENT = "production", ALLOWED_ORIGIN = "https://mux-lang.dev" }
+vars = { ENVIRONMENT = "production", ALLOWED_ORIGIN = "https://mux-lang.dev", MUX_API_ORIGIN = "https://mux-lang-api.fly.dev" }
 
 [env.production.ai]
 binding = "AI"
@@ -43,7 +44,7 @@ name = "CHAT_RATE_LIMITER"
 class_name = "ChatRateLimiter"
 
 [env.development]
-vars = { ENVIRONMENT = "development", ALLOWED_ORIGIN = "http://localhost:3000" }
+vars = { ENVIRONMENT = "development", ALLOWED_ORIGIN = "http://localhost:3000", MUX_API_ORIGIN = "http://localhost:8080" }
 
 [env.development.ai]
 binding = "AI"

@@ -105,3 +105,94 @@ test('durable limiter rejects non-POST requests', async () => {
 
   assert.equal(response.status, 405);
 });
+
+function compileEnv(): Env {
+  return {
+    ALLOWED_ORIGIN: 'https://mux-lang.dev',
+    ENVIRONMENT: 'production',
+    MUX_API_ORIGIN: 'https://mux-lang-api.fly.dev',
+    MUX_API_ORIGIN_TOKEN: 'origin-token',
+    CHAT_RATE_LIMITER: {
+      idFromName: () => ({}) as DurableObjectId,
+      get: () => ({ fetch: async () => new Response(null, { status: 204 }) }),
+    } as unknown as DurableObjectNamespace,
+  } as Env;
+}
+
+test('compile proxy rejects non-POST requests', async () => {
+  const response = await worker.fetch(
+    new Request('https://example.test/api/compile'),
+    compileEnv(),
+  );
+
+  assert.equal(response.status, 405);
+});
+
+test('compile proxy fails closed when production origin settings are absent', async () => {
+  const incomplete = { ...compileEnv(), MUX_API_ORIGIN_TOKEN: undefined };
+  const response = await worker.fetch(
+    new Request('https://example.test/api/compile', {
+      method: 'POST',
+      body: JSON.stringify({ code: 'print(1)' }),
+      headers: { 'content-type': 'application/json' },
+    }),
+    incomplete,
+  );
+
+  assert.equal(response.status, 503);
+});
+
+test('compile proxy forwards validated code with the private origin token', async () => {
+  const originalFetch = globalThis.fetch;
+  let upstreamRequest: Request | undefined;
+  globalThis.fetch = async (input, init) => {
+    upstreamRequest = new Request(input, init);
+    return new Response(JSON.stringify({ output: 'ok' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  try {
+    const response = await worker.fetch(
+      new Request('https://example.test/api/compile', {
+        method: 'POST',
+        body: JSON.stringify({ code: 'print(1)' }),
+        headers: { 'content-type': 'application/json' },
+      }),
+      compileEnv(),
+    );
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { output: 'ok' });
+    assert.equal(upstreamRequest?.url, 'https://mux-lang-api.fly.dev/api/compile');
+    assert.equal(upstreamRequest?.headers.get('X-Mux-Origin-Token'), 'origin-token');
+    assert.deepEqual(await upstreamRequest?.json(), { code: 'print(1)' });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('compile proxy rejects oversized source before contacting the origin', async () => {
+  const originalFetch = globalThis.fetch;
+  let called = false;
+  globalThis.fetch = async () => {
+    called = true;
+    return new Response(null, { status: 500 });
+  };
+
+  try {
+    const response = await worker.fetch(
+      new Request('https://example.test/api/compile', {
+        method: 'POST',
+        body: JSON.stringify({ code: 'x'.repeat(100 * 1024 + 1) }),
+      }),
+      compileEnv(),
+    );
+
+    assert.equal(response.status, 413);
+    assert.equal(called, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

@@ -189,7 +189,7 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
   customFields: {
     version: siteVersion,
-    apiUrl: process.env.MUX_API_URL ?? 'https://mux-lang-api.fly.dev',
+    apiUrl: process.env.MUX_API_URL ?? 'https://mux-ai.corniedj.workers.dev',
     aiApiUrl: process.env.MUX_AI_API_URL ?? 'https://mux-ai.corniedj.workers.dev',
   },
 };
