@@ -4,6 +4,10 @@ Cloudflare Worker backing the Mux AI documentation assistant. Lives on its own
 free-tier Cloudflare account/Worker, separate from the billed `mux-lang-api`
 Fly.io service, so the assistant's usage never affects compile-API costs.
 
+The Worker also proxies the playground compile endpoint. Browser compile
+requests stay behind Cloudflare, and the Worker authenticates requests to the
+Fly origin with a secret that is never sent to the browser.
+
 The assistant spans four pieces:
 
 - `workers/mux-ai` (this dir) - the Worker: retrieval + answer generation.
@@ -20,6 +24,11 @@ The assistant spans four pieces:
 
 ## Endpoints
 
+- `POST /api/compile` - validates a bounded source request, applies the
+  per-client Durable Object cooldown, and forwards it to the Fly compile API.
+  Production requires `MUX_API_ORIGIN` and the secret
+  `MUX_API_ORIGIN_TOKEN`.
+- `GET /health` - health check used by the website's compile API warmup.
 - `GET /api/chat/health` - returns `{ "status": "ok" }`.
 - `POST /api/chat` - retrieval-augmented chat. Embeds the query (with the last
   few user turns for context), queries Vectorize for the top chunks above
@@ -36,6 +45,11 @@ CORS is restricted to `https://mux-lang.dev` (production) and
 The top-level `[vars]` default to the production (locked-down) posture, so a
 bare `wrangler deploy` never accidentally exposes the dev endpoint; opening it
 requires an explicit `--env development`.
+
+The production Worker uses Cloudflare's edge protection and the existing
+`ChatRateLimiter` Durable Object for chat and compile cooldowns. The Fly API
+also checks `MUX_API_ORIGIN_TOKEN`, so direct requests to
+`mux-lang-api.fly.dev` cannot start compilation.
 
 ## Local development
 
@@ -68,6 +82,18 @@ once with `wrangler login`, then:
 ```bash
 npm run deploy       # wrangler deploy --env production -> mux-ai.corniedj.workers.dev
 ```
+
+Before the first production deploy, set the same random token on Fly and the
+Worker. Keep the value out of shell history and source control:
+
+```bash
+fly secrets set MUX_API_ORIGIN_TOKEN='<random-token>' -a mux-lang-api
+printf '%s' '<random-token>' | npx wrangler secret put MUX_API_ORIGIN_TOKEN --env production
+```
+
+Deploy the API after setting its secret, then deploy this Worker. The website
+already defaults to the Worker URL; `MUX_API_URL` remains available for local
+development.
 
 The production environment provisions the `ChatRateLimiter` Durable Object as
 part of this Worker deployment. It is not a second always-on server. Do not

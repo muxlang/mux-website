@@ -13,6 +13,10 @@ export interface Env {
   // Deploy-time only (set in wrangler.toml, never request-derived). Gates the
   // dev-only /api/search endpoint; production deploys set this to "production".
   ENVIRONMENT: string;
+  // The Worker is the only public compile entry point. The origin URL is a
+  // deploy-time variable and the token is a secret shared with Fly.io.
+  MUX_API_ORIGIN?: string;
+  MUX_API_ORIGIN_TOKEN?: string;
 }
 
 export interface ChatMessage {
@@ -82,6 +86,9 @@ const MAX_CONTENT_CHARS = 2000;
 // Bound the serialized request before parsing so an attacker cannot send a
 // huge JSON array of tiny messages and make parsing itself the expensive work.
 const MAX_REQUEST_BODY_BYTES = 128 * 1024;
+// Compile source is validated after JSON decoding. Leave room for escaping
+// overhead while matching the API's 512 KiB request cap.
+const MAX_COMPILE_REQUEST_BODY_BYTES = 512 * 1024;
 const MAX_MESSAGE_COUNT = 32;
 // Minimum cosine similarity for a chunk to be considered relevant. There is a
 // consistent gap between on-topic chunk scores and the highest off-topic leak;
@@ -96,6 +103,9 @@ const RATE_LIMIT_MS = 2000;
 // When the cooldown map grows past this, sweep out expired entries. Bounds
 // memory for one-shot IPs that never return, without paying a sweep per request.
 const RATE_LIMIT_MAP_CAP = 10000;
+const MAX_COMPILE_CODE_BYTES = 100 * 1024;
+const UPSTREAM_TIMEOUT_MS = 35_000;
+const ORIGIN_HEALTH_TIMEOUT_MS = 10_000;
 
 // Per-isolate cooldown map. Resets on isolate eviction, which is acceptable —
 // the goal is basic abuse prevention, not perfect rate limiting across all PoPs.
@@ -332,9 +342,20 @@ function parseChatRequest(body: unknown): ChatRequest | null {
   return b as unknown as ChatRequest;
 }
 
-async function readJsonBody(request: Request): Promise<unknown> {
+async function readJsonBody(
+  request: Request,
+  maxBytes = MAX_REQUEST_BODY_BYTES,
+): Promise<unknown> {
+  const bytes = await readBodyBytes(request, maxBytes);
+  return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+}
+
+async function readBodyBytes(
+  request: Request,
+  maxBytes: number,
+): Promise<Uint8Array> {
   const declaredLength = request.headers.get('content-length');
-  if (declaredLength !== null && Number(declaredLength) > MAX_REQUEST_BODY_BYTES) {
+  if (declaredLength !== null && Number(declaredLength) > maxBytes) {
     throw new Error('request body too large');
   }
 
@@ -343,7 +364,7 @@ async function readJsonBody(request: Request): Promise<unknown> {
   // capped stream instead and cancel as soon as the budget is exceeded.
   const reader = request.body?.getReader();
   if (!reader) {
-    return JSON.parse('null') as unknown;
+    return new Uint8Array();
   }
   const chunks: Uint8Array[] = [];
   let total = 0;
@@ -352,7 +373,7 @@ async function readJsonBody(request: Request): Promise<unknown> {
       const { done, value } = await reader.read();
       if (done) break;
       total += value.byteLength;
-      if (total > MAX_REQUEST_BODY_BYTES) {
+      if (total > maxBytes) {
         await reader.cancel('request body too large');
         throw new Error('request body too large');
       }
@@ -367,7 +388,96 @@ async function readJsonBody(request: Request): Promise<unknown> {
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+  return bytes;
+}
+
+function validateCompileBody(body: unknown): { code: string } | { error: string; status: number } {
+  if (typeof body !== 'object' || body === null) {
+    return { error: 'Request body must be a JSON object', status: 400 };
+  }
+  const code = (body as Record<string, unknown>).code;
+  if (typeof code !== 'string') {
+    return { error: "'code' must be a string", status: 400 };
+  }
+  if (new TextEncoder().encode(code).byteLength > MAX_COMPILE_CODE_BYTES) {
+    return { error: 'Source code exceeds 100KB limit', status: 413 };
+  }
+  return { code };
+}
+
+async function handleCompile(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, env, 405);
+  }
+  if (!env.MUX_API_ORIGIN || (env.ENVIRONMENT === 'production' && !env.MUX_API_ORIGIN_TOKEN)) {
+    log({ event: 'compile_origin_unavailable' });
+    return jsonResponse(
+      { error: 'The compile service is temporarily unavailable.', errorCode: 'MODEL_UNAVAILABLE' },
+      env,
+      503,
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await readJsonBody(request, MAX_COMPILE_REQUEST_BODY_BYTES);
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, env, 400);
+  }
+  const validated = validateCompileBody(body);
+  if ('error' in validated) {
+    return jsonResponse({ error: validated.error }, env, validated.status);
+  }
+
+  const rateLimit = await consumeRateLimit(`compile:${clientIp(request)}`, env);
+  if (!rateLimit.available) {
+    return jsonResponse(
+      { error: 'The compile service is temporarily unavailable.', errorCode: 'MODEL_UNAVAILABLE' },
+      env,
+      503,
+    );
+  }
+  if (!rateLimit.allowed) {
+    return jsonResponse(
+      { error: 'Too many requests. Please wait and try again.', errorCode: 'RATE_LIMIT' },
+      env,
+      429,
+    );
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  try {
+    const origin = new URL(env.MUX_API_ORIGIN);
+    origin.pathname = `${origin.pathname.replace(/\/$/, '')}/api/compile`;
+    origin.search = '';
+    const upstreamHeaders = new Headers({ 'Content-Type': 'application/json' });
+    if (env.MUX_API_ORIGIN_TOKEN) {
+      upstreamHeaders.set('X-Mux-Origin-Token', env.MUX_API_ORIGIN_TOKEN);
+    }
+    const upstream = await fetch(origin, {
+      method: 'POST',
+      headers: upstreamHeaders,
+      body: JSON.stringify({ code: validated.code }),
+      signal: controller.signal,
+    });
+    const headers = new Headers({ ...corsHeaders(env), 'Cache-Control': 'no-store' });
+    const contentType = upstream.headers.get('Content-Type');
+    if (contentType) headers.set('Content-Type', contentType);
+    return new Response(upstream.body, { status: upstream.status, headers });
+  } catch (err) {
+    log({
+      event: 'compile_origin_error',
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return jsonResponse(
+      { error: 'The compile service is temporarily unavailable.', errorCode: 'MODEL_UNAVAILABLE' },
+      env,
+      504,
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 type ValidatedChat =
@@ -561,6 +671,41 @@ function handleHealth(env: Env): Response {
   return jsonResponse({ status: 'ok' }, env);
 }
 
+async function handleOriginHealth(env: Env): Promise<Response> {
+  if (!env.MUX_API_ORIGIN || (env.ENVIRONMENT === 'production' && !env.MUX_API_ORIGIN_TOKEN)) {
+    return jsonResponse({ status: 'unavailable' }, env, 503);
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ORIGIN_HEALTH_TIMEOUT_MS);
+  try {
+    const origin = new URL(env.MUX_API_ORIGIN);
+    origin.pathname = `${origin.pathname.replace(/\/$/, '')}/health`;
+    origin.search = '';
+    const headers = new Headers();
+    if (env.MUX_API_ORIGIN_TOKEN) {
+      headers.set('X-Mux-Origin-Token', env.MUX_API_ORIGIN_TOKEN);
+    }
+    const upstream = await fetch(origin, {
+      method: 'GET',
+      headers,
+      signal: controller.signal,
+    });
+    const responseHeaders = new Headers({ ...corsHeaders(env), 'Cache-Control': 'no-store' });
+    const contentType = upstream.headers.get('Content-Type');
+    if (contentType) responseHeaders.set('Content-Type', contentType);
+    return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
+  } catch (err) {
+    log({
+      event: 'compile_origin_error',
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return jsonResponse({ status: 'unavailable' }, env, 503);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === 'OPTIONS') {
@@ -569,12 +714,20 @@ export default {
 
     const url = new URL(request.url);
 
+    if (url.pathname === '/health' && request.method === 'GET') {
+      return handleOriginHealth(env);
+    }
+
     if (url.pathname === '/api/chat/health' && request.method === 'GET') {
       return handleHealth(env);
     }
 
     if (url.pathname === '/api/chat' && request.method === 'POST') {
       return handleChat(request, env);
+    }
+
+    if (url.pathname === '/api/compile') {
+      return handleCompile(request, env);
     }
 
     // Dev-only retrieval endpoint for the eval harness. ENVIRONMENT is a

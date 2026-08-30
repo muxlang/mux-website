@@ -171,13 +171,19 @@ cd mux-website
 npm start
 ```
 
-The site runs on `http://localhost:3000` and uses the production API (`https://mux-lang-api.fly.dev`) by default.
+The site runs on `http://localhost:3000` and uses the production compile proxy
+(`https://mux-ai.corniedj.workers.dev`) by default. The proxy keeps browser
+traffic behind Cloudflare and authenticates its requests to the Fly origin.
 
 To use your local API server instead, set this before starting the docs site:
 
 ```bash
 MUX_API_URL=http://localhost:8080 npm start
 ```
+
+Set `MUX_API_URL` when running a local API directly. Production deployments
+should keep the default Worker URL; do not expose the Fly origin to browser
+code.
 
 ## Profiling
 

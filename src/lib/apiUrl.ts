@@ -1,4 +1,7 @@
-export const DEFAULT_MUX_API_URL = 'https://mux-lang-api.fly.dev';
+// Keep browser traffic on the Cloudflare edge. The Worker proxies compile
+// requests to Fly with a private origin token, so the Fly hostname is not a
+// public compute entry point.
+export const DEFAULT_MUX_API_URL = 'https://mux-ai.corniedj.workers.dev';
 
 /**
  * Resolves the base URL for the Mux compile/run API from Docusaurus site

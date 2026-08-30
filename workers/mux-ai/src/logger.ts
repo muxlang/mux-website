@@ -6,6 +6,8 @@
 
 type LogEvent =
   | { event: 'chat_request'; turn_count: number }
+  | { event: 'compile_origin_unavailable' }
+  | { event: 'compile_origin_error'; message: string }
   | { event: 'rate_limit' }
   | { event: 'rate_limit_backend_unavailable'; message?: string }
   | { event: 'retrieval_result'; chunk_count: number; top_score: number; query_length: number }
