@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const ignored = /^(?:node_modules|build|\.docusaurus|coverage)\//;
 const supported = /\.(?:ts|tsx|js|jsx|mjs|css|json|ya?ml|md)$/;
@@ -32,7 +33,9 @@ if (formatFiles.length === 0) {
   process.exit(0);
 }
 
-const prettier = new URL("../node_modules/prettier/bin/prettier.cjs", import.meta.url);
+const prettier = fileURLToPath(
+  new URL("../node_modules/prettier/bin/prettier.cjs", import.meta.url),
+);
 execFileSync(process.execPath, [prettier, "--check", ...formatFiles], {
   stdio: "inherit",
   env: { ...process.env, PATH: "/usr/bin:/bin" },
