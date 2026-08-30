@@ -25,6 +25,11 @@ const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
     if (!isBrowser) {
       return;
     }
+    // Clear the previous snippet immediately. The old highlighted markup is
+    // not valid for the new props while the asynchronous highlighter runs.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setHtml(null);
+    /* eslint-enable react-hooks/set-state-in-effect */
     let cancelled = false;
     const theme = colorMode === 'dark' ? 'github-dark' : 'github-light';
 
