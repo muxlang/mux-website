@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import worker, { type Env } from './index';
+import worker, { ChatRateLimiter, type Env } from './index';
 
 const env = {
   ALLOWED_ORIGIN: 'https://mux-lang.dev',
@@ -59,4 +59,49 @@ test('rejects a message array above the bounded conversation limit', async () =>
 
   assert.equal(response.status, 400);
   assert.match(await response.text(), /at most 32/);
+});
+
+test('production rejects valid chat requests when the durable limiter is absent', async () => {
+  const request = new Request('https://example.test/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
+  });
+
+  const response = await worker.fetch(request, env);
+
+  assert.equal(response.status, 503);
+  const body = (await response.json()) as { error?: string; errorCode?: string };
+  assert.match(body.error ?? '', /rate-limit service/);
+  assert.equal(body.errorCode, 'MODEL_UNAVAILABLE');
+});
+
+test('durable limiter admits a request then applies the cooldown', async () => {
+  const values = new Map<string, number>();
+  const state = {
+    storage: {
+      get: async <T>(key: string) => values.get(key) as T | undefined,
+      put: async (key: string, value: number) => {
+        values.set(key, value);
+      },
+    },
+  } as unknown as DurableObjectState;
+  const limiter = new ChatRateLimiter(state);
+
+  const first = await limiter.fetch(new Request('https://example.test/check', { method: 'POST' }));
+  const second = await limiter.fetch(new Request('https://example.test/check', { method: 'POST' }));
+
+  assert.equal(first.status, 204);
+  assert.equal(second.status, 429);
+});
+
+test('durable limiter rejects non-POST requests', async () => {
+  const state = {
+    storage: { get: async () => undefined, put: async () => undefined },
+  } as unknown as DurableObjectState;
+  const limiter = new ChatRateLimiter(state);
+
+  const response = await limiter.fetch(new Request('https://example.test/check'));
+
+  assert.equal(response.status, 405);
 });

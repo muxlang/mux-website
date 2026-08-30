@@ -9,6 +9,14 @@ binding = "AI"
 binding = "VECTORIZE"
 index_name = "mux-docs"
 
+[[durable_objects.bindings]]
+name = "CHAT_RATE_LIMITER"
+class_name = "ChatRateLimiter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChatRateLimiter"]
+
 # Fail-safe defaults for a bare `wrangler deploy` (no --env): lock down to the
 # production posture so the dev-only /api/search endpoint is never accidentally
 # exposed on the real URL. Opening it requires an explicit `--env development`
@@ -30,6 +38,10 @@ binding = "AI"
 binding = "VECTORIZE"
 index_name = "mux-docs"
 
+[[env.production.durable_objects.bindings]]
+name = "CHAT_RATE_LIMITER"
+class_name = "ChatRateLimiter"
+
 [env.development]
 vars = { ENVIRONMENT = "development", ALLOWED_ORIGIN = "http://localhost:3000" }
 
@@ -39,3 +51,7 @@ binding = "AI"
 [[env.development.vectorize]]
 binding = "VECTORIZE"
 index_name = "mux-docs"
+
+[[env.development.durable_objects.bindings]]
+name = "CHAT_RATE_LIMITER"
+class_name = "ChatRateLimiter"

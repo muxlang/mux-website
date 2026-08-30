@@ -24,7 +24,9 @@ The assistant spans four pieces:
 - `POST /api/chat` - retrieval-augmented chat. Embeds the query (with the last
   few user turns for context), queries Vectorize for the top chunks above
   `MIN_SCORE`, and generates a grounded answer with `sources`. Rate-limited per
-  IP, with a per-message size cap and a bounded conversation history.
+  IP through the `ChatRateLimiter` Durable Object, with a per-message size cap
+  and a bounded conversation history. Production fails closed if the binding
+  is unavailable; local development uses the short-lived in-memory cooldown.
 - `POST /api/search` - retrieval only, used by the eval harness. **Gated to
   `ENVIRONMENT=development`** via a deploy-time var, so it returns 404 in
   production and exists only on a local dev Worker.
@@ -66,6 +68,11 @@ once with `wrangler login`, then:
 ```bash
 npm run deploy       # wrangler deploy --env production -> mux-ai.corniedj.workers.dev
 ```
+
+The production environment provisions the `ChatRateLimiter` Durable Object as
+part of this Worker deployment. It is not a second always-on server. Do not
+remove the binding or migration: without it, production chat requests are
+rejected rather than silently reverting to isolate-local rate limiting.
 
 ## Maintenance runbook (manual deploy - nothing is automated)
 
