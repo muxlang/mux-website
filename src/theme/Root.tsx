@@ -1,5 +1,5 @@
-import React, { type ReactNode } from "react";
-import Chat from "../components/Chat";
+import React, { type ReactNode } from 'react';
+import Chat from '../components/Chat';
 
 interface RootProps {
   children: ReactNode;

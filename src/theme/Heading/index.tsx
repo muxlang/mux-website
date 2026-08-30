@@ -1,19 +1,19 @@
-import React, { useState, type ReactNode } from "react";
-import clsx from "clsx";
-import { translate } from "@docusaurus/Translate";
-import { useAnchorTargetClassName } from "@docusaurus/theme-common";
-import Link from "@docusaurus/Link";
-import useBrokenLinks from "@docusaurus/useBrokenLinks";
-import type { Props } from "@theme/Heading";
-import "./styles.module.css";
+import React, {useState, type ReactNode} from 'react';
+import clsx from 'clsx';
+import {translate} from '@docusaurus/Translate';
+import {useAnchorTargetClassName} from '@docusaurus/theme-common';
+import Link from '@docusaurus/Link';
+import useBrokenLinks from '@docusaurus/useBrokenLinks';
+import type {Props} from '@theme/Heading';
+import './styles.module.css';
 
-export default function Heading({ as: As, id, ...props }: Readonly<Props>): ReactNode {
+export default function Heading({as: As, id, ...props}: Readonly<Props>): ReactNode {
   const brokenLinks = useBrokenLinks();
   const anchorTargetClassName = useAnchorTargetClassName(id);
   const [copied, setCopied] = useState(false);
 
   // H1 headings do not need an id because they don't appear in the TOC.
-  if (As === "h1" || !id) {
+  if (As === 'h1' || !id) {
     return <As {...props} id={undefined} />;
   }
 
@@ -21,12 +21,12 @@ export default function Heading({ as: As, id, ...props }: Readonly<Props>): Reac
 
   const anchorTitle = translate(
     {
-      id: "theme.common.headingLinkTitle",
-      message: "Direct link to {heading}",
-      description: "Title for link to heading",
+      id: 'theme.common.headingLinkTitle',
+      message: 'Direct link to {heading}',
+      description: 'Title for link to heading',
     },
     {
-      heading: typeof props.children === "string" ? props.children : id,
+      heading: typeof props.children === 'string' ? props.children : id,
     },
   );
 
@@ -35,29 +35,28 @@ export default function Heading({ as: As, id, ...props }: Readonly<Props>): Reac
     const origin = globalThis.location.origin;
     const pathname = globalThis.location.pathname;
     const url = `${origin}${pathname}#${id}`;
-    navigator.clipboard
-      .writeText(url)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {
-        // Clipboard write failed (e.g., non-HTTPS context)
-      });
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      // Clipboard write failed (e.g., non-HTTPS context)
+    });
   };
 
   return (
-    <As {...props} className={clsx("anchor", anchorTargetClassName, props.className)} id={id}>
+    <As
+      {...props}
+      className={clsx('anchor', anchorTargetClassName, props.className)}
+      id={id}>
       {props.children}
       <Link
-        className={clsx("hash-link", copied && "hash-link-copied")}
+        className={clsx('hash-link', copied && 'hash-link-copied')}
         to={`#${id}`}
         aria-label={anchorTitle}
-        title={copied ? "Copied!" : anchorTitle}
+        title={copied ? 'Copied!' : anchorTitle}
         translate="no"
-        onClick={handleClick}
-      >
-        {copied ? "Copied!" : "\u200B"}
+        onClick={handleClick}>
+        {copied ? 'Copied!' : '\u200B'}
       </Link>
     </As>
   );

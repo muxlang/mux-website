@@ -13,8 +13,8 @@
  *
  * Override the target with WORKER_URL if the dev Worker is on another port.
  */
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
 interface ErrorCase {
   id: string;
@@ -37,15 +37,15 @@ interface ChatResponse {
   error?: string;
 }
 
-const DEFAULT_URL = "http://localhost:8787";
-const CORPUS_DIR = path.resolve(import.meta.dirname, "..", "..", "..", "docs", "error-corpus");
+const DEFAULT_URL = 'http://localhost:8787';
+const CORPUS_DIR = path.resolve(import.meta.dirname, '..', '..', '..', 'docs', 'error-corpus');
 const REFUSAL_MARKER = "couldn't find that information";
 
 function loadCorpus(): ErrorCase[] {
-  const files = fs.readdirSync(CORPUS_DIR).filter((f) => f.endsWith(".json"));
+  const files = fs.readdirSync(CORPUS_DIR).filter((f) => f.endsWith('.json'));
   const cases: ErrorCase[] = [];
   for (const file of files) {
-    const parsed: unknown = JSON.parse(fs.readFileSync(path.join(CORPUS_DIR, file), "utf8"));
+    const parsed: unknown = JSON.parse(fs.readFileSync(path.join(CORPUS_DIR, file), 'utf8'));
     if (Array.isArray(parsed)) {
       cases.push(...(parsed as ErrorCase[]));
     }
@@ -54,16 +54,16 @@ function loadCorpus(): ErrorCase[] {
 }
 
 function buildErrorMessage(c: ErrorCase): string {
-  const help = c.help ? `\n  = help: ${c.help}` : "";
+  const help = c.help ? `\n  = help: ${c.help}` : '';
   return `I got this compiler error, what does it mean and how do I fix it?\n\nerror[${c.code}]: ${c.error}\n${c.source}${help}`;
 }
 
 async function askChat(baseUrl: string, content: string): Promise<ChatResponse> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(`${baseUrl}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [{ role: "user", content }] }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content }] }),
     });
     if (res.status === 429) {
       // Per-IP cooldown; wait past it and retry once.
@@ -75,13 +75,13 @@ async function askChat(baseUrl: string, content: string): Promise<ChatResponse> 
     }
     return (await res.json()) as ChatResponse;
   }
-  throw new Error("rate limited after retry");
+  throw new Error('rate limited after retry');
 }
 
 function evaluate(c: ErrorCase, res: ChatResponse): { pass: boolean; reason: string } {
-  const message = res.message ?? "";
+  const message = res.message ?? '';
   if (message.toLowerCase().includes(REFUSAL_MARKER)) {
-    return { pass: false, reason: "model refused to explain" };
+    return { pass: false, reason: 'model refused to explain' };
   }
   const citedPaths = (res.sources ?? []).map((s) => s.path);
   if (c.relevant_docs.length > 0) {
@@ -94,14 +94,11 @@ function evaluate(c: ErrorCase, res: ChatResponse): { pass: boolean; reason: str
     }
     return { pass: true, reason: `cited ${matched}` };
   }
-  return {
-    pass: true,
-    reason: citedPaths.length ? `cited ${citedPaths[0]}` : "explained",
-  };
+  return { pass: true, reason: citedPaths.length ? `cited ${citedPaths[0]}` : 'explained' };
 }
 
 async function main(): Promise<void> {
-  const baseUrl = (process.env.WORKER_URL ?? DEFAULT_URL).replace(/\/$/, "");
+  const baseUrl = (process.env.WORKER_URL ?? DEFAULT_URL).replace(/\/$/, '');
   const corpus = loadCorpus();
   console.log(`Target: ${baseUrl}  (${corpus.length} error fixtures)\n`);
 
@@ -112,7 +109,7 @@ async function main(): Promise<void> {
     try {
       const res = await askChat(baseUrl, buildErrorMessage(c));
       const { pass, reason } = evaluate(c, res);
-      console.log(`${pass ? "PASS" : "FAIL"}  [${c.category}] ${c.id} - ${reason}`);
+      console.log(`${pass ? 'PASS' : 'FAIL'}  [${c.category}] ${c.id} - ${reason}`);
       pass ? passed++ : failed++;
     } catch (err) {
       console.error(`ERROR [${c.category}] ${c.id} - ${String(err)}`);

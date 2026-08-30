@@ -38,24 +38,21 @@ interface PositiveCase {
 }
 
 const POSITIVE_CASES: PositiveCase[] = [
-  { question: "How do enums work?", expectedMatch: "enum" },
-  { question: "How do generics work?", expectedMatch: "generic" },
-  { question: "What is match and how do I use it?", expectedMatch: "match" },
+  { question: 'How do enums work?', expectedMatch: 'enum' },
+  { question: 'How do generics work?', expectedMatch: 'generic' },
+  { question: 'What is match and how do I use it?', expectedMatch: 'match' },
   // Mux uses "interfaces" (keyword: is) documented inside classes.md
-  {
-    question: "How do I define and implement an interface?",
-    expectedMatch: "class",
-  },
-  { question: "How do modules work?", expectedMatch: "module" },
+  { question: 'How do I define and implement an interface?', expectedMatch: 'class' },
+  { question: 'How do modules work?', expectedMatch: 'module' },
 ];
 
 // Off-topic queries that must retrieve nothing. If the Worker's MIN_SCORE floor
 // is set too low (or the distribution shifts), these start leaking hits and the
 // eval fails loudly.
 const NEGATIVE_CASES: string[] = [
-  "what is the weather in Paris today",
-  "how do I bake sourdough bread",
-  "tell me about quantum entanglement",
+  'what is the weather in Paris today',
+  'how do I bake sourdough bread',
+  'tell me about quantum entanglement',
 ];
 
 // The relevant hit for a positive case must score at least this high. Kept
@@ -63,13 +60,13 @@ const NEGATIVE_CASES: string[] = [
 // instead of only after a relevant doc has already dropped below the floor.
 const MIN_HEALTHY_SCORE = 0.63;
 
-const DEFAULT_SEARCH_URL = "http://localhost:8787";
+const DEFAULT_SEARCH_URL = 'http://localhost:8787';
 const TOP_K = 5;
 
 async function search(baseUrl: string, question: string): Promise<SearchResult[]> {
   const res = await fetch(`${baseUrl}/api/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: question }),
   });
 
@@ -92,12 +89,12 @@ function resultHit(result: SearchResult, expectedMatch: string): boolean {
 }
 
 function pad(s: string, width: number): string {
-  return s.length >= width ? s : s + " ".repeat(width - s.length);
+  return s.length >= width ? s : s + ' '.repeat(width - s.length);
 }
 
 function printResults(results: SearchResult[], expectedMatch: string | null): void {
   results.slice(0, TOP_K).forEach((r, i) => {
-    const marker = expectedMatch && resultHit(r, expectedMatch) ? "*" : " ";
+    const marker = expectedMatch && resultHit(r, expectedMatch) ? '*' : ' ';
     console.log(`  ${marker} ${i + 1}. [${r.score.toFixed(4)}] ${pad(r.title, 35)} ${r.path}`);
   });
 }
@@ -111,9 +108,7 @@ function runPositive(tc: PositiveCase, results: SearchResult[]): Outcome {
   const matches = topK.filter((r) => resultHit(r, tc.expectedMatch));
 
   if (matches.length === 0) {
-    console.log(
-      `FAIL  "${tc.question}" - no result matching "${tc.expectedMatch}" in top ${TOP_K}`,
-    );
+    console.log(`FAIL  "${tc.question}" - no result matching "${tc.expectedMatch}" in top ${TOP_K}`);
     printResults(results, tc.expectedMatch);
     return { pass: false };
   }
@@ -143,7 +138,7 @@ function runNegative(question: string, results: SearchResult[]): Outcome {
 }
 
 async function main(): Promise<void> {
-  const baseUrl = (process.env.SEARCH_URL ?? DEFAULT_SEARCH_URL).replace(/\/$/, "");
+  const baseUrl = (process.env.SEARCH_URL ?? DEFAULT_SEARCH_URL).replace(/\/$/, '');
   console.log(`Target: ${baseUrl}\n`);
 
   let passed = 0;

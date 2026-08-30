@@ -1,8 +1,8 @@
-import { useEffect } from "react";
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
-import { resolveApiUrl } from "../lib/apiUrl";
+import { useEffect } from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import { resolveApiUrl } from '../lib/apiUrl';
 
-const WARMUP_SESSION_KEY = "mux-api-warmed";
+const WARMUP_SESSION_KEY = 'mux-api-warmed';
 
 /**
  * Fires a single fire-and-forget request to the Mux API's health endpoint
@@ -19,7 +19,7 @@ function useApiWarmup(): void {
   const apiUrl = resolveApiUrl(siteConfig.customFields);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       return;
     }
 
@@ -36,7 +36,7 @@ function useApiWarmup(): void {
     }
 
     try {
-      window.sessionStorage.setItem(WARMUP_SESSION_KEY, "1");
+      window.sessionStorage.setItem(WARMUP_SESSION_KEY, '1');
     } catch {
       // Ignore write failures; worst case we send an extra warmup request.
     }

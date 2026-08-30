@@ -1,5 +1,5 @@
-import { SYSTEM_PROMPT, NO_ANSWER_RESPONSE } from "./prompts";
-import { log } from "./logger";
+import { SYSTEM_PROMPT, NO_ANSWER_RESPONSE } from './prompts';
+import { log } from './logger';
 
 export interface Env {
   AI: Ai;
@@ -20,7 +20,7 @@ export interface Env {
 }
 
 export interface ChatMessage {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
 }
 
@@ -33,7 +33,7 @@ export interface ChatRequest {
   messages: ChatMessage[];
 }
 
-export type ErrorCode = "RATE_LIMIT" | "MODEL_UNAVAILABLE";
+export type ErrorCode = 'RATE_LIMIT' | 'MODEL_UNAVAILABLE';
 
 export interface ChatResponse {
   message?: string;
@@ -59,12 +59,12 @@ export interface SearchResponse {
 // Must stay on the exact same model + version the docs-indexer uses at index
 // time (tools/docs-indexer/src/embed.ts); query and passage vectors only share
 // a space if both are produced by the same model.
-const EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5";
+const EMBEDDING_MODEL = '@cf/baai/bge-base-en-v1.5';
 // bge-base-en-v1.5 is an asymmetric retrieval model: queries are prefixed with
 // this instruction, passages are embedded raw (see the indexer). Keeping them
 // asymmetric separates query/passage vectors and improves ranking.
-const QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: ";
-const GENERATION_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+const QUERY_INSTRUCTION = 'Represent this sentence for searching relevant passages: ';
+const GENERATION_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const VECTOR_QUERY_TOP_K = 20;
 const TOP_K = 5;
 // Number of recent user turns combined into the retrieval query so contextual
@@ -115,36 +115,36 @@ export class ChatRateLimiter implements DurableObject {
   constructor(private readonly state: DurableObjectState) {}
 
   async fetch(request: Request): Promise<Response> {
-    if (request.method !== "POST") {
-      return new Response("method not allowed", { status: 405 });
+    if (request.method !== 'POST') {
+      return new Response('method not allowed', { status: 405 });
     }
 
     const now = Date.now();
-    const last = await this.state.storage.get<number>("lastRequestAt");
+    const last = await this.state.storage.get<number>('lastRequestAt');
     if (last !== undefined && now - last < RATE_LIMIT_MS) {
       return new Response(null, { status: 429 });
     }
 
-    await this.state.storage.put("lastRequestAt", now);
+    await this.state.storage.put('lastRequestAt', now);
     return new Response(null, { status: 204 });
   }
 }
 
 function corsHeaders(env: Env): HeadersInit {
   if (!env.ALLOWED_ORIGIN) {
-    throw new Error("ALLOWED_ORIGIN is not configured for this environment");
+    throw new Error('ALLOWED_ORIGIN is not configured for this environment');
   }
   return {
-    "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
   };
 }
 
 function jsonResponse(body: unknown, env: Env, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders(env) },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders(env) },
   });
 }
 
@@ -157,7 +157,7 @@ function sweepExpired(now: number): void {
 }
 
 function clientIp(request: Request): string {
-  return request.headers.get("CF-Connecting-IP") ?? "unknown";
+  return request.headers.get('CF-Connecting-IP') ?? 'unknown';
 }
 
 // Read-only cooldown check; does not record the request. Recording is deferred
@@ -178,10 +178,11 @@ function markRequest(ip: string): void {
 }
 
 type RateLimitDecision =
-  { available: true; allowed: boolean } | { available: false; allowed: false };
+  | { available: true; allowed: boolean }
+  | { available: false; allowed: false };
 
 async function consumeRateLimit(ip: string, env: Env): Promise<RateLimitDecision> {
-  if (env.ENVIRONMENT !== "production") {
+  if (env.ENVIRONMENT !== 'production') {
     if (isWithinCooldown(ip)) {
       return { available: true, allowed: false };
     }
@@ -190,26 +191,27 @@ async function consumeRateLimit(ip: string, env: Env): Promise<RateLimitDecision
   }
 
   if (!env.CHAT_RATE_LIMITER) {
-    log({ event: "rate_limit_backend_unavailable" });
+    log({ event: 'rate_limit_backend_unavailable' });
     return { available: false, allowed: false };
   }
 
   try {
     const id = env.CHAT_RATE_LIMITER.idFromName(ip);
-    const response = await env.CHAT_RATE_LIMITER.get(id).fetch("https://rate-limit/check", {
-      method: "POST",
-    });
+    const response = await env.CHAT_RATE_LIMITER.get(id).fetch(
+      'https://rate-limit/check',
+      { method: 'POST' },
+    );
     if (response.status === 429) {
       return { available: true, allowed: false };
     }
     if (!response.ok) {
-      log({ event: "rate_limit_backend_unavailable" });
+      log({ event: 'rate_limit_backend_unavailable' });
       return { available: false, allowed: false };
     }
     return { available: true, allowed: true };
   } catch (err) {
     log({
-      event: "rate_limit_backend_unavailable",
+      event: 'rate_limit_backend_unavailable',
       message: err instanceof Error ? err.message : String(err),
     });
     return { available: false, allowed: false };
@@ -225,7 +227,7 @@ async function embedQuery(query: string, env: Env): Promise<number[]> {
     data?: number[][];
   };
   if (!result.data?.[0]) {
-    throw new Error("Embedding model returned no vector data");
+    throw new Error('Embedding model returned no vector data');
   }
   return result.data[0];
 }
@@ -238,25 +240,29 @@ async function retrieveChunks(
   const vector = await embedQuery(query, env);
   const queryResult = await env.VECTORIZE.query(vector, {
     topK: VECTOR_QUERY_TOP_K,
-    returnMetadata: "all",
-    ...(env.VECTORIZE_NAMESPACE ? { namespace: env.VECTORIZE_NAMESPACE } : {}),
+    returnMetadata: 'all',
+    ...(env.VECTORIZE_NAMESPACE
+      ? { namespace: env.VECTORIZE_NAMESPACE }
+      : {}),
   });
 
-  const diagnosticCodes = new Set(diagnosticCodeQuery.toUpperCase().match(/\b[EW]\d{4}\b/g) ?? []);
+  const diagnosticCodes = new Set(
+    diagnosticCodeQuery.toUpperCase().match(/\b[EW]\d{4}\b/g) ?? [],
+  );
 
   return queryResult.matches
     .filter((match) => match.score >= MIN_SCORE)
     .map((match) => {
       const meta = match.metadata as Record<string, unknown> | undefined;
       return {
-        title: typeof meta?.title === "string" ? meta.title : "",
-        path: typeof meta?.path === "string" ? meta.path : "",
-        section: typeof meta?.section === "string" ? meta.section : "",
-        heading: typeof meta?.heading === "string" ? meta.heading : null,
-        text: typeof meta?.text === "string" ? meta.text : "",
+        title: typeof meta?.title === 'string' ? meta.title : '',
+        path: typeof meta?.path === 'string' ? meta.path : '',
+        section: typeof meta?.section === 'string' ? meta.section : '',
+        heading: typeof meta?.heading === 'string' ? meta.heading : null,
+        text: typeof meta?.text === 'string' ? meta.text : '',
         score: match.score,
         codes: Array.isArray(meta?.codes)
-          ? meta.codes.filter((code): code is string => typeof code === "string")
+          ? meta.codes.filter((code): code is string => typeof code === 'string')
           : [],
       };
     })
@@ -286,11 +292,11 @@ function deduplicateSources(chunks: SearchResult[]): ChatSource[] {
 function buildContextBlock(chunks: SearchResult[]): string {
   return chunks
     .map((chunk, i) => {
-      const heading = chunk.heading ? ` > ${chunk.heading}` : "";
-      const codes = chunk.codes.length ? ` [${chunk.codes.join(", ")}]` : "";
+      const heading = chunk.heading ? ` > ${chunk.heading}` : '';
+      const codes = chunk.codes.length ? ` [${chunk.codes.join(', ')}]` : '';
       return `[${i + 1}] ${chunk.title}${heading}${codes} (${chunk.path})\n${chunk.text}`;
     })
-    .join("\n\n---\n\n");
+    .join('\n\n---\n\n');
 }
 
 function buildUserMessageWithContext(userContent: string, chunks: SearchResult[]): string {
@@ -299,7 +305,7 @@ function buildUserMessageWithContext(userContent: string, chunks: SearchResult[]
 }
 
 function normalize(text: string): string {
-  return text.trim().toLowerCase().replace(/\s+/g, " ");
+  return text.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 // True when the model declined to answer. Uses a normalized startsWith rather
@@ -310,25 +316,25 @@ function isRefusal(message: string): boolean {
 }
 
 function buildRetrievalQuery(messages: ChatMessage[]): string {
-  const userTurns = messages.filter((m) => m.role === "user").map((m) => m.content);
+  const userTurns = messages.filter((m) => m.role === 'user').map((m) => m.content);
   // Newest first: if the combined text exceeds the embedding model's context
   // window and is truncated, the most recent (most important) turn survives and
   // older context is dropped instead.
   const recent = userTurns.slice(-RETRIEVAL_HISTORY_TURNS).reverse();
-  return recent.join("\n\n");
+  return recent.join('\n\n');
 }
 
 function parseChatRequest(body: unknown): ChatRequest | null {
-  if (typeof body !== "object" || body === null) return null;
+  if (typeof body !== 'object' || body === null) return null;
   const b = body as Record<string, unknown>;
   if (!Array.isArray(b.messages)) return null;
   for (const msg of b.messages) {
     if (
-      typeof msg !== "object" ||
+      typeof msg !== 'object' ||
       msg === null ||
-      ((msg as Record<string, unknown>).role !== "user" &&
-        (msg as Record<string, unknown>).role !== "assistant") ||
-      typeof (msg as Record<string, unknown>).content !== "string"
+      ((msg as Record<string, unknown>).role !== 'user' &&
+        (msg as Record<string, unknown>).role !== 'assistant') ||
+      typeof (msg as Record<string, unknown>).content !== 'string'
     ) {
       return null;
     }
@@ -336,15 +342,21 @@ function parseChatRequest(body: unknown): ChatRequest | null {
   return b as unknown as ChatRequest;
 }
 
-async function readJsonBody(request: Request, maxBytes = MAX_REQUEST_BODY_BYTES): Promise<unknown> {
+async function readJsonBody(
+  request: Request,
+  maxBytes = MAX_REQUEST_BODY_BYTES,
+): Promise<unknown> {
   const bytes = await readBodyBytes(request, maxBytes);
   return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
 }
 
-async function readBodyBytes(request: Request, maxBytes: number): Promise<Uint8Array> {
-  const declaredLength = request.headers.get("content-length");
+async function readBodyBytes(
+  request: Request,
+  maxBytes: number,
+): Promise<Uint8Array> {
+  const declaredLength = request.headers.get('content-length');
   if (declaredLength !== null && Number(declaredLength) > maxBytes) {
-    throw new Error("request body too large");
+    throw new Error('request body too large');
   }
 
   // Content-Length is absent for chunked requests, so arrayBuffer() would
@@ -362,8 +374,8 @@ async function readBodyBytes(request: Request, maxBytes: number): Promise<Uint8A
       if (done) break;
       total += value.byteLength;
       if (total > maxBytes) {
-        await reader.cancel("request body too large");
-        throw new Error("request body too large");
+        await reader.cancel('request body too large');
+        throw new Error('request body too large');
       }
       chunks.push(value);
     }
@@ -380,30 +392,27 @@ async function readBodyBytes(request: Request, maxBytes: number): Promise<Uint8A
 }
 
 function validateCompileBody(body: unknown): { code: string } | { error: string; status: number } {
-  if (typeof body !== "object" || body === null) {
-    return { error: "Request body must be a JSON object", status: 400 };
+  if (typeof body !== 'object' || body === null) {
+    return { error: 'Request body must be a JSON object', status: 400 };
   }
   const code = (body as Record<string, unknown>).code;
-  if (typeof code !== "string") {
+  if (typeof code !== 'string') {
     return { error: "'code' must be a string", status: 400 };
   }
   if (new TextEncoder().encode(code).byteLength > MAX_COMPILE_CODE_BYTES) {
-    return { error: "Source code exceeds 100KB limit", status: 413 };
+    return { error: 'Source code exceeds 100KB limit', status: 413 };
   }
   return { code };
 }
 
 async function handleCompile(request: Request, env: Env): Promise<Response> {
-  if (request.method !== "POST") {
-    return jsonResponse({ error: "METHOD_NOT_ALLOWED" }, env, 405);
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, env, 405);
   }
-  if (!env.MUX_API_ORIGIN || (env.ENVIRONMENT === "production" && !env.MUX_API_ORIGIN_TOKEN)) {
-    log({ event: "compile_origin_unavailable" });
+  if (!env.MUX_API_ORIGIN || (env.ENVIRONMENT === 'production' && !env.MUX_API_ORIGIN_TOKEN)) {
+    log({ event: 'compile_origin_unavailable' });
     return jsonResponse(
-      {
-        error: "The compile service is temporarily unavailable.",
-        errorCode: "MODEL_UNAVAILABLE",
-      },
+      { error: 'The compile service is temporarily unavailable.', errorCode: 'MODEL_UNAVAILABLE' },
       env,
       503,
     );
@@ -413,30 +422,24 @@ async function handleCompile(request: Request, env: Env): Promise<Response> {
   try {
     body = await readJsonBody(request, MAX_COMPILE_REQUEST_BODY_BYTES);
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, env, 400);
+    return jsonResponse({ error: 'Invalid JSON body' }, env, 400);
   }
   const validated = validateCompileBody(body);
-  if ("error" in validated) {
+  if ('error' in validated) {
     return jsonResponse({ error: validated.error }, env, validated.status);
   }
 
   const rateLimit = await consumeRateLimit(`compile:${clientIp(request)}`, env);
   if (!rateLimit.available) {
     return jsonResponse(
-      {
-        error: "The compile service is temporarily unavailable.",
-        errorCode: "MODEL_UNAVAILABLE",
-      },
+      { error: 'The compile service is temporarily unavailable.', errorCode: 'MODEL_UNAVAILABLE' },
       env,
       503,
     );
   }
   if (!rateLimit.allowed) {
     return jsonResponse(
-      {
-        error: "Too many requests. Please wait and try again.",
-        errorCode: "RATE_LIMIT",
-      },
+      { error: 'Too many requests. Please wait and try again.', errorCode: 'RATE_LIMIT' },
       env,
       429,
     );
@@ -446,35 +449,29 @@ async function handleCompile(request: Request, env: Env): Promise<Response> {
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
   try {
     const origin = new URL(env.MUX_API_ORIGIN);
-    origin.pathname = `${origin.pathname.replace(/\/$/, "")}/api/compile`;
-    origin.search = "";
-    const upstreamHeaders = new Headers({ "Content-Type": "application/json" });
+    origin.pathname = `${origin.pathname.replace(/\/$/, '')}/api/compile`;
+    origin.search = '';
+    const upstreamHeaders = new Headers({ 'Content-Type': 'application/json' });
     if (env.MUX_API_ORIGIN_TOKEN) {
-      upstreamHeaders.set("X-Mux-Origin-Token", env.MUX_API_ORIGIN_TOKEN);
+      upstreamHeaders.set('X-Mux-Origin-Token', env.MUX_API_ORIGIN_TOKEN);
     }
     const upstream = await fetch(origin, {
-      method: "POST",
+      method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify({ code: validated.code }),
       signal: controller.signal,
     });
-    const headers = new Headers({
-      ...corsHeaders(env),
-      "Cache-Control": "no-store",
-    });
-    const contentType = upstream.headers.get("Content-Type");
-    if (contentType) headers.set("Content-Type", contentType);
+    const headers = new Headers({ ...corsHeaders(env), 'Cache-Control': 'no-store' });
+    const contentType = upstream.headers.get('Content-Type');
+    if (contentType) headers.set('Content-Type', contentType);
     return new Response(upstream.body, { status: upstream.status, headers });
   } catch (err) {
     log({
-      event: "compile_origin_error",
+      event: 'compile_origin_error',
       message: err instanceof Error ? err.message : String(err),
     });
     return jsonResponse(
-      {
-        error: "The compile service is temporarily unavailable.",
-        errorCode: "MODEL_UNAVAILABLE",
-      },
+      { error: 'The compile service is temporarily unavailable.', errorCode: 'MODEL_UNAVAILABLE' },
       env,
       504,
     );
@@ -484,7 +481,8 @@ async function handleCompile(request: Request, env: Env): Promise<Response> {
 }
 
 type ValidatedChat =
-  { ok: true; messages: ChatMessage[]; lastUserIndex: number } | { ok: false; error: string };
+  | { ok: true; messages: ChatMessage[]; lastUserIndex: number }
+  | { ok: false; error: string };
 
 // Parse and validate a chat request body: shape, per-message size, and the
 // presence of a user message. Extracted from handleChat to keep that handler's
@@ -492,32 +490,23 @@ type ValidatedChat =
 function validateChatBody(body: unknown): ValidatedChat {
   const chatRequest = parseChatRequest(body);
   if (!chatRequest || chatRequest.messages.length === 0) {
-    return {
-      ok: false,
-      error: "messages must be a non-empty array of {role, content}",
-    };
+    return { ok: false, error: 'messages must be a non-empty array of {role, content}' };
   }
   if (chatRequest.messages.length > MAX_MESSAGE_COUNT) {
-    return {
-      ok: false,
-      error: `messages must contain at most ${MAX_MESSAGE_COUNT} items`,
-    };
+    return { ok: false, error: `messages must contain at most ${MAX_MESSAGE_COUNT} items` };
   }
   if (chatRequest.messages.some((m) => m.content.length > MAX_CONTENT_CHARS)) {
-    return {
-      ok: false,
-      error: `Each message must be at most ${MAX_CONTENT_CHARS} characters.`,
-    };
+    return { ok: false, error: `Each message must be at most ${MAX_CONTENT_CHARS} characters.` };
   }
   let lastUserIndex = -1;
   for (let i = chatRequest.messages.length - 1; i >= 0; i--) {
-    if (chatRequest.messages[i].role === "user") {
+    if (chatRequest.messages[i].role === 'user') {
       lastUserIndex = i;
       break;
     }
   }
   if (lastUserIndex === -1) {
-    return { ok: false, error: "At least one user message is required" };
+    return { ok: false, error: 'At least one user message is required' };
   }
   return { ok: true, messages: chatRequest.messages, lastUserIndex };
 }
@@ -531,7 +520,7 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   try {
     body = await readJsonBody(request);
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" } satisfies ChatResponse, env, 400);
+    return jsonResponse({ error: 'Invalid JSON body' } satisfies ChatResponse, env, 400);
   }
 
   const validated = validateChatBody(body);
@@ -546,26 +535,26 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   if (!rateLimit.available) {
     return jsonResponse(
       {
-        error: "The rate-limit service is temporarily unavailable.",
-        errorCode: "MODEL_UNAVAILABLE",
+        error: 'The rate-limit service is temporarily unavailable.',
+        errorCode: 'MODEL_UNAVAILABLE',
       } satisfies ChatResponse,
       env,
       503,
     );
   }
   if (!rateLimit.allowed) {
-    log({ event: "rate_limit" });
+    log({ event: 'rate_limit' });
     return jsonResponse(
       {
-        error: "Too many requests. Please wait a moment before sending another message.",
-        errorCode: "RATE_LIMIT",
+        error: 'Too many requests. Please wait a moment before sending another message.',
+        errorCode: 'RATE_LIMIT',
       } satisfies ChatResponse,
       env,
       429,
     );
   }
 
-  log({ event: "chat_request", turn_count: messages.length });
+  log({ event: 'chat_request', turn_count: messages.length });
 
   const retrievalQuery = buildRetrievalQuery(messages);
 
@@ -574,11 +563,11 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
     chunks = await retrieveChunks(retrievalQuery, env, lastUserMessage.content);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log({ event: "retrieval_error", message });
+    log({ event: 'retrieval_error', message });
     return jsonResponse(
       {
-        error: "The AI assistant is temporarily unavailable. Please try again shortly.",
-        errorCode: "MODEL_UNAVAILABLE",
+        error: 'The AI assistant is temporarily unavailable. Please try again shortly.',
+        errorCode: 'MODEL_UNAVAILABLE',
       } satisfies ChatResponse,
       env,
       503,
@@ -586,12 +575,15 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   }
 
   if (chunks.length === 0) {
-    log({ event: "no_results", query_length: retrievalQuery.length });
-    return jsonResponse({ message: NO_ANSWER_RESPONSE, sources: [] } satisfies ChatResponse, env);
+    log({ event: 'no_results', query_length: retrievalQuery.length });
+    return jsonResponse(
+      { message: NO_ANSWER_RESPONSE, sources: [] } satisfies ChatResponse,
+      env,
+    );
   }
 
   log({
-    event: "retrieval_result",
+    event: 'retrieval_result',
     chunk_count: chunks.length,
     top_score: chunks[0].score,
     query_length: retrievalQuery.length,
@@ -604,12 +596,9 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   const augmentedUserContent = buildUserMessageWithContext(lastUserMessage.content, chunks);
 
   const llmMessages = [
-    { role: "system" as const, content: SYSTEM_PROMPT },
-    ...priorMessages.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })),
-    { role: "user" as const, content: augmentedUserContent },
+    { role: 'system' as const, content: SYSTEM_PROMPT },
+    ...priorMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    { role: 'user' as const, content: augmentedUserContent },
   ];
 
   let generation: { response?: string };
@@ -620,24 +609,24 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
     })) as { response?: string };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log({ event: "generation_error", message });
+    log({ event: 'generation_error', message });
     return jsonResponse(
       {
-        error: "The AI assistant is temporarily unavailable. Please try again shortly.",
-        errorCode: "MODEL_UNAVAILABLE",
+        error: 'The AI assistant is temporarily unavailable. Please try again shortly.',
+        errorCode: 'MODEL_UNAVAILABLE',
       } satisfies ChatResponse,
       env,
       503,
     );
   }
 
-  const message = generation.response?.trim() ?? "";
+  const message = generation.response?.trim() ?? '';
   // Don't cite sources for a refusal: the retrieved chunks cleared the score
   // floor but the model judged they don't actually answer the question, so
   // showing them under an "I couldn't find that" message would be contradictory.
   const sources = isRefusal(message) ? [] : deduplicateSources(chunks);
   log({
-    event: "chat_response",
+    event: 'chat_response',
     latency_ms: Date.now() - start,
     chunk_count: chunks.length,
     source_count: sources.length,
@@ -653,75 +642,65 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
   try {
     body = await readJsonBody(request);
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, env, 400);
+    return jsonResponse({ error: 'Invalid JSON body' }, env, 400);
   }
 
   if (
-    typeof body !== "object" ||
+    typeof body !== 'object' ||
     body === null ||
-    typeof (body as Record<string, unknown>).query !== "string"
+    typeof (body as Record<string, unknown>).query !== 'string'
   ) {
-    return jsonResponse({ error: "Missing required field: query" }, env, 400);
+    return jsonResponse({ error: 'Missing required field: query' }, env, 400);
   }
 
   const query = ((body as Record<string, unknown>).query as string).trim();
   if (!query) {
-    return jsonResponse({ error: "query must not be empty" }, env, 400);
+    return jsonResponse({ error: 'query must not be empty' }, env, 400);
   }
 
-  log({ event: "search_request", query_length: query.length });
+  log({ event: 'search_request', query_length: query.length });
 
   const results = await retrieveChunks(query, env);
 
-  log({
-    event: "search_response",
-    latency_ms: Date.now() - start,
-    chunk_count: results.length,
-  });
+  log({ event: 'search_response', latency_ms: Date.now() - start, chunk_count: results.length });
 
   return jsonResponse({ results } satisfies SearchResponse, env);
 }
 
 function handleHealth(env: Env): Response {
-  return jsonResponse({ status: "ok" }, env);
+  return jsonResponse({ status: 'ok' }, env);
 }
 
 async function handleOriginHealth(env: Env): Promise<Response> {
-  if (!env.MUX_API_ORIGIN || (env.ENVIRONMENT === "production" && !env.MUX_API_ORIGIN_TOKEN)) {
-    return jsonResponse({ status: "unavailable" }, env, 503);
+  if (!env.MUX_API_ORIGIN || (env.ENVIRONMENT === 'production' && !env.MUX_API_ORIGIN_TOKEN)) {
+    return jsonResponse({ status: 'unavailable' }, env, 503);
   }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), ORIGIN_HEALTH_TIMEOUT_MS);
   try {
     const origin = new URL(env.MUX_API_ORIGIN);
-    origin.pathname = `${origin.pathname.replace(/\/$/, "")}/health`;
-    origin.search = "";
+    origin.pathname = `${origin.pathname.replace(/\/$/, '')}/health`;
+    origin.search = '';
     const headers = new Headers();
     if (env.MUX_API_ORIGIN_TOKEN) {
-      headers.set("X-Mux-Origin-Token", env.MUX_API_ORIGIN_TOKEN);
+      headers.set('X-Mux-Origin-Token', env.MUX_API_ORIGIN_TOKEN);
     }
     const upstream = await fetch(origin, {
-      method: "GET",
+      method: 'GET',
       headers,
       signal: controller.signal,
     });
-    const responseHeaders = new Headers({
-      ...corsHeaders(env),
-      "Cache-Control": "no-store",
-    });
-    const contentType = upstream.headers.get("Content-Type");
-    if (contentType) responseHeaders.set("Content-Type", contentType);
-    return new Response(upstream.body, {
-      status: upstream.status,
-      headers: responseHeaders,
-    });
+    const responseHeaders = new Headers({ ...corsHeaders(env), 'Cache-Control': 'no-store' });
+    const contentType = upstream.headers.get('Content-Type');
+    if (contentType) responseHeaders.set('Content-Type', contentType);
+    return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   } catch (err) {
     log({
-      event: "compile_origin_error",
+      event: 'compile_origin_error',
       message: err instanceof Error ? err.message : String(err),
     });
-    return jsonResponse({ status: "unavailable" }, env, 503);
+    return jsonResponse({ status: 'unavailable' }, env, 503);
   } finally {
     clearTimeout(timeout);
   }
@@ -729,25 +708,25 @@ async function handleOriginHealth(env: Env): Promise<Response> {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    if (request.method === "OPTIONS") {
+    if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders(env) });
     }
 
     const url = new URL(request.url);
 
-    if (url.pathname === "/health" && request.method === "GET") {
+    if (url.pathname === '/health' && request.method === 'GET') {
       return handleOriginHealth(env);
     }
 
-    if (url.pathname === "/api/chat/health" && request.method === "GET") {
+    if (url.pathname === '/api/chat/health' && request.method === 'GET') {
       return handleHealth(env);
     }
 
-    if (url.pathname === "/api/chat" && request.method === "POST") {
+    if (url.pathname === '/api/chat' && request.method === 'POST') {
       return handleChat(request, env);
     }
 
-    if (url.pathname === "/api/compile") {
+    if (url.pathname === '/api/compile') {
       return handleCompile(request, env);
     }
 
@@ -755,13 +734,13 @@ export default {
     // deploy-time var, so in production this falls through to 404 and there is
     // no request-controllable way to reach handleSearch.
     if (
-      url.pathname === "/api/search" &&
-      request.method === "POST" &&
-      env.ENVIRONMENT === "development"
+      url.pathname === '/api/search' &&
+      request.method === 'POST' &&
+      env.ENVIRONMENT === 'development'
     ) {
       return handleSearch(request, env);
     }
 
-    return jsonResponse({ error: "NOT_FOUND" }, env, 404);
+    return jsonResponse({ error: 'NOT_FOUND' }, env, 404);
   },
 };

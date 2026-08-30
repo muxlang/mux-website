@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import useIsBrowser from "@docusaurus/useIsBrowser";
-import { useColorMode } from "@docusaurus/theme-common";
-import { highlightCode } from "../../shiki/highlighter";
+import React, { useEffect, useState } from 'react';
+import useIsBrowser from '@docusaurus/useIsBrowser';
+import { useColorMode } from '@docusaurus/theme-common';
+import { highlightCode } from '../../shiki/highlighter';
 
 interface ChatCodeBlockProps {
   code: string;
@@ -26,8 +26,8 @@ const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
   // Shiki bakes the theme's colors into inline styles, so we must re-highlight
   // when the site's color mode changes rather than snapshot it once.
   const { colorMode } = useColorMode();
-  const languageName = language ?? "mux";
-  const theme = colorMode === "dark" ? "github-dark" : "github-light";
+  const languageName = language ?? 'mux';
+  const theme = colorMode === 'dark' ? 'github-dark' : 'github-light';
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
   useEffect(() => {
@@ -44,7 +44,7 @@ const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
           // unsupported; only treat it as highlighted markup when it produced
           // a <pre> wrapper.
           setHighlighted(
-            result.startsWith("<pre")
+            result.startsWith('<pre')
               ? { code, language: languageName, theme, html: result }
               : null,
           );
@@ -73,7 +73,9 @@ const ChatCodeBlock: React.FC<ChatCodeBlockProps> = ({ code, language }) => {
       : null;
 
   if (html) {
-    return <div className="mux-chat-code-block" dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+      <div className="mux-chat-code-block" dangerouslySetInnerHTML={{ __html: html }} />
+    );
   }
 
   return (

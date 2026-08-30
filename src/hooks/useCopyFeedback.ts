@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface CopyFeedback {
   readonly copied: boolean;
@@ -42,9 +42,9 @@ export default function useCopyFeedback(text: string): CopyFeedback {
         if (resetTimer.current) clearTimeout(resetTimer.current);
         resetTimer.current = setTimeout(() => {
           if (latestRequestPayload.current !== payload) return;
-          setFeedback((previous) =>
-            previous.payload === payload ? { ...previous, copied: false } : previous,
-          );
+          setFeedback((previous) => (
+            previous.payload === payload ? { ...previous, copied: false } : previous
+          ));
           resetTimer.current = null;
         }, 2000);
       })
@@ -54,11 +54,11 @@ export default function useCopyFeedback(text: string): CopyFeedback {
   }, [payload, text]);
 
   const copied = feedback.payload === payload && feedback.copied;
-  let announcement = "";
+  let announcement = '';
   if (copied && feedback.copyCount === 1) {
-    announcement = "Copied to clipboard";
+    announcement = 'Copied to clipboard';
   } else if (copied && feedback.copyCount > 1) {
-    announcement = "Copied to clipboard again";
+    announcement = 'Copied to clipboard again';
     if (feedback.copyCount > 2) {
       announcement += ` (${feedback.copyCount} times)`;
     }

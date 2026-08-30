@@ -6,7 +6,7 @@
 }
 
 :global(.hash-link::before) {
-  content: "#";
+  content: '#';
 }
 
 :global(.hash-link:focus),
@@ -23,5 +23,5 @@
 }
 
 :global(.hash-link-copied::before) {
-  content: "";
+  content: '';
 }

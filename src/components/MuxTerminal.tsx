@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
-import PlaygroundOutput from "./PlaygroundOutput";
-import MonacoEditorComponent from "./MonacoEditor";
-import useMuxExecutor from "../hooks/useMuxExecutor";
-import useModifierKeyLabel from "../hooks/useModifierKeyLabel";
-import useApiWarmup from "../hooks/useApiWarmup";
+import React, { useEffect, useMemo, useState } from 'react';
+import PlaygroundOutput from './PlaygroundOutput';
+import MonacoEditorComponent from './MonacoEditor';
+import useMuxExecutor from '../hooks/useMuxExecutor';
+import useModifierKeyLabel from '../hooks/useModifierKeyLabel';
+import useApiWarmup from '../hooks/useApiWarmup';
 
 interface MuxTerminalProps {
   initialCode: string;
@@ -15,20 +15,20 @@ interface MuxTerminalProps {
    * 'fill': editor stretches to fill its container's height, used on the
    * full playground page where the container manages available space.
    */
-  sizing?: "auto" | "fill";
+  sizing?: 'auto' | 'fill';
 }
 
-const DEFAULT_TITLE = "snippet.mux";
+const DEFAULT_TITLE = 'snippet.mux';
 
 const MuxTerminal: React.FC<MuxTerminalProps> = ({
   initialCode,
   title = DEFAULT_TITLE,
   className,
-  sizing = "auto",
+  sizing = 'auto',
 }) => {
   const modifierKey = useModifierKeyLabel();
   const [code, setCode] = useState(initialCode);
-  const [output, setOutput] = useState("");
+  const [output, setOutput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const { executeCode, loading } = useMuxExecutor();
@@ -38,7 +38,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setCode(initialCode);
-    setOutput("");
+    setOutput('');
     setError(null);
   }, [initialCode]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -47,12 +47,12 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
 
   const handleRun = async () => {
     if (!canRun) {
-      setOutput("");
-      setError("Code snippet is empty.");
+      setOutput('');
+      setError('Code snippet is empty.');
       return;
     }
 
-    setOutput("");
+    setOutput('');
     setError(null);
 
     try {
@@ -60,16 +60,16 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
       if (result.error) {
         setError(result.error);
       } else {
-        setOutput(result.output || "(no output)");
+        setOutput(result.output || '(no output)');
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : 'Unknown error');
     }
   };
 
   const handleReset = () => {
     setCode(initialCode);
-    setOutput("");
+    setOutput('');
     setError(null);
   };
 
@@ -86,7 +86,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
   const showOutput = loading || output.length > 0 || !!error;
 
   return (
-    <div className={`embedded-playground mux-terminal ${className || ""}`.trim()}>
+    <div className={`embedded-playground mux-terminal ${className || ''}`.trim()}>
       <div className="embedded-playground-bar">
         <div className="embedded-playground-dots">
           <span className="dot dot-red" />
@@ -100,7 +100,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
             onClick={handleCopy}
             className="embedded-playground-button secondary"
           >
-            {copied ? "Copied" : "Copy"}
+            {copied ? 'Copied' : 'Copy'}
           </button>
           <button
             type="button"
@@ -115,7 +115,7 @@ const MuxTerminal: React.FC<MuxTerminalProps> = ({
             disabled={loading || !canRun}
             className="embedded-playground-button primary"
           >
-            {loading ? "Running..." : "Run"}
+            {loading ? 'Running...' : 'Run'}
           </button>
         </div>
       </div>

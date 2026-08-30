@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import Layout from "@theme/Layout";
-import MuxTerminal from "../components/MuxTerminal";
+import React, { useState } from 'react';
+import Layout from '@theme/Layout';
+import MuxTerminal from '../components/MuxTerminal';
 
 const DEFAULT_PLAYGROUND_CODE = `func main() returns void {
     print("Hello from Mux Playground")
@@ -10,7 +10,7 @@ const DEFAULT_PLAYGROUND_CODE = `func main() returns void {
 function getCodeFromQuery(): string {
   if (globalThis.window === undefined) return DEFAULT_PLAYGROUND_CODE;
   const params = new URLSearchParams(globalThis.location.search);
-  return params.get("code") || DEFAULT_PLAYGROUND_CODE;
+  return params.get('code') || DEFAULT_PLAYGROUND_CODE;
 }
 
 const PlaygroundPage: React.FC = () => {

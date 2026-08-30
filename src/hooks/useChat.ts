@@ -1,14 +1,14 @@
-import { useCallback, useState } from "react";
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
-import { sendChat } from "../api/chat";
-import type { ChatMessage, ChatErrorCode } from "../lib/chatTypes";
+import { useCallback, useState } from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import { sendChat } from '../api/chat';
+import type { ChatMessage, ChatErrorCode } from '../lib/chatTypes';
 
 const MAX_MESSAGES_PER_SESSION = 25;
-const SESSION_COUNT_KEY = "mux_chat_message_count";
+const SESSION_COUNT_KEY = 'mux_chat_message_count';
 
 const ERROR_COPY: Record<ChatErrorCode, string> = {
-  RATE_LIMIT: "Please wait a moment before sending another message.",
-  MODEL_UNAVAILABLE: "The AI assistant is temporarily unavailable. Please try again shortly.",
+  RATE_LIMIT: 'Please wait a moment before sending another message.',
+  MODEL_UNAVAILABLE: 'The AI assistant is temporarily unavailable. Please try again shortly.',
 };
 
 function newId(): string {
@@ -17,7 +17,7 @@ function newId(): string {
 
 function getSessionCount(): number {
   try {
-    return Number.parseInt(sessionStorage.getItem(SESSION_COUNT_KEY) ?? "0", 10) || 0;
+    return Number.parseInt(sessionStorage.getItem(SESSION_COUNT_KEY) ?? '0', 10) || 0;
   } catch {
     return 0;
   }
@@ -44,9 +44,9 @@ const useChat = () => {
   const { siteConfig } = useDocusaurusContext();
   const customFields = siteConfig.customFields;
   const aiApiUrl =
-    typeof customFields?.aiApiUrl === "string"
+    typeof customFields?.aiApiUrl === 'string'
       ? customFields.aiApiUrl
-      : "https://mux-ai.corniedj.workers.dev";
+      : 'https://mux-ai.corniedj.workers.dev';
 
   const sessionLimitReached = sessionCount >= MAX_MESSAGES_PER_SESSION;
 
@@ -57,11 +57,7 @@ const useChat = () => {
         return;
       }
 
-      const userMessage: ChatMessage = {
-        id: newId(),
-        role: "user",
-        content: trimmed,
-      };
+      const userMessage: ChatMessage = { id: newId(), role: 'user', content: trimmed };
       const nextMessages = [...messages, userMessage];
       setMessages(nextMessages);
       setLoading(true);
@@ -77,20 +73,15 @@ const useChat = () => {
           return;
         }
         if (response.error || !response.message) {
-          setError(response.error ?? "Server returned an unexpected response");
+          setError(response.error ?? 'Server returned an unexpected response');
           return;
         }
         setMessages([
           ...nextMessages,
-          {
-            id: newId(),
-            role: "assistant",
-            content: response.message,
-            sources: response.sources ?? [],
-          },
+          { id: newId(), role: 'assistant', content: response.message, sources: response.sources ?? [] },
         ]);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
