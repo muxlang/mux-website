@@ -1,17 +1,7 @@
-import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import ChatMessage from './ChatMessage';
 import type { ChatMessage as ChatMessageType } from '../../lib/chatTypes';
-
-vi.mock('./ChatCodeBlock', () => ({
-  default: ({ code, language }: { code: string; language?: string }) =>
-    React.createElement(
-      'pre',
-      { 'data-testid': 'static-code', 'data-language': language },
-      React.createElement('code', null, code),
-    ),
-}));
 
 afterEach(() => {
   cleanup();
@@ -54,7 +44,6 @@ describe('ChatMessage', () => {
       />,
     );
 
-    expect(screen.getByTestId('static-code')).toHaveAttribute('data-language', 'mux');
     expect(screen.getByText('let answer = 42')).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });

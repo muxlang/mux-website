@@ -12,6 +12,14 @@ export default defineConfig({
         './test/mocks/useDocusaurusContext.ts',
         import.meta.url,
       ).pathname,
+      '@docusaurus/useIsBrowser': new URL(
+        './test/mocks/useIsBrowser.ts',
+        import.meta.url,
+      ).pathname,
+      '@docusaurus/theme-common': new URL(
+        './test/mocks/themeCommon.ts',
+        import.meta.url,
+      ).pathname,
     },
   },
   test: {
