@@ -111,7 +111,7 @@ describe('CodeBlock', () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(code.trimEnd());
     expect(await screen.findByTitle('Copied!')).toBeInTheDocument();
-    expect(screen.getByTitle('Copied!')).toHaveAttribute('aria-label', 'Copied');
+    expect(screen.getByTitle('Copied!')).toHaveAttribute('aria-label', 'Copy code to clipboard');
     expect(screen.getByTitle('Copied!').querySelector('svg')).toHaveAttribute(
       'aria-hidden',
       'true',

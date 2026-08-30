@@ -171,7 +171,7 @@ function HomepageHeader() {
               <button
                 className={styles.copyButton}
                 onClick={handleCopy}
-                aria-label={copied ? 'Copied' : 'Copy install command to clipboard'}
+                aria-label="Copy install command to clipboard"
                 title={copied ? "Copied!" : "Copy to clipboard"}
                 type="button"
               >

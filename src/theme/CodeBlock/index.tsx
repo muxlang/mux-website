@@ -261,7 +261,7 @@ function MultilineCodeBlock({
         <button
           className="terminal-copy-button"
           onClick={onCopy}
-          aria-label={copied ? 'Copied' : 'Copy code to clipboard'}
+          aria-label="Copy code to clipboard"
           title={copied ? 'Copied!' : 'Copy to clipboard'}
           type="button"
         >
