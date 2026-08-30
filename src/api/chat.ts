@@ -25,7 +25,8 @@ async function readChatResponse(res: Response): Promise<ChatResponse> {
 }
 
 export async function sendChat(apiUrl: string, messages: ChatMessage[]): Promise<ChatResponse> {
-  const res = await fetch(`${apiUrl}/api/chat`, {
+  const baseUrl = apiUrl.replace(/\/+$/, '');
+  const res = await fetch(`${baseUrl}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages }),
