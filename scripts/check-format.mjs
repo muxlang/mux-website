@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 
-const supported = /^(src|scripts|workers|tools)\/.*\.(?:ts|tsx|js|jsx|mjs|css)$/;
+const ignored = /^(?:node_modules|build|\.docusaurus|coverage)\//;
+const supported = /\.(?:ts|tsx|js|jsx|mjs|css|json|ya?ml|md)$/;
 
 function gitFiles(args) {
   try {
@@ -19,9 +20,11 @@ function gitFiles(args) {
 
 const baseRef = process.env.GITHUB_BASE_REF;
 const formatFiles = baseRef
-  ? gitFiles([`origin/${baseRef}...HEAD`]).filter((file) => supported.test(file))
-  : [...new Set([...gitFiles([]), ...gitFiles(["--cached"])])].filter((file) =>
-      supported.test(file),
+  ? gitFiles([`origin/${baseRef}...HEAD`]).filter(
+      (file) => supported.test(file) && !ignored.test(file),
+    )
+  : [...new Set([...gitFiles([]), ...gitFiles(["--cached"])])].filter(
+      (file) => supported.test(file) && !ignored.test(file),
     );
 
 if (formatFiles.length === 0) {
