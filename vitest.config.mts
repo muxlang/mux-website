@@ -13,6 +13,10 @@ export default defineConfig({
         './test/mocks/BrowserOnly.tsx',
         import.meta.url,
       ).pathname,
+      '@docusaurus/router': new URL(
+        './test/mocks/router.ts',
+        import.meta.url,
+      ).pathname,
       '@docusaurus/useDocusaurusContext': new URL(
         './test/mocks/useDocusaurusContext.ts',
         import.meta.url,
