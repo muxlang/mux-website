@@ -129,13 +129,29 @@ test('compile proxy rejects non-POST requests', async () => {
 });
 
 test('health alias supports the website API warmup path', async () => {
-  const response = await worker.fetch(
-    new Request('https://example.test/health'),
-    compileEnv(),
-  );
+  const originalFetch = globalThis.fetch;
+  let upstreamRequest: Request | undefined;
+  globalThis.fetch = async (input, init) => {
+    upstreamRequest = new Request(input, init);
+    return new Response(JSON.stringify({ status: 'ok' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
 
-  assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { status: 'ok' });
+  try {
+    const response = await worker.fetch(
+      new Request('https://example.test/health'),
+      compileEnv(),
+    );
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { status: 'ok' });
+    assert.equal(upstreamRequest?.url, 'https://mux-lang-api.fly.dev/health');
+    assert.equal(upstreamRequest?.headers.get('X-Mux-Origin-Token'), 'origin-token');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('compile proxy fails closed when production origin settings are absent', async () => {

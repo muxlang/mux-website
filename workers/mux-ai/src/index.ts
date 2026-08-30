@@ -105,6 +105,7 @@ const RATE_LIMIT_MS = 2000;
 const RATE_LIMIT_MAP_CAP = 10000;
 const MAX_COMPILE_CODE_BYTES = 100 * 1024;
 const UPSTREAM_TIMEOUT_MS = 35_000;
+const ORIGIN_HEALTH_TIMEOUT_MS = 10_000;
 
 // Per-isolate cooldown map. Resets on isolate eviction, which is acceptable —
 // the goal is basic abuse prevention, not perfect rate limiting across all PoPs.
@@ -670,6 +671,41 @@ function handleHealth(env: Env): Response {
   return jsonResponse({ status: 'ok' }, env);
 }
 
+async function handleOriginHealth(env: Env): Promise<Response> {
+  if (!env.MUX_API_ORIGIN || (env.ENVIRONMENT === 'production' && !env.MUX_API_ORIGIN_TOKEN)) {
+    return jsonResponse({ status: 'unavailable' }, env, 503);
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ORIGIN_HEALTH_TIMEOUT_MS);
+  try {
+    const origin = new URL(env.MUX_API_ORIGIN);
+    origin.pathname = `${origin.pathname.replace(/\/$/, '')}/health`;
+    origin.search = '';
+    const headers = new Headers();
+    if (env.MUX_API_ORIGIN_TOKEN) {
+      headers.set('X-Mux-Origin-Token', env.MUX_API_ORIGIN_TOKEN);
+    }
+    const upstream = await fetch(origin, {
+      method: 'GET',
+      headers,
+      signal: controller.signal,
+    });
+    const responseHeaders = new Headers({ ...corsHeaders(env), 'Cache-Control': 'no-store' });
+    const contentType = upstream.headers.get('Content-Type');
+    if (contentType) responseHeaders.set('Content-Type', contentType);
+    return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
+  } catch (err) {
+    log({
+      event: 'compile_origin_error',
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return jsonResponse({ status: 'unavailable' }, env, 503);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === 'OPTIONS') {
@@ -679,7 +715,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/health' && request.method === 'GET') {
-      return handleHealth(env);
+      return handleOriginHealth(env);
     }
 
     if (url.pathname === '/api/chat/health' && request.method === 'GET') {
