@@ -1,4 +1,5 @@
 import type { ChatMessage, ChatResponse } from '../lib/chatTypes';
+import { resolveApiUrl } from '../lib/apiUrl';
 
 async function readChatResponse(res: Response): Promise<ChatResponse> {
   // Read the body exactly once, then try to parse it as JSON. Reading the
@@ -25,7 +26,7 @@ async function readChatResponse(res: Response): Promise<ChatResponse> {
 }
 
 export async function sendChat(apiUrl: string, messages: ChatMessage[]): Promise<ChatResponse> {
-  const baseUrl = apiUrl.replace(/\/+$/, '');
+  const baseUrl = resolveApiUrl({ apiUrl });
   const res = await fetch(`${baseUrl}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
