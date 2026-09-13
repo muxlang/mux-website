@@ -1,5 +1,6 @@
 {
   "name": "Mux",
+  "canonicalSource": "mux-syntax-highlighting/shared/syntax-matrix.json",
   "scopeName": "source.mux",
   "fileTypes": [".mux"],
   "patterns": [
