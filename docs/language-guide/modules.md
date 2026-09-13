@@ -22,7 +22,6 @@ The stdlib uses the `std` namespace:
 
 ```mux title="stdlib_imports.mux"
 import std
-import std.assert
 import std.math
 import std.io
 import std.random
@@ -33,8 +32,10 @@ import std.(math, random as r)
 import std.*
 ```
 
-- `import std` exposes module namespaces like `std.assert`, `std.math`, `std.io`, `std.random`, `std.datetime`, `std.sync`, and `std.net`
+- `import std` exposes module namespaces like `std.math`, `std.io`, `std.random`, `std.datetime`, `std.sync`, and `std.net`
 - `import std.<module>` imports a single stdlib module namespace
+- Nested modules are imported by their full path, such as `import std.data.json`
+  or `import std.net.http` / `import std.net.websocket`.
 - `import std.*` performs a flat import of stdlib items into the current scope
 
 ## Module Resolution
@@ -48,6 +49,7 @@ import lib.core.util // lib/core/util.mux
 ```
 
 **File Structure:**
+
 ```
 project/
 ├── main.mux
@@ -81,7 +83,7 @@ import math
 func main() returns void {
     auto sum = math.add(5, 3)
     auto product = math.multiply(4, 7)
-    
+
     print(sum.to_string())
     print(product.to_string())
     return
@@ -156,6 +158,7 @@ initialize()
 ```
 
 The compiler:
+
 1. Generates a module init function
 2. Calls it before `main()` executes
 3. Ensures each module initializes only once
@@ -299,7 +302,7 @@ func clamp(int value, int low, int high) returns int {
 class Point {
     int x
     int y
-    
+
     func distance_to(Point other) returns float {
         auto dx = self.x - other.x
         auto dy = self.y - other.y
@@ -418,7 +421,7 @@ import utils.format as fmt
 func main() returns void {
     auto sum = basic.add(5, 3)
     print(fmt.format_result(sum))
-    
+
     auto powered = advanced.power(2, 10)
     print(fmt.format_result(powered))
     return

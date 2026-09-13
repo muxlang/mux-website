@@ -1,9 +1,7 @@
 {
   "name": "Mux",
   "scopeName": "source.mux",
-  "fileTypes": [
-    ".mux"
-  ],
+  "fileTypes": [".mux"],
   "patterns": [
     {
       "include": "#comments"
@@ -15,13 +13,13 @@
       "include": "#declarations"
     },
     {
+      "include": "#keywords"
+    },
+    {
       "include": "#calls"
     },
     {
       "include": "#types"
-    },
-    {
-      "include": "#keywords"
     },
     {
       "include": "#operators"
@@ -57,7 +55,7 @@
       "patterns": [
         {
           "name": "keyword.control",
-          "match": "\\b(?:if|else|for|while|match|break|continue)\\b"
+          "match": "\\b(?:if|else|for|while|match|break|continue|use)\\b"
         },
         {
           "name": "keyword.declaration",
@@ -121,6 +119,10 @@
               "match": "\\\\([nrt0\\\\'\" ])"
             }
           ]
+        },
+        {
+          "name": "string.quoted.bytes",
+          "match": "b\"(\\\\.|[^\"\\\\])*\""
         },
         {
           "name": "string.quoted.double",
@@ -235,7 +237,7 @@
         },
         {
           "name": "storage.type",
-          "match": "\\b(?:string|bool|void|int|float|char|optional|result|list|map|tuple|set|range|Stringable|Hashable|Thread|Error|Self|[A-Z][a-zA-Z0-9_]*)\\b"
+          "match": "\\b(?:string|bool|void|int|float|char|byte|bytes|optional|result|list|map|tuple|set|range|Stringable|Hashable|Thread|Error|Self|[A-Z][a-zA-Z0-9_]*)\\b"
         }
       ]
     },

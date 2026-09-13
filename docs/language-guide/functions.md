@@ -189,7 +189,8 @@ print("Value: " + x.to_string())
 
 ### Input
 
-**`read_line() -> string`** - Reads a line from stdin:
+**`read_line() -> string`** - Reads a UTF-8 line from stdin. Input is bounded
+to 16 MiB; an oversized or invalid-UTF-8 line fails the read:
 
 ```mux title="read_line_example.mux"
 print("Enter your name: ")

@@ -14,7 +14,67 @@ interface Error {
 }
 ```
 
-`string` implements `Error`, so existing `result<T, string>` code continues to work.
+`string` implements `Error`, so it can be used as a Result's error type.
+
+### Propagating with `use`
+
+`use` extracts a successful value. If the operation fails, it returns the error
+from the enclosing function immediately. Sequential operations stay flat:
+
+```mux title="use_result.mux"
+func add_numbers(string first, string second) returns result<int, string> {
+    auto a = use first.to_int()
+    auto b = use second.to_int()
+    return ok(a + b)
+}
+```
+
+For an Optional, `use` extracts `some(value)` or returns `none`:
+
+```mux title="use_optional.mux"
+func describe(optional<int> input) returns optional<string> {
+    auto number = use input
+    return some(number.to_string())
+}
+```
+
+The enclosing function must return the same wrapper kind. Result error types
+must be compatible; the success types may differ. An Optional does not need an
+error value. There is no automatic conversion between `none` and `err`.
+
+`use` is a prefix expression with unary precedence. Calls and member access bind
+more tightly, so `use text.to_int()` extracts the call's result. Write
+`(use text.to_int()).to_string()` to call a method on the extracted integer.
+It also works in arguments, collection elements, assignments, conditions, and
+return expressions. A standalone `use operation()` handles a Result with a
+void success payload. Each operand runs once, and ordinary short-circuit rules
+still apply. Inside a lambda, failure returns from that lambda.
+
+Functions returning `result<void, E>` use `ok()` for a successful completion;
+value-carrying Results continue to use `ok(value)`.
+
+### Checking before extracting
+
+Use inspection methods when failure needs local handling:
+
+```mux title="checked_result.mux"
+func read_number(string text) returns result<int, string> {
+    auto parsed = text.to_int()
+    if parsed.is_err() {
+        print(parsed.error())
+        return err(parsed.error())
+    }
+    auto number = parsed.value()
+    return ok(number)
+}
+```
+
+The compiler checks that `value()` or `error()` is valid on every path reaching
+the access. Printing an error and continuing does not make `value()` safe.
+Optional values follow the same rule with `is_some()`, `is_none()`, and
+`value()`. Checks can establish facts through branches and saved booleans, but
+changing the checked value invalidates those facts. Access is rejected when
+the compiler cannot prove the variant.
 
 ### Basic Usage
 
@@ -35,6 +95,35 @@ match result {
     err(error) {
         print("Error: " + error)
     }
+}
+```
+
+### Assigning from a match
+
+`match` can produce a value. Keep each arm readable across several lines: a
+successful arm yields the value, while a failure arm can explicitly return the
+current function's error.
+
+```mux title="assigning_from_match.mux"
+func load_value() returns result<int, string> {
+    result<int, string> source = ok(41)
+    auto value = match source {
+        ok(number) {
+            number + 1
+        }
+        err(error) {
+            return err(error)
+        }
+    }
+    return ok(value)
+}
+
+func main() returns void {
+    match load_value() {
+        ok(value) { print(value.to_string()) }
+        err(error) { print(error) }
+    }
+    return
 }
 ```
 
@@ -95,21 +184,15 @@ result<int, string> result = ok(100)
 
 ### result Methods
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `.is_ok()` | `bool` | Returns `true` if the result is an ok variant |
-| `.is_err()` | `bool` | Returns `true` if the result is an err variant |
-| `.to_string()` | `string` | String representation |
+| Method         | Returns  | Description                                 |
+| -------------- | -------- | ------------------------------------------- |
+| `.is_ok()`     | `bool`   | Tests for success; narrows checked branches |
+| `.is_err()`    | `bool`   | Tests for failure; narrows checked branches |
+| `.value()`     | `T`      | Extracts the payload when success is proved |
+| `.error()`     | `E`      | Extracts the payload when failure is proved |
+| `.to_string()` | `string` | String representation                       |
 
-```mux title="result_methods.mux"
-result<int, string> res1 = ok(42)
-result<int, string> res2 = err("error")
-
-print(res1.is_ok().to_string())   // true
-print(res1.is_err().to_string())  // false
-print(res2.is_ok().to_string())   // false
-print(res2.is_err().to_string())  // true
-```
+Use `match` for pattern-specific behavior and transformations of both outcomes.
 
 ### Pattern Matching Results
 
@@ -177,23 +260,17 @@ match maybeEven {
 
 ### optional Methods
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `.is_some()` | `bool` | Returns `true` if the optional contains a value |
-| `.is_none()` | `bool` | Returns `true` if the optional is empty |
-| `.to_string()` | `string` | String representation |
+| Method         | Returns  | Description                                         |
+| -------------- | -------- | --------------------------------------------------- |
+| `.is_some()`   | `bool`   | Tests for a present value; narrows checked branches |
+| `.is_none()`   | `bool`   | Tests for absence; narrows checked branches         |
+| `.value()`     | `T`      | Extracts the payload when presence is proved        |
+| `.to_string()` | `string` | String representation                               |
 
-```mux title="optional_methods.mux"
-optional<int> opt1 = some(42)
-optional<int> opt2 = none
+Use `use` to propagate absence, inspection for local handling, and `match`
+when both cases need different behavior.
 
-print(opt1.is_some().to_string())  // true
-print(opt1.is_none().to_string())  // false
-print(opt2.is_some().to_string())  // false
-print(opt2.is_none().to_string())  // true
-```
-
-### result Methods
+### Optional variants
 
 `optional<T>` is built in and has two cases - `some` carrying a `T`, and
 `none`. Like `result`, you build it with the `some` and `none` functions rather
@@ -337,7 +414,7 @@ func processData(string input) returns result<int, string> {
     if input == "" {
         return err("empty input")
     }
-    
+
     // Parse input
     auto parsed = input.to_int()
     match parsed {
@@ -355,31 +432,20 @@ func processData(string input) returns result<int, string> {
 }
 ```
 
-### Nested Matching
+### Flat Sequential Propagation
 
-```mux title="nested_matching.mux"
+```mux title="flat_sequential_propagation.mux"
 func complexOperation() returns result<string, string> {
-    auto step1 = firstOperation()
-    
-    match step1 {
-        ok(value1) {
-            auto step2 = secondOperation(value1)
-            
-            match step2 {
-                ok(value2) {
-                    return ok(value2)
-                }
-                err(err2) {
-                    return err("step2 failed: " + err2)
-                }
-            }
-        }
-        err(err1) {
-            return err("step1 failed: " + err1)
-        }
-    }
+    auto value1 = use firstOperation()
+    auto value2 = use secondOperation(value1)
+
+    return ok(value2)
 }
 ```
+
+When each step should propagate its error unchanged, `use` keeps the happy
+path flat and makes the enclosing return type explicit. Use a `match` when an
+error needs local transformation or both outcomes require distinct work.
 
 ## Fallible Type Conversions
 
@@ -441,15 +507,15 @@ pub struct optional<T> {
 ```
 
 **Benefits:**
+
 - **Single runtime representation**: Collections can store either
 - **No enum overhead**: No runtime enum tag beyond discriminant
-- **Easy error propagation**: Simple with match statements
+- **Easy error propagation**: `use` keeps sequential operations flat
 - **Interop**: optional and result can wrap the same types
 
 ### Runtime ABI note
 
 • Implementation detail: the runtime now represents both `optional<T>` and `result<T, E>` as boxed `Value` pointers (`*mut Value`) at the FFI boundary. This means runtime constructors and C-exported helpers return `*mut Value` for these types. Compiler-generated code and native extensions should treat optionals/results as boxed `Value` objects and use the provided discriminant helpers when matching variants.
-
 
 ## Comparison with Other Languages
 
@@ -477,8 +543,9 @@ func divide(int a, int b) returns result<int, string> {
 ```
 
 Differences:
+
 - Mux uses explicit `return` statements
-- Rust has `?` operator for error propagation (Mux doesn't)
+- Rust has the `?` operator; Mux uses the explicit `use` prefix instead
 
 ### vs Go
 
@@ -503,6 +570,7 @@ func divide(int a, int b) returns result<int, string> {
 ```
 
 Mux advantage:
+
 - Type system enforces error handling
 - Cannot ignore errors without explicit match
 
@@ -527,6 +595,7 @@ func divide(int a, int b) returns result<int, string> {
 ```
 
 Mux advantages:
+
 - Errors visible in function signature
 - Cannot forget to handle errors
 - No runtime exceptions
@@ -538,11 +607,11 @@ Mux advantages:
 2. **Return optional for nullable values** - Collection access, lookups, searches
 3. **Match exhaustively** - Handle both success and error cases
 4. **Use descriptive error messages** - Include context in error strings
-5. **Early returns for errors** - Reduces nesting
+5. **Use `use` for propagation** - Reduces nesting while preserving typed errors
 6. **Use `_` for ignored values** - Makes intent explicit
 7. **Don't overuse wildcards** - Match specific cases when possible
 8. **Document error conditions** - What errors can a function return?
-9. **Chain operations explicitly** - No `?` operator, use match
+9. **Flatten sequential fallible operations** - Use `use` to propagate failure, or inspection methods and early returns for custom handling
 10. **Prefer result over panicking** - Explicit > implicit
 
 ## Common Patterns

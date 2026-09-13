@@ -1,6 +1,6 @@
 # Operators
 
-Mux provides a comprehensive set of operators for arithmetic, comparison, logical operations, and more.
+Mux provides operators for arithmetic, comparison, and logical operations.
 
 ## Arithmetic Operators
 

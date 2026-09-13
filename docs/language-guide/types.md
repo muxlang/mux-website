@@ -9,6 +9,8 @@ int      // 64-bit signed integer
 float    // 64-bit IEEE-754
 bool     // true | false
 char     // Unicode code point
+byte     // checked unsigned scalar in the range 0..255
+bytes    // contiguous mutable sequence of octets
 string   // UTF-8 sequence
 ```
 
@@ -38,6 +40,11 @@ auto flag_str = flag.to_string() // bool -> string ("true" or "false")
 // Char conversions
 auto ch = 'A'
 auto ch_str = ch.to_string()    // char -> string
+
+// Byte conversions are checked and return result<byte, ByteError> when parsing
+byte octet = 42
+auto octet_int = octet.to_int()
+auto parsed_octet = "0x2a".to_byte()
 
 // Method calls on literals
 auto num = 3.to_string()
@@ -122,36 +129,92 @@ auto good3 = 1.to_float() < 1.0           // OK: true
 
 ## Conversion Methods Reference
 
-| From Type | Method | Returns | Notes |
-|-----------|--------|---------|-------|
-| `int` | `.to_string()` | `string` | Converts to string representation |
-| `int` | `.to_float()` | `float` | Converts to floating-point |
-| `int` | `.to_int()` | `int` | Identity function |
-| `float` | `.to_string()` | `string` | Converts to string representation |
-| `float` | `.to_int()` | `int` | Truncates decimal part |
-| `float` | `.to_float()` | `float` | Identity function |
-| `bool` | `.to_string()` | `string` | Returns "true" or "false" |
-| `bool` | `.to_int()` | `int` | Returns 1 or 0 |
-| `bool` | `.to_float()` | `float` | Returns 1.0 or 0.0 |
-| `char` | `.to_string()` | `string` | Converts char to string |
-| `char` | `.to_int()` | `result<int, string>` | Digit value for '0'-'9' only |
-| `string` | `.to_string()` | `string` | Identity function |
-| `string` | `.to_int()` | `result<int, string>` | Parses string as integer |
-| `string` | `.to_float()` | `result<float, string>` | Parses string as float |
+| From Type | Method            | Returns                   | Notes                                    |
+| --------- | ----------------- | ------------------------- | ---------------------------------------- |
+| `int`     | `.to_string()`    | `string`                  | Converts to string representation        |
+| `int`     | `.to_float()`     | `float`                   | Converts to floating-point               |
+| `int`     | `.to_int()`       | `int`                     | Identity function                        |
+| `float`   | `.to_string()`    | `string`                  | Converts to string representation        |
+| `float`   | `.to_int()`       | `int`                     | Truncates decimal part                   |
+| `float`   | `.to_float()`     | `float`                   | Identity function                        |
+| `bool`    | `.to_string()`    | `string`                  | Returns "true" or "false"                |
+| `bool`    | `.to_int()`       | `int`                     | Returns 1 or 0                           |
+| `bool`    | `.to_float()`     | `float`                   | Returns 1.0 or 0.0                       |
+| `char`    | `.to_string()`    | `string`                  | Converts char to string                  |
+| `char`    | `.to_int()`       | `result<int, string>`     | Digit value for '0'-'9' only             |
+| `char`    | `.to_codepoint()` | `int`                     | Unicode scalar value                     |
+| `byte`    | `.to_string()`    | `string`                  | Decimal representation                   |
+| `byte`    | `.to_int()`       | `int`                     | Zero-extended value                      |
+| `int`     | `.to_byte()`      | `result<byte, ByteError>` | Checks that the value is in 0..255       |
+| `string`  | `.to_string()`    | `string`                  | Identity function                        |
+| `string`  | `.to_int()`       | `result<int, string>`     | Parses string as integer                 |
+| `string`  | `.to_float()`     | `result<float, string>`   | Parses string as float                   |
+| `string`  | `.to_byte()`      | `result<byte, ByteError>` | Parses decimal, `0b`, `0o`, or `0x` text |
+
+Byte arithmetic is explicit: `checked_add`, `checked_sub`, `checked_mul`,
+`checked_div`, and `checked_rem` return `result<byte, ByteError>`; the
+`wrapping_*` and `saturating_*` variants return `byte`. Bitwise operations are
+`bit_and`, `bit_or`, `bit_xor`, `bit_not`, `shift_left`, `shift_right`,
+`rotate_left`, and `rotate_right`.
+
+`ByteError` exposes a typed `ByteErrorKind` (`Invalid`, `Range`, `Overflow`,
+`DivideByZero`, `Shift`, or `Io`) plus textual `detail`, `message()`, and
+`to_string()`. Compare or match the enum instead of matching rendered text.
+
+`bytes` is not an alias for `list<byte>`: it stores octets contiguously and
+offers mutable buffer operations. Use `list<byte>.to_bytes()` to perform a
+checked conversion, `to_list()` to copy it back, `to_utf8()` for strict UTF-8,
+and `to_utf8_lossy()` when replacement characters are acceptable.
+`push_back`, `push_front`, `insert`, `remove`, `clear`, `truncate`, `resize`,
+`reserve`, `fill`, `extend`, `copy_within`, and `contains` operate directly on
+the buffer. Negative or unrepresentable growth sizes leave the buffer
+unchanged.
+`format(radix, width)` supports binary, octal, decimal, and hexadecimal output;
+width is optional (the radix minimum is used by default) and is bounded to 64
+characters per byte.
+
+For sequential binary protocols, `bytes.cursor()` creates an independent
+read/write cursor. Reads advance the cursor only after a complete value is
+available; writes grow the cursor's private buffer. `into_bytes()` returns the
+cursor buffer without changing its position.
+Cursor and binary codec failures return `BytesError`, whose typed
+`BytesErrorKind` is one of `Invalid`, `Range`, `Overflow`, `Bounds`, `Utf8`, or
+`Io`; `detail`, `message()`, and `to_string()` remain textual.
+
+```mux
+func read_packet() returns result<int, BytesError> {
+    bytes packet = b"\x34\x12"
+    auto cursor = use packet.cursor()
+    auto value = use cursor.read_uint_le(2)
+    auto position = use cursor.position()
+    print(value.to_string())
+    print(position.to_string())
+    return ok(value)
+}
+
+func main() returns void {
+    auto result = read_packet()
+    if result.is_err() {
+        print(result.error().message())
+        return
+    }
+    return
+}
+```
 
 ## Composite Types
 
-These are type *forms* rather than runnable declarations - `T`, `K`, `V` and
+These are type _forms_ rather than runnable declarations - `T`, `K`, `V` and
 `U` stand for whatever you instantiate them with:
 
-| Form | Meaning |
-|------|---------|
-| `optional<T>` | a value that may or may not exist |
+| Form           | Meaning                                        |
+| -------------- | ---------------------------------------------- |
+| `optional<T>`  | a value that may or may not exist              |
 | `result<T, E>` | success carrying `T`, or an error carrying `E` |
-| `list<T>` | ordered collection |
-| `map<K, V>` | key-value pairs, iterating in insertion order |
-| `set<T>` | unique elements, iterating in insertion order |
-| `tuple<T, U>` | fixed-size pair |
+| `list<T>`      | ordered collection                             |
+| `map<K, V>`    | key-value pairs, iterating in insertion order  |
+| `set<T>`       | unique elements, iterating in insertion order  |
+| `tuple<T, U>`  | fixed-size pair                                |
 
 ```mux title="composite_types.mux"
 func main() returns void {
@@ -217,6 +280,7 @@ print("val after update: " + x.to_string())  // 21
 ```
 
 **Reference Syntax:**
+
 - Create reference: `&variable` or `&expression`
 - Dereference: `*reference` (required for both reading and writing)
 - Pass to functions: `func(&int ref)` declares parameter, `update(&x)` passes reference

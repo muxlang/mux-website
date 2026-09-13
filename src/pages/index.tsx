@@ -90,7 +90,7 @@ const features = [
       </svg>
     ),
     title: 'Developer Friendly',
-    description: 'Built for humans with helpful error messages, built-in tooling, and comprehensive documentation. Start writing code in minutes, not hours.'
+    description: 'Built for humans with helpful error messages, built-in tooling, and clear documentation. Start writing code in minutes, not hours.'
   }
 ];
 

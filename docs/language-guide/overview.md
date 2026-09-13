@@ -99,7 +99,7 @@ Explore the detailed language documentation:
 - **NO implicit type conversions**
 - **NO runtime reflection**
 - All generics must monomorphize at compile time
-- Interfaces use static dispatch (no vtables)
+- Interfaces support static bounds and owned `dyn<Interface>` values
 
 ## Getting Help
 

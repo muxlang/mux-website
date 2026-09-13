@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-09-10
+
+### Changed
+
+- **WebSocket fragmentation is documented.** `WebSocketFrame.reassemble` now
+  provides bounded decoded-frame reassembly while long-lived connection I/O
+  remains a separate transport concern.
+- **Monaco operator highlighting matches Mux syntax.** Unsupported `?`, `~`,
+  and `^` characters are no longer presented as operators, and `:` is treated
+  as punctuation rather than an operator.
+- **Byte syntax is highlighted consistently.** Monaco and Shiki now recognize
+  the `byte` and `bytes` types and the `b"..."` bytes literal.
+- **SQL placeholder rewriting rejects unterminated block comments.** Positional
+  and named parameter paths now fail before provider execution, keeping
+  malformed statements consistent across drivers.
+- **Chunked request trailers are validated and bounded.** Trailer fields now
+  count against the configured header budget, reject malformed names/values,
+  and cannot override `Content-Length` or `Transfer-Encoding` framing.
+- **Typed class JSON decoding handles nullable list entries.**
+  `list<optional<T>>` maps JSON `null` to `none` while decoding other entries
+  as `some(T)`, matching the declared nested shape.
+- **The stdlib import example names every current module.** The root namespace
+  example now includes the nested HTTP, TLS, JSON, and CSV modules that were
+  omitted from its inventory comment.
+- **Standard-library navigation is complete.** The index and sidebar now expose
+  every current documentation page, including `std.env`, `std.sync`, and the
+  CLI, encoding, filesystem, logging, process, regex, TLS, URL, UUID, and
+  crypto modules. The docs indexer uses the same section assignments as the
+  sidebar, including the `where-clauses` and testing guides.
+- The docs indexer now explicitly assigns the strings guide and the TLS/log
+  standard-library pages, keeping all scoped sidebar documents in a known
+  section instead of relying on fallback placement.
+- **JSON and SQL boundary behavior is documented.** JSON duplicate-key policies
+  (`Reject`, `First`, and `Last`) and provider-aware SQL constraint errors now
+  match the compiler/runtime APIs and their executable fixtures.
+- **Constructor guidance matches the language.** The expressions reference no
+  longer presents `list<T>.new()` as a valid collection construction form;
+  built-in collections use literals, while `.new()` remains for zero-argument
+  class construction.
+- **I/O constructor failures are typed.** Filesystem-backed readers and writers
+  document their native error categories and operation context through
+  `IoError.kind` and `IoError.operation`.
+- **HTTP body and response framing are documented precisely.** Reader-backed
+  request bodies stream incrementally and are single-use, while the HTTP/1.x
+  response writer rejects ambiguous transfer framing, requires `close` in any
+  caller-supplied `Connection` header, and enforces bodyless `304`/zero-length
+  `205` responses. Buffered request byte bodies are capped at 16 MiB; larger
+  uploads use an explicitly bounded reader.
+- **SQL parameter examples preserve Unicode text.** Placeholder rewriting now
+  leaves non-ASCII statements unchanged while still validating parameter shape.
+
+### Fixed
+
+- **Unterminated docs code fences now fail the snippet check.** A missing
+  closing fence can no longer make a Mux example disappear from the compile
+  audit silently.
+
 ## 2026-08-29
 
 ### Added

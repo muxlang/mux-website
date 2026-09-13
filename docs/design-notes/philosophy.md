@@ -134,7 +134,7 @@ Mux prioritizes readability, safety, and developer productivity over absolute ma
 **Decision:** Include Rust-style pattern matching with guards.
 
 **Rationale:**
-- Elegant error handling
+- Clear error handling
 - Safer than if/else chains
 - Compiler checks exhaustiveness
 - Natural for `result` and `optional`

@@ -58,19 +58,14 @@ func fetch() returns result<string, string> {
 }
 
 func run() returns result<string, string> {
-    string status
-    match fetch() {
-        ok(value) { status = value }
-        err(e) { return err(e) }
-    }
-
+    auto status = use fetch()
     return ok(status)
 }
 ```
 
-This is what keeps a function flat when it makes several fallible calls. The
-alternative is a `match` nested inside a `match` for each one, indenting the
-real work further at every step.
+`use` keeps a function flat when it makes several fallible calls. Reserve an
+uninitialized declaration for cases where different branches assign a value
+that has no useful default.
 
 It matters most for types with no natural zero value. A `string` could be
 declared as `""` and overwritten, but a class type has nothing to stand in -
@@ -111,7 +106,7 @@ func calculate() returns int {
 class Config {
     const int MAX_RETRIES = 3
     int current_retry
-    
+
     func increment() returns void {
         self.current_retry++  // OK - mutable field
         // self.MAX_RETRIES++  // ERROR: Cannot modify const field
@@ -187,12 +182,12 @@ Variables are scoped to the block in which they are declared:
 ```mux title="scope.mux"
 func example() returns void {
     auto x = 10  // Scoped to function
-    
+
     if x > 5 {
         auto y = 20  // Scoped to if block
         print(y.to_string())
     }
-    
+
     // print(y.to_string())  // ERROR: y is out of scope
     return
 }

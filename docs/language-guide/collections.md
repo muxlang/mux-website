@@ -347,7 +347,7 @@ auto combined = ints_as_floats + floats  // list<float>
 
 ## Generic Collections
 
-Collections work seamlessly with generics:
+Collections work with generics:
 
 ```mux title="generic_collections.mux"
 func first<T>(list<T> items) returns optional<T> {
@@ -387,7 +387,7 @@ set<string> empty_tags = {}
 
 1. **Use safe access methods** - `.get()` returns `optional<T>` to avoid runtime errors
 2. **Explicit types for empty collections** - Prevents ambiguity
-3. **Leverage type inference** - Use `auto` when types are obvious from literals
+3. **Use type inference** - Use `auto` when types are obvious from literals
 4. **Use the `in` operator** - Cleaner than calling `.contains()`
 5. **Prefer literals over constructors** - More readable
 6. **Use appropriate collection type**:

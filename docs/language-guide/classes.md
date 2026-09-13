@@ -7,12 +7,12 @@ Mux provides object-oriented programming through classes and interfaces (traits)
 ```mux title="basic_class.mux"
 class Circle {
     float radius  // explicit type required for fields
-    
+
     func area() returns float {
         const float PI = 3.1415
         return PI * self.radius * self.radius
     }
-    
+
     func circumference() returns float {
         const float PI = 3.1415
         return 2.0 * PI * self.radius
@@ -21,6 +21,7 @@ class Circle {
 ```
 
 **Key Points:**
+
 - Fields must have explicit types (no `auto` inference)
 - Methods use `self` to access instance fields
 - Methods follow same rules as regular functions
@@ -43,7 +44,7 @@ auto area = circle.area()
 print("Area: " + area.to_string())
 ```
 
-**Design Note:** Mux uses explicit `.new()` rather than direct constructor calls to distinguish class instantiation from function calls and enum variant construction. The `.new()` method will *always* instantiate a new object with all default "zero" values for fields, and then you can set fields afterward. This is a simple and consistent pattern for object creation.
+**Design Note:** Mux uses explicit `.new()` rather than direct constructor calls to distinguish class instantiation from function calls and enum variant construction. The `.new()` method will _always_ instantiate a new object with all default "zero" values for fields, and then you can set fields afterward. This is a simple and consistent pattern for object creation.
 
 The Mux style for constructors is to use a `common` factory method (see [below](./classes.md#static-methods-with-common)) that creates and initializes the object. Name factories by behavior (`from(...)`, `from_<source>(...)`, `with_<feature>(...)`) rather than `new`.
 
@@ -69,18 +70,18 @@ Use the `is` keyword to implement interfaces:
 ```mux title="implementing_interfaces.mux"
 class Circle is Drawable, Measurable {
     float radius
-    
+
     func draw() returns void {
         auto message = "Circle radius=" + self.radius.to_string()
         print(message)
         return
     }
-    
+
     func area() returns float {
         const float PI = 3.1415
         return PI * self.radius * self.radius
     }
-    
+
     func perimeter() returns float {
         const float PI = 3.1415
         return 2.0 * PI * self.radius
@@ -90,16 +91,16 @@ class Circle is Drawable, Measurable {
 class Rectangle is Drawable, Measurable {
     float width
     float height
-    
+
     func draw() returns void {
         print("Rectangle " + self.width.to_string() + "x" + self.height.to_string())
         return
     }
-    
+
     func area() returns float {
         return self.width * self.height
     }
-    
+
     func perimeter() returns float {
         return 2.0 * (self.width + self.height)
     }
@@ -117,17 +118,17 @@ Access instance data via `self`:
 ```mux title="instance_methods.mux"
 class Counter {
     int value
-    
+
     func increment() returns void {
         self.value = self.value + 1
         return
     }
-    
+
     func reset() returns void {
         self.value = 0
         return
     }
-    
+
     func get() returns int {
         return self.value
     }
@@ -144,7 +145,7 @@ print(counter.get().to_string())  // "2"
 ```mux title="class_unused_params.mux"
 class Config {
     string name
-    
+
     func update(string newName, string _) returns void {
         self.name = newName  // second parameter ignored
         return
@@ -159,18 +160,18 @@ The `common` keyword declares static (class-level) methods:
 ```mux title="static_methods.mux"
 class Stack<T> {
     list<T> items
-    
+
     // Instance method - operates on self
     func push(T item) returns void {
         self.items.push_back(item)
         return
     }
-    
+
     // Static method - no self, called on class
     common func who_am_i() returns string {
         return "I'm a Stack!"
     }
-    
+
     // Factory pattern - creates instances
     common func from(list<T> init_list) returns Stack<T> {
         auto new_stack = Stack<T>.new()
@@ -190,12 +191,13 @@ stack.push(42)
 
 ### `common` vs `const`
 
-| Keyword | Purpose | Usage |
-|---------|---------|-------|
-| `common` | Static methods and factory functions | `ClassName.method()` |
-| `const` | Immutable constants | `const int MAX = 100` |
+| Keyword  | Purpose                              | Usage                 |
+| -------- | ------------------------------------ | --------------------- |
+| `common` | Static methods and factory functions | `ClassName.method()`  |
+| `const`  | Immutable constants                  | `const int MAX = 100` |
 
 **Key Differences:**
+
 - **Instance methods** (no keyword) operate on `self` and require an instance
 - **Static methods** (`common`) have no `self` and are called on the class
 - **Const fields** are immutable instance/class fields, not methods
@@ -209,7 +211,7 @@ Classes can have constant (immutable) fields:
 class Config {
     const int MAX_RETRIES = 3
     int current_retry
-    
+
     func increment() returns void {
         self.current_retry++  // OK - mutable field
         // self.MAX_RETRIES++  // ERROR: Cannot modify const field
@@ -223,6 +225,7 @@ cfg.current_retry = 1  // OK - mutable field
 ```
 
 **Const Enforcement:**
+
 - Cannot reassign: `self.MAX_RETRIES = value` -> ERROR
 - Cannot increment/decrement: `self.MAX_RETRIES++` -> ERROR
 - Use `const` for fields that shouldn't change after initialization
@@ -235,11 +238,11 @@ Classes can be generic over type parameters:
 class Pair<T, U> {
     T first
     U second
-    
+
     func swap() returns Pair<U, T> {
         return Pair<U, T>.from(self.second, self.first)
     }
-    
+
     common func from(T a, U b) returns Pair<T, U> {
         auto pair = Pair<T, U>.new()
         pair.first = a
@@ -267,12 +270,12 @@ Four capabilities are built into the language rather than declared. A class
 opts in by naming one and writing the method it requires, and the operators
 then work on that class:
 
-| Capability | Method | What it enables |
-|------------|--------|-----------------|
-| `Equatable` | `eq(Self) returns bool` | `==` and `!=` |
-| `Comparable` | `cmp(Self) returns int` | `<`, `<=`, `>`, `>=`, and `==` |
-| `Hashable` | `hash() returns int` and `eq` | use as a `map` key or `set` member |
-| `Stringable` | `to_string() returns string` | `to_string()` on the class |
+| Capability   | Method                        | What it enables                    |
+| ------------ | ----------------------------- | ---------------------------------- |
+| `Equatable`  | `eq(Self) returns bool`       | `==` and `!=`                      |
+| `Comparable` | `cmp(Self) returns int`       | `<`, `<=`, `>`, `>=`, and `==`     |
+| `Hashable`   | `hash() returns int` and `eq` | use as a `map` key or `set` member |
+| `Stringable` | `to_string() returns string`  | `to_string()` on the class         |
 
 `cmp` returns negative, zero or positive like C's `strcmp`, so one method
 supplies every ordering operator. `Comparable` and `Hashable` each grant
@@ -350,11 +353,12 @@ those are registered with the runtime once per class, and a generic class
 shares one registration across every instantiation. `Stringable` registers
 nothing and is available to generic classes.
 
-## Interface Dispatch (Static)
+## Interface Dispatch
 
-Mux uses **static dispatch** for interfaces - no runtime vtable lookup. That
-shapes how you use them: an interface is a **bound on a type parameter**, not a
-type you can store a value in.
+Mux supports both static interface bounds and owned dynamic interface values.
+Use a type parameter when the concrete type is known at compile time. Use
+`dyn<Interface>` when a value must cross a function boundary without exposing
+its concrete class.
 
 ```mux title="static_dispatch.mux"
 interface Drawable {
@@ -389,7 +393,7 @@ class Square is Drawable {
     }
 }
 
-// The bound form. Each call is monomorphized to the concrete class.
+// The bound form. Each call is specialized for the concrete class.
 func render<T is Drawable>(T shape) returns string {
     return shape.draw()
 }
@@ -401,42 +405,86 @@ func main() returns void {
 }
 ```
 
-Writing the interface as a value type is an error, and says so at the
-declaration rather than at the call:
+An owned dynamic interface value stores the concrete object and its interface
+dispatch table. Passing a class to `dyn<Interface>` performs the checked
+conversion. Calling a method uses the table, so different classes can be
+handled by one function:
 
 ```mux
-func render(Drawable shape) returns string   // ERROR: 'Drawable' is an
-                                             // interface and cannot be used
-                                             // as a value type
+interface Drawable {
+    func draw() returns string
+}
+
+class Circle is Drawable {
+    func draw() returns string {
+        return "circle"
+    }
+}
+
+class Square is Drawable {
+    func draw() returns string {
+        return "square"
+    }
+}
+
+func render_dynamic(dyn<Drawable> shape) returns string {
+    return shape.draw()
+}
+
+func main() returns void {
+    print(render_dynamic(Circle.new()))
+    print(render_dynamic(Square.new()))
+    return
+}
 ```
 
-**Why Static Dispatch?**
+Dynamic interface values own their erased object. They can be stored in
+heterogeneous collections through the dynamic interface type. Generic dynamic
+interfaces such as `dyn<T>` are not supported; name a declared interface.
+
+**Why static dispatch?**
+
 - **Zero cost**: No pointer indirection, direct function calls
 - **Inlining**: LLVM can inline interface methods
 - **Optimization**: Better branch prediction, no indirect jumps
 
-The tradeoffs: interfaces cannot be added to types from other modules (no
-"extension traits"), and there are no heterogeneous collections - a
-`list<Drawable>` holding both a `Circle` and a `Square` needs dynamic dispatch,
-which Mux does not have. Model a closed set of alternatives as an enum
-instead.
+Static interface bounds still cannot be added to types from other modules.
+Use a named dynamic interface when a heterogeneous collection or erased
+function argument is required. Model a closed set of alternatives as an enum
+when dynamic dispatch is not needed.
 
 ## Building a Class From a Document
 
-Every class gets three deserializers, synthesized the way `new` is. Declare the
-shape you expect, and get it or an error saying what was wrong:
+Document conversion is explicit Mux code. A class receives no generated
+serializer, deserializer, field rename, omit, flatten, or default mapping.
+Implement `JsonRepresentable` or `CsvRepresentable` when the class should
+provide the corresponding operation. Parser methods such as `from_json` and
+`from_csv` are ordinary user-written methods.
 
 ```mux title="from_json.mux"
-class Config {
+import std.data.json
+
+class Config is JsonRepresentable {
     int port
     string host
     optional<string> note
+
+    func to_json() returns result<Json, JsonError> {
+        return json.parse("{\"port\":" + self.port.to_string() + "}")
+    }
+
+    common func from_json(string text) returns result<Config, JsonError> {
+        auto value = use json.parse(text)
+        auto config = Config.new()
+        // Read and validate value explicitly in real application code.
+        return ok(config)
+    }
 }
 
 func load(string text) returns void {
     match Config.from_json(text) {
         ok(cfg) { print(cfg.host + ":" + cfg.port.to_string()) }
-        err(e) { print("bad config: " + e) }
+        err(e) { print("bad config (" + e.kind.to_string() + "): " + e.message()) }
     }
     return
 }
@@ -444,24 +492,30 @@ func load(string text) returns void {
 
 The name says what shape it returns:
 
-| Method | Returns |
-| --- | --- |
-| `Config.from_json(text)` | `result<Config, string>` - one object |
-| `Config.list_from_json(text)` | `result<list<Config>, string>` - a JSON array |
-| `Config.list_from_csv(text)` | `result<list<Config>, string>` - the rows of a table |
+| Method                        | Returns                                                          |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `Config.to_json()`            | `result<Json, JsonError>` - explicit class serialization         |
+| `Config.from_json(text)`      | `result<Config, JsonError>` - explicit class parsing             |
+| `Config.list_from_json(text)` | `result<list<Config>, JsonError>` - only when explicitly defined |
+| `Config.to_csv()`             | `result<string, CsvError>` - explicit class serialization        |
+| `Config.from_csv(text)`       | `result<Config, CsvError>` - only when explicitly defined        |
 
-There is deliberately no singular `from_csv`: a CSV document *is* a table, so a
-singular form would only work for a file with exactly one row.
+There is no compiler-provided singular or list parser. A CSV document is a
+table, but a program may define either shape when its input contract requires
+it.
 
-### The rules
+### A common parser contract
 
-| Case | Result |
-| --- | --- |
-| A required field is missing | error naming the field |
-| An `optional<T>` field is missing | `none` |
-| An `optional<T>` field is `null` | `none` |
-| A field is the wrong kind | error naming the field and the type expected |
-| The document has fields you did not declare | ignored |
+The compiler does not impose these rules. They are a useful contract for an
+explicit parser that wants the same behavior as the standard shape fixtures:
+
+| Case                                        | Result                                       |
+| ------------------------------------------- | -------------------------------------------- |
+| A required field is missing                 | error naming the field                       |
+| An `optional<T>` field is missing           | `none`                                       |
+| An `optional<T>` field is `null`            | `none`                                       |
+| A field is the wrong kind                   | error naming the field and the type expected |
+| The document has fields you did not declare | ignored                                      |
 
 Absence and an explicit `null` deliberately mean the same thing. Extra fields
 are ignored so a server adding one does not break a program that reads it.
@@ -476,6 +530,7 @@ class Order {
     Item shipping           // a nested class
     list<int> codes         // a list of primitives
     list<Item> items        // a list of classes
+    list<optional<int>> maybe_codes // nullable entries in a list
     optional<string> note   // may be absent
 }
 ```
@@ -506,7 +561,7 @@ goes through `Json`.
 ### CSV is different
 
 A CSV cell is always **text**, so `3` in a file is the string `"3"`. An `int`
-column is therefore *parsed* rather than type-checked, and an unparseable cell
+column is therefore _parsed_ rather than type-checked, and an unparseable cell
 names the column:
 
 ```
@@ -526,7 +581,7 @@ tell "empty" from "absent" once the column exists.
 3. **Use `common` for factory methods** - Create instances with pre-populated data
 4. **Keep classes focused** - Single responsibility principle
 5. **Use `const` for immutable fields** - Prevent accidental modification
-6. **Leverage generic classes** - Reusable data structures
+6. **Use generic classes** - Reusable data structures
 7. **Prefer static dispatch** - Better performance than dynamic dispatch
 
 ## See Also

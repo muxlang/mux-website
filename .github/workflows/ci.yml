@@ -52,7 +52,9 @@ jobs:
       - run: npm test
       # Verify the Monaco/Shiki keyword+type sets match the canonical
       # syntax-matrix.json in muxlang/mux-syntax-highlighting (fetched over
-      # HTTP by the script). Fails if the vendored copies drift.
+      # HTTPS by the script). Fails if the vendored copies drift. Runtime
+      # service and native-host acceptance belongs to mux-runtime; the exact
+      # split is documented in docs/stdlib/hosted-acceptance.md.
       - run: npm run check:syntax-parity
       - run: npm run build
 

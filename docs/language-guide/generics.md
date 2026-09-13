@@ -376,7 +376,7 @@ Type `T` must implement **all** specified interfaces.
 
 1. **Use type constraints** - Specify what operations are needed
 2. **Prefer interface bounds over concrete types** - More flexible
-3. **Leverage monomorphization** - No runtime overhead for generics
+3. **Use monomorphization** - No runtime overhead for generics
 4. **Use descriptive type parameter names** - `T`, `U`, `K`, `V` for simple cases
 5. **Explicit types when ambiguous** - Helps readability
 6. **Keep generic functions simple** - Complex logic harder to debug

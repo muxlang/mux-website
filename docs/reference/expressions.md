@@ -6,11 +6,11 @@ This document describes expression evaluation rules in Mux.
 
 Expressions are categorized by their evaluation behavior:
 
-| Category | Description | Examples |
-|----------|-------------|----------|
-| **Value expressions** | Produce a value | Literals, variables, operators |
+| Category              | Description              | Examples                          |
+| --------------------- | ------------------------ | --------------------------------- |
+| **Value expressions** | Produce a value          | Literals, variables, operators    |
 | **Place expressions** | Denote storage locations | Variables, array elements, fields |
-| **Void expressions** | Produce no value | some function calls |
+| **Void expressions**  | Produce no value         | some function calls               |
 
 ## Primary Expressions
 
@@ -81,7 +81,6 @@ Empty lists require explicit type annotation:
 
 ```mux
 list<int> empty = []            // Valid: explicit type
-auto empty = list<int>.new()    // Valid: explicit constructor
 auto bad = []                   // ERROR: cannot infer type
 ```
 
@@ -272,21 +271,21 @@ print("message")          // Print for side effect
 
 The compiler determines the type of each expression:
 
-| Expression | Type |
-|------------|------|
-| Integer literal | `int` |
-| Float literal | `float` |
-| String literal | `string` |
-| Boolean literal | `bool` |
-| Tuple literal | `tuple<T, U>` |
-| List literal | `list<T>` (inferred) |
-| Identifier | Declared or inferred type |
-| `a + b` | Type of `a` and `b` (must match) |
-| `a == b` | `bool` |
-| `a && b` | `bool` |
-| `!a` | `bool` |
-| `range(a, b)` | `list<int>` |
-| Lambda | `func(...) -> ...` |
+| Expression      | Type                             |
+| --------------- | -------------------------------- |
+| Integer literal | `int`                            |
+| Float literal   | `float`                          |
+| String literal  | `string`                         |
+| Boolean literal | `bool`                           |
+| Tuple literal   | `tuple<T, U>`                    |
+| List literal    | `list<T>` (inferred)             |
+| Identifier      | Declared or inferred type        |
+| `a + b`         | Type of `a` and `b` (must match) |
+| `a == b`        | `bool`                           |
+| `a && b`        | `bool`                           |
+| `!a`            | `bool`                           |
+| `range(a, b)`   | `list<int>`                      |
+| Lambda          | `func(...) -> ...`               |
 
 ## See Also
 
