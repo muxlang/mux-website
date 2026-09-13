@@ -27,6 +27,7 @@ const docsSidebar: NonNullable<SidebarsConfig["docsSidebar"]> = [
     label: "Tour of Mux",
     collapsed: true,
     items: [
+      "tour/index",
       "tour/hello-world",
       "tour/variables",
       "tour/basic-types",

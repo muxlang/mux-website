@@ -28,9 +28,9 @@ import { dirname, resolve, sep } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");
 
-const CANONICAL_URL =
-  process.env.MUX_SYNTAX_MATRIX_URL ??
+const DEFAULT_CANONICAL_URL =
   "https://raw.githubusercontent.com/muxlang/mux-syntax-highlighting/main/shared/syntax-matrix.json";
+const CANONICAL_URL = process.env.MUX_SYNTAX_MATRIX_URL ?? DEFAULT_CANONICAL_URL;
 
 // Tokens the website intentionally treats as keywords/types even though the
 // canonical spec does not list them as such. Keep this list small and justified.
@@ -142,14 +142,34 @@ async function loadCanonical() {
     return { matrix, from: resolved };
   }
   const url = source || CANONICAL_URL;
+  const canFallbackToDefault = !source && url !== DEFAULT_CANONICAL_URL;
   let res;
   try {
     res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
   } catch (error) {
-    throw canonicalFailure(sourceLabel, `HTTPS request failed: ${errorText(error)}`, [
-      `Check outbound HTTPS access to ${url} and rerun the command.`,
-      "For an offline check, pass a canonical JSON file under this website checkout with MUX_SYNTAX_MATRIX or the CLI argument.",
-    ]);
+    if (canFallbackToDefault) {
+      res = undefined;
+    } else {
+      throw canonicalFailure(sourceLabel, `HTTPS request failed: ${errorText(error)}`, [
+        `Check outbound HTTPS access to ${url} and rerun the command.`,
+        "For an offline check, pass a canonical JSON file under this website checkout with MUX_SYNTAX_MATRIX or the CLI argument.",
+      ]);
+    }
+  }
+  if (!res?.ok && canFallbackToDefault) {
+    const fallbackUrl = DEFAULT_CANONICAL_URL;
+    try {
+      res = await fetch(fallbackUrl, { signal: AbortSignal.timeout(15_000) });
+    } catch (error) {
+      throw canonicalFailure(
+        sourceLabel,
+        `HTTPS request failed for both ${url} and ${fallbackUrl}: ${errorText(error)}`,
+        [
+          `Check outbound HTTPS access to ${url} and rerun the command.`,
+          "For an offline check, pass a canonical JSON file under this website checkout with MUX_SYNTAX_MATRIX or the CLI argument.",
+        ],
+      );
+    }
   }
   if (!res.ok) {
     throw canonicalFailure(sourceLabel, `HTTPS returned ${res.status} ${res.statusText}`, [
