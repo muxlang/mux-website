@@ -5,6 +5,7 @@ This section provides detailed, technical documentation of Mux's syntax and sema
 ## Purpose
 
 The Language Reference is the authoritative source for:
+
 - Exact syntax definitions
 - Semantic behavior
 - Edge cases and corner cases
@@ -16,33 +17,33 @@ This is different from the [Language Guide](../language-guide/overview.md), whic
 
 ### Core Reference
 
-| Topic | Description |
-|-------|-------------|
+| Topic                                       | Description                                       |
+| ------------------------------------------- | ------------------------------------------------- |
 | [Lexical Structure](./lexical-structure.md) | Tokens, keywords, identifiers, literals, comments |
-| [Operators](./operators.md) | Operator precedence, associativity, behavior |
+| [Operators](./operators.md)                 | Operator precedence, associativity, behavior      |
 
 ### Behavior Reference
 
-| Topic | Description |
-|-------|-------------|
-| [Statements](./statements.md) | Detailed semantics of each statement type |
-| [Expressions](./expressions.md) | Expression evaluation rules |
-| [Memory Model](./memory-model.md) | Reference counting specifics |
+| Topic                             | Description                               |
+| --------------------------------- | ----------------------------------------- |
+| [Statements](./statements.md)     | Detailed semantics of each statement type |
+| [Expressions](./expressions.md)   | Expression evaluation rules               |
+| [Memory Model](./memory-model.md) | Reference counting specifics              |
 
 ### Quick Reference
 
-| Topic | Description |
-|-------|-------------|
+| Topic                                           | Description               |
+| ----------------------------------------------- | ------------------------- |
 | [Operators](./operators.md#operator-precedence) | Operator precedence table |
-| [Memory Model](./memory-model.md#memory-layout) | Memory layout diagrams |
+| [Memory Model](./memory-model.md#memory-layout) | Memory layout diagrams    |
 
 ## Reference vs Guide
 
-| Language Guide | Language Reference |
-|----------------|-------------------|
-| Learning-oriented | Reference-oriented |
-| Concept explanations | Precise rules |
-| Practical examples | Formal definitions |
+| Language Guide         | Language Reference          |
+| ---------------------- | --------------------------- |
+| Learning-oriented      | Reference-oriented          |
+| Concept explanations   | Precise rules               |
+| Practical examples     | Formal definitions          |
 | Progressive complexity | Topic-by-topic organization |
 
 ## Additional Resources

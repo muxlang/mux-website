@@ -9,6 +9,7 @@ Mux is built on clear principles that guide every design decision. This page exp
 **Principle:** It's better to have fewer, well-understood features than many half-baked ones.
 
 **What this means in practice:**
+
 - Mux doesn't try to support every programming paradigm
 - Features must have clear, explainable semantics
 - When in doubt, leave it out
@@ -20,6 +21,7 @@ Mux is built on clear principles that guide every design decision. This page exp
 **Principle:** Every feature must justify its complexity by improving understanding or safety.
 
 **What this means in practice:**
+
 - New features require strong justification
 - Complexity must provide proportional value
 - I say "no" more often than "yes"
@@ -31,14 +33,16 @@ Mux is built on clear principles that guide every design decision. This page exp
 **Principle:** Code should be clear about what it's doing. No hidden behavior.
 
 **What this means in practice:**
+
 - No implicit type conversions
 - No hidden memory allocations (where possible)
 - Function calls are obvious, not disguised as operators
 
 **Example:**
+
 ```mux title="explicit_conversions.mux"
 // ERROR: No implicit conversion
-auto x = 1 + 1.5  
+auto x = 1 + 1.5
 
 // Explicit: You must choose how to convert
 auto x = (1).to_float() + 1.5  // 2.5 as float
@@ -50,11 +54,13 @@ auto y = 1 + (1.5).to_int()   // 2 as int
 **Principle:** Code is read far more than it's written. Optimize for reading.
 
 **What this means in practice:**
+
 - No semicolons (less visual noise)
 - Clear keywords (`func`, `returns`, `auto`)
 - Obvious control flow
 
 **Example:**
+
 ```mux title="readable_syntax.mux"
 // Clean and readable
 func calculate(int x) returns int {
@@ -70,6 +76,7 @@ func calculate(int x) returns int {
 **Principle:** Memory safety doesn't mean slow performance or difficult code.
 
 **What this means in practice:**
+
 - Reference counting for automatic memory management
 - No manual `malloc`/`free`
 - No borrow checker to fight with
@@ -98,11 +105,13 @@ Mux prioritizes readability, safety, and developer productivity over absolute ma
 ### Why Reference Counting?
 
 **Decision:** Mux uses reference counting for memory management instead of:
+
 - Garbage collection (like Go, Java)
 - Borrow checking (like Rust)
 - Manual management (like C)
 
 **Rationale:**
+
 - Simpler than borrow checking
 - Deterministic cleanup (unlike GC)
 - No stop-the-world pauses
@@ -114,6 +123,7 @@ Mux prioritizes readability, safety, and developer productivity over absolute ma
 **Decision:** All type conversions must be explicit using `.to_*()` methods.
 
 **Rationale:**
+
 - No surprise behavior
 - Clear what type you're working with
 - Prevents subtle bugs
@@ -124,6 +134,7 @@ Mux prioritizes readability, safety, and developer productivity over absolute ma
 **Decision:** Statements terminate with newlines, not semicolons.
 
 **Rationale:**
+
 - Less visual clutter
 - Easier for beginners
 - Follows Python/Go convention
@@ -134,6 +145,7 @@ Mux prioritizes readability, safety, and developer productivity over absolute ma
 **Decision:** Include Rust-style pattern matching with guards.
 
 **Rationale:**
+
 - Clear error handling
 - Safer than if/else chains
 - Compiler checks exhaustiveness
@@ -151,6 +163,7 @@ match divide(10, 0) {
 **Decision:** Generics are specialized at compile-time (like Rust, C++).
 
 **Rationale:**
+
 - Zero runtime cost
 - Full type safety
 - Enables optimization
@@ -162,11 +175,13 @@ match divide(10, 0) {
 Mux's design will evolve, but guided by these principles:
 
 **Changes I might make:**
+
 - Adding new features that fit the philosophy
 - Improving syntax based on real-world usage
 - Better error messages and tooling
 
 **Changes I won't make:**
+
 - Adding implicit conversions
 - Introducing a garbage collector
 - Making the type system optional
@@ -176,6 +191,7 @@ Mux's design will evolve, but guided by these principles:
 The best place to discuss Mux's design decisions is in [GitHub Issues](https://github.com/muxlang/mux-compiler/issues).
 
 I value:
+
 - Thoughtful critique
 - Real-world use cases
 - Honest feedback

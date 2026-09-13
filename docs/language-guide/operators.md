@@ -6,14 +6,14 @@ Mux provides operators for arithmetic, comparison, and logical operations.
 
 Standard arithmetic operations with strict type requirements:
 
-| Operator | Description | Types | Example |
-|----------|-------------|-------|---------|
-| `+` | Addition | `int`, `float`, `string` | `5 + 3` -> `8` |
-| `-` | Subtraction | `int`, `float` | `10 - 4` -> `6` |
-| `*` | Multiplication | `int`, `float` | `6 * 7` -> `42` |
-| `/` | Division | `int`, `float` | `15 / 3` -> `5` |
-| `%` | Modulo | `int`, `float` | `10 % 3` -> `1` |
-| `**` | Exponentiation | `int`, `float` | `2 ** 3` -> `8` |
+| Operator | Description    | Types                    | Example         |
+| -------- | -------------- | ------------------------ | --------------- |
+| `+`      | Addition       | `int`, `float`, `string` | `5 + 3` -> `8`  |
+| `-`      | Subtraction    | `int`, `float`           | `10 - 4` -> `6` |
+| `*`      | Multiplication | `int`, `float`           | `6 * 7` -> `42` |
+| `/`      | Division       | `int`, `float`           | `15 / 3` -> `5` |
+| `%`      | Modulo         | `int`, `float`           | `10 % 3` -> `1` |
+| `**`     | Exponentiation | `int`, `float`           | `2 ** 3` -> `8` |
 
 ### Examples
 
@@ -68,10 +68,10 @@ auto good3 = (1).to_float() + 1.0         // 2.0
 
 Postfix-only operators for incrementing/decrementing:
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `++` | Increment (postfix only) | `counter++` |
-| `--` | Decrement (postfix only) | `counter--` |
+| Operator | Description              | Example     |
+| -------- | ------------------------ | ----------- |
+| `++`     | Increment (postfix only) | `counter++` |
+| `--`     | Decrement (postfix only) | `counter--` |
 
 ### Design Constraints
 
@@ -103,14 +103,14 @@ const int MAX = 100
 
 Compare values of compatible types:
 
-| Operator | Description | Types | Example |
-|----------|-------------|-------|---------|
-| `==` | Equality | All comparable types | `a == b` |
-| `!=` | Inequality | All comparable types | `a != b` |
-| `<` | Less than | `int`, `float`, `string` | `5 < 10` |
-| `<=` | Less than or equal | `int`, `float`, `string` | `x <= 100` |
-| `>` | Greater than | `int`, `float`, `string` | `y > 0` |
-| `>=` | Greater than or equal | `int`, `float`, `string` | `age >= 18` |
+| Operator | Description           | Types                    | Example     |
+| -------- | --------------------- | ------------------------ | ----------- |
+| `==`     | Equality              | All comparable types     | `a == b`    |
+| `!=`     | Inequality            | All comparable types     | `a != b`    |
+| `<`      | Less than             | `int`, `float`, `string` | `5 < 10`    |
+| `<=`     | Less than or equal    | `int`, `float`, `string` | `x <= 100`  |
+| `>`      | Greater than          | `int`, `float`, `string` | `y > 0`     |
+| `>=`     | Greater than or equal | `int`, `float`, `string` | `age >= 18` |
 
 ### Examples
 
@@ -149,11 +149,11 @@ auto good3 = (1).to_float() < 1.0   // true
 
 Boolean operations with short-circuit evaluation:
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `&&` | Logical AND (short-circuit) | `a && b` |
-| `\|\|` | Logical OR (short-circuit) | `a \|\| b` |
-| `!` | Logical NOT | `!flag` |
+| Operator | Description                 | Example    |
+| -------- | --------------------------- | ---------- |
+| `&&`     | Logical AND (short-circuit) | `a && b`   |
+| `\|\|`   | Logical OR (short-circuit)  | `a \|\| b` |
+| `!`      | Logical NOT                 | `!flag`    |
 
 ### Short-Circuit Evaluation
 
@@ -183,12 +183,14 @@ auto result = a && b
 ```
 
 Generates:
+
 1. Evaluate `a`
 2. If `a` is false, result is false (skip `b`)
 3. If `a` is true, evaluate `b` and use its value
 4. Phi node merges results from different paths
 
 This enables:
+
 - Performance optimization (skip unnecessary checks)
 - Safe null/bounds checking patterns
 - Branch prediction opportunities
@@ -197,12 +199,12 @@ This enables:
 
 Test for membership/containment:
 
-| Left Operand | Right Operand | Description |
-|--------------|---------------|-------------|
-| `T` | `list<T>` | Check if value exists in list |
-| `T` | `set<T>` | Check if value exists in set |
-| `string` | `string` | Check if substring exists |
-| `char` | `string` | Check if character exists in string |
+| Left Operand | Right Operand | Description                         |
+| ------------ | ------------- | ----------------------------------- |
+| `T`          | `list<T>`     | Check if value exists in list       |
+| `T`          | `set<T>`      | Check if value exists in set        |
+| `string`     | `string`      | Check if substring exists           |
+| `char`       | `string`      | Check if character exists in string |
 
 ### Type Constraints
 
@@ -220,12 +222,12 @@ Both operands must have compatible element types:
 
 The `+` operator is overloaded for collection types:
 
-| Types | Operation | result |
-|-------|-----------|--------|
-| `list<T> + list<T>` | Concatenation | Combined list |
-| `map<K,V> + map<K,V>` | Merge | Combined map (latter overwrites on collision) |
-| `set<T> + set<T>` | Union | Set with all unique elements |
-| `string + string` | Concatenation | Combined string |
+| Types                 | Operation     | result                                        |
+| --------------------- | ------------- | --------------------------------------------- |
+| `list<T> + list<T>`   | Concatenation | Combined list                                 |
+| `map<K,V> + map<K,V>` | Merge         | Combined map (latter overwrites on collision) |
+| `set<T> + set<T>`     | Union         | Set with all unique elements                  |
+| `string + string`     | Concatenation | Combined string                               |
 
 ### Examples
 
@@ -263,10 +265,10 @@ Collections must be the exact same type:
 
 Create and dereference references:
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `&` | Create reference | `&variable` |
-| `*` | Dereference | `*reference` |
+| Operator | Description      | Example      |
+| -------- | ---------------- | ------------ |
+| `&`      | Create reference | `&variable`  |
+| `*`      | Dereference      | `*reference` |
 
 ### Examples
 
@@ -323,9 +325,9 @@ Arithmetic operators (`+`, `-`, `*`, `/`, `%`, `**`) are builtin-only for primit
 They are not dispatched through `Add`/`Sub`/`Mul`/`Div` interfaces.
 Custom types can implement interfaces for equality and comparison:
 
-| Operator | Interface |
-|----------|-----------|
-| `==`, `!=` | `Equatable` |
+| Operator             | Interface    |
+| -------------------- | ------------ |
+| `==`, `!=`           | `Equatable`  |
 | `<`, `>`, `<=`, `>=` | `Comparable` |
 
 ### Custom Type Example
@@ -370,10 +372,9 @@ A class declaring `Comparable` supplies `cmp` instead, which powers `<`, `<=`,
 
 Simple assignment (no compound assignment):
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `=` | Assignment | `x = 10` |
-
+| Operator | Description | Example  |
+| -------- | ----------- | -------- |
+| `=`      | Assignment  | `x = 10` |
 
 ```mux title="assignment_ops.mux"
 auto x = 10

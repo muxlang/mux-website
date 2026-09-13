@@ -80,19 +80,19 @@ Classes can be generic over type parameters:
 ```mux title="generic_classes.mux"
 class Stack<T> {
     list<T> items
-    
+
     func push(T item) returns void {
         self.items.push_back(item)
         return
     }
-    
+
     func pop() returns optional<T> {
         if self.items.is_empty() {
             return none
         }
         return self.items.pop_back()
     }
-    
+
     func size() returns int {
         return self.items.size()
     }
@@ -115,14 +115,14 @@ string_stack.push("world")
 class Pair<T, U> {
     T first
     U second
-    
+
     func swap() returns Pair<U, T> {
         auto swapped = Pair<U, T>.new()
         swapped.first = self.second
         swapped.second = self.first
         return swapped
     }
-    
+
     common func from(T a, U b) returns Pair<T, U> {
         auto pair = Pair<T, U>.new()
         pair.first = a
@@ -140,13 +140,13 @@ auto reversed = pair.swap()  // Pair<string, int>
 
 Mux provides built-in interfaces for common operations:
 
-| Interface | Description |
-|-----------|-------------|
-| `Stringable` | Types that can be converted to string (via `.to_string()` method) |
-| `Equatable` | Types that support `==` and `!=` operators |
-| `Comparable` | Types that support `<`, `<=`, `>`, `>=` operators |
-| `Hashable` | Types that can be used as keys in sets and maps |
-| `Error` | Types that can be used as `result<T, E>` errors (via `.message()` method) |
+| Interface    | Description                                                               |
+| ------------ | ------------------------------------------------------------------------- |
+| `Stringable` | Types that can be converted to string (via `.to_string()` method)         |
+| `Equatable`  | Types that support `==` and `!=` operators                                |
+| `Comparable` | Types that support `<`, `<=`, `>`, `>=` operators                         |
+| `Hashable`   | Types that can be used as keys in sets and maps                           |
+| `Error`      | Types that can be used as `result<T, E>` errors (via `.message()` method) |
 
 ### Operator Mapping
 
@@ -156,13 +156,13 @@ Mux provides built-in interfaces for common operations:
 
 ### Primitives and Interfaces
 
-| Type | Implements |
-|------|-----------|
-| `int` | `Stringable`, `Equatable`, `Comparable`, `Hashable` |
-| `float` | `Stringable`, `Equatable`, `Comparable`, `Hashable` |
+| Type     | Implements                                                   |
+| -------- | ------------------------------------------------------------ |
+| `int`    | `Stringable`, `Equatable`, `Comparable`, `Hashable`          |
+| `float`  | `Stringable`, `Equatable`, `Comparable`, `Hashable`          |
 | `string` | `Stringable`, `Equatable`, `Comparable`, `Hashable`, `Error` |
-| `bool` | `Stringable`, `Equatable`, `Hashable` |
-| `char` | `Stringable`, `Equatable`, `Comparable`, `Hashable` |
+| `bool`   | `Stringable`, `Equatable`, `Hashable`                        |
+| `char`   | `Stringable`, `Equatable`, `Comparable`, `Hashable`          |
 
 `result<T, E>` requires `E` to implement `Error`.
 
