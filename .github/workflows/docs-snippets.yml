@@ -109,6 +109,9 @@ jobs:
             echo "::error::The coordinated compiler build did not produce libmux_runtime.a"
             exit 1
           fi
+          runtime_dir="$(dirname "$runtime_lib")"
+          ln -sfn "$(basename "$runtime_lib")" "$runtime_dir/libmux_runtime.a"
+          runtime_lib="$runtime_dir/libmux_runtime.a"
           echo "used=true" >> "$GITHUB_OUTPUT"
           echo "mux_bin=/tmp/mux-compiler/target/release/mux" >> "$GITHUB_OUTPUT"
           echo "runtime_lib=$runtime_lib" >> "$GITHUB_OUTPUT"
