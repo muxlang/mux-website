@@ -53,7 +53,9 @@ export interface SearchResult {
 }
 
 export interface SearchResponse {
-  results: SearchResult[];
+  results?: SearchResult[];
+  error?: string;
+  errorCode?: ErrorCode;
 }
 
 // Must stay on the exact same model + version the docs-indexer uses at index
@@ -644,7 +646,23 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
 
   log({ event: "search_request", query_length: query.length });
 
-  const results = await retrieveChunks(query, env);
+  let results: SearchResult[];
+  try {
+    results = await retrieveChunks(query, env);
+  } catch (err) {
+    log({
+      event: "search_error",
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return jsonResponse(
+      {
+        error: "The search service is temporarily unavailable. Please try again shortly.",
+        errorCode: "MODEL_UNAVAILABLE",
+      } satisfies SearchResponse,
+      env,
+      503,
+    );
+  }
 
   log({ event: "search_response", latency_ms: Date.now() - start, chunk_count: results.length });
 
