@@ -16,6 +16,7 @@ type LogEvent =
   | { event: "generation_error"; message: string }
   | { event: "chat_response"; latency_ms: number; chunk_count: number; source_count: number }
   | { event: "search_request"; query_length: number }
+  | { event: "search_error"; message: string }
   | { event: "search_response"; latency_ms: number; chunk_count: number };
 
 export function log(entry: LogEvent): void {

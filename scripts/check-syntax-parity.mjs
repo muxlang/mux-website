@@ -29,6 +29,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");
 
 const CANONICAL_URL =
+  process.env.MUX_SYNTAX_MATRIX_URL ??
   "https://raw.githubusercontent.com/muxlang/mux-syntax-highlighting/main/shared/syntax-matrix.json";
 
 // Tokens the website intentionally treats as keywords/types even though the
