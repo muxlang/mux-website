@@ -21,7 +21,9 @@ actually link.
 
 Website CI does not turn a documentation build into runtime acceptance. A
 runtime change needs a green runtime workflow, and a docs change needs the
-website checks. When both repositories change together, run both sets of jobs.
+website checks. For a coordinated PR, the docs-snippet job pins the matching
+compiler and runtime branch commits so examples are checked against the same
+stdlib surface. When both repositories change together, run both sets of jobs.
 
 ## SQL Server acceptance
 
