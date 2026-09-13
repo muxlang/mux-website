@@ -1,8 +1,10 @@
 name: Docs Snippets
 
 # Compiles every complete ```mux example and EmbeddedPlayground block in docs/
-# against the same released compiler the playground runs, so docs can never
-# teach syntax the live playground rejects.
+# against the same compiler the playground runs, so docs can never teach
+# syntax the live playground rejects. Coordinated stdlib PRs use exact pinned
+# compiler/runtime commits from their paired branches; ordinary changes use
+# the released playground compiler.
 #
 # The compiler version is read from muxlang/mux-website-api's Dockerfile
 # (ARG MUX_VERSION) - the single source of truth for what the playground runs.
@@ -77,7 +79,42 @@ jobs:
           sudo apt-get install -y --no-install-recommends "clang-${LLVM_VERSION}" "llvm-${LLVM_VERSION}" "llvm-${LLVM_VERSION}-dev" "libpolly-${LLVM_VERSION}-dev"
           sudo ln -sf "/usr/bin/clang-${LLVM_VERSION}" /usr/local/bin/clang
 
+      - name: Build the coordinated compiler and runtime
+        id: coordinated
+        if: github.event_name == 'pull_request'
+        env:
+          DOCS_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          compiler_sha="$(git ls-remote "https://github.com/muxlang/mux-compiler.git" "refs/heads/${DOCS_BRANCH}" | awk 'NR == 1 { print $1 }')"
+          runtime_sha="$(git ls-remote "https://github.com/muxlang/mux-runtime.git" "refs/heads/${DOCS_BRANCH}" | awk 'NR == 1 { print $1 }')"
+          if [ -z "$compiler_sha" ] || [ -z "$runtime_sha" ]; then
+            echo "used=false" >> "$GITHUB_OUTPUT"
+            echo "No paired compiler/runtime branch for ${DOCS_BRANCH}; using the released compiler."
+            exit 0
+          fi
+
+          git clone --depth 1 --branch "$DOCS_BRANCH" https://github.com/muxlang/mux-compiler.git /tmp/mux-compiler
+          git -C /tmp/mux-compiler fetch --depth 1 origin "$compiler_sha"
+          git -C /tmp/mux-compiler checkout --detach "$compiler_sha"
+          sed -i "s/rev = \"[0-9a-f]*\"/rev = \"${runtime_sha}\"/" \
+            /tmp/mux-compiler/mux-compiler/Cargo.toml
+          cargo update --manifest-path /tmp/mux-compiler/Cargo.toml \
+            -p mux-runtime --precise "$runtime_sha"
+          cargo build --manifest-path /tmp/mux-compiler/Cargo.toml \
+            --release --bin mux --locked
+
+          runtime_lib="$(find /tmp/mux-compiler/target/release -name libmux_runtime.a -print -quit)"
+          if [ -z "$runtime_lib" ]; then
+            echo "::error::The coordinated compiler build did not produce libmux_runtime.a"
+            exit 1
+          fi
+          echo "used=true" >> "$GITHUB_OUTPUT"
+          echo "mux_bin=/tmp/mux-compiler/target/release/mux" >> "$GITHUB_OUTPUT"
+          echo "runtime_lib=$runtime_lib" >> "$GITHUB_OUTPUT"
+
       - name: Install the released mux compiler
+        if: steps.coordinated.outputs.used != 'true'
         env:
           MUX_VERSION: ${{ steps.pin.outputs.version }}
         run: |
@@ -96,6 +133,7 @@ jobs:
 
       - name: Compile docs snippets
         env:
-          MUX_RUNTIME_LIB: /usr/local/lib/mux/libmux_runtime.a
+          MUX_BIN: ${{ steps.coordinated.outputs.mux_bin || 'mux' }}
+          MUX_RUNTIME_LIB: ${{ steps.coordinated.outputs.runtime_lib || '/usr/local/lib/mux/libmux_runtime.a' }}
           LD_LIBRARY_PATH: /usr/lib/llvm-${{ env.LLVM_VERSION }}/lib
         run: npm run check:docs-snippets
