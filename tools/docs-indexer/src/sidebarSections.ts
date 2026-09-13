@@ -63,6 +63,7 @@ const SIDEBAR_SECTIONS: Record<string, string> = {
   "stdlib/io": "Standard Library",
   "stdlib/fs": "Standard Library",
   "stdlib/net": "Standard Library",
+  "stdlib/hosted-acceptance": "Standard Library",
   "stdlib/tls": "Standard Library",
   "stdlib/sql": "Standard Library",
   "stdlib/process": "Standard Library",

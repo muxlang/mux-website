@@ -39,13 +39,11 @@ const CANONICAL_URL =
 //   playground editor highlights them as keywords for readability.
 // ref: a reference marker highlighted as a keyword in the playground; canonical
 //   models references via the '&' (Ref) operator symbol, not a word keyword.
-// use: flow-sensitive result/optional extraction added by the compiler.
-// byte/bytes: built-in byte scalar and sequence types added by the compiler.
 const ALLOWED_EXTRA = {
-  "monaco:keywords": new Set(["ok", "err", "some", "ref", "use"]),
-  "monaco:types": new Set(["byte", "bytes"]),
-  "shiki:keywords": new Set(["use"]),
-  "shiki:types": new Set(["byte", "bytes"]),
+  "monaco:keywords": new Set(["ok", "err", "some", "ref"]),
+  "monaco:types": new Set(),
+  "shiki:keywords": new Set(),
+  "shiki:types": new Set(),
 };
 
 const IDENT = /^[a-zA-Z_]\w*$/;

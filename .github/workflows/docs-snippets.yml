@@ -95,6 +95,8 @@ jobs:
           fi
 
           git clone --depth 1 --branch "$DOCS_BRANCH" https://github.com/muxlang/mux-compiler.git /tmp/mux-compiler
+          git -C /tmp/mux-compiler fetch --depth 1 origin "$compiler_sha"
+          git -C /tmp/mux-compiler checkout --detach "$compiler_sha"
           sed -i "s/rev = \"[0-9a-f]*\"/rev = \"${runtime_sha}\"/" \
             /tmp/mux-compiler/mux-compiler/Cargo.toml
           cargo update --manifest-path /tmp/mux-compiler/Cargo.toml \
