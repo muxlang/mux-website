@@ -104,7 +104,7 @@ jobs:
           cargo build --manifest-path /tmp/mux-compiler/Cargo.toml \
             --release --bin mux --locked
 
-          runtime_lib="$(find /tmp/mux-compiler/target/release -name libmux_runtime.a -print -quit)"
+          runtime_lib="$(find /tmp/mux-compiler/target/release -type f -name 'libmux_runtime*.a' -print -quit)"
           if [ -z "$runtime_lib" ]; then
             echo "::error::The coordinated compiler build did not produce libmux_runtime.a"
             exit 1
