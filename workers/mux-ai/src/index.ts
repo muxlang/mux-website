@@ -150,6 +150,14 @@ function jsonResponse(body: unknown, env: Env, status = 200): Response {
   });
 }
 
+function modelUnavailableResponse(message: string, env: Env, status = 503): Response {
+  return jsonResponse(
+    { error: message, errorCode: "MODEL_UNAVAILABLE" } satisfies ChatResponse,
+    env,
+    status,
+  );
+}
+
 function sweepExpired(now: number): void {
   for (const [ip, ts] of lastRequestByIp) {
     if (now - ts >= RATE_LIMIT_MS) {
@@ -401,11 +409,7 @@ async function handleCompile(request: Request, env: Env): Promise<Response> {
   }
   if (!env.MUX_API_ORIGIN || (env.ENVIRONMENT === "production" && !env.MUX_API_ORIGIN_TOKEN)) {
     log({ event: "compile_origin_unavailable" });
-    return jsonResponse(
-      { error: "The compile service is temporarily unavailable.", errorCode: "MODEL_UNAVAILABLE" },
-      env,
-      503,
-    );
+    return modelUnavailableResponse("The compile service is temporarily unavailable.", env);
   }
 
   let body: unknown;
@@ -421,11 +425,7 @@ async function handleCompile(request: Request, env: Env): Promise<Response> {
 
   const rateLimit = await consumeRateLimit(`compile:${clientIp(request)}`, env);
   if (!rateLimit.available) {
-    return jsonResponse(
-      { error: "The compile service is temporarily unavailable.", errorCode: "MODEL_UNAVAILABLE" },
-      env,
-      503,
-    );
+    return modelUnavailableResponse("The compile service is temporarily unavailable.", env);
   }
   if (!rateLimit.allowed) {
     return jsonResponse(
@@ -460,11 +460,7 @@ async function handleCompile(request: Request, env: Env): Promise<Response> {
       event: "compile_origin_error",
       message: err instanceof Error ? err.message : String(err),
     });
-    return jsonResponse(
-      { error: "The compile service is temporarily unavailable.", errorCode: "MODEL_UNAVAILABLE" },
-      env,
-      504,
-    );
+    return modelUnavailableResponse("The compile service is temporarily unavailable.", env, 504);
   } finally {
     clearTimeout(timeout);
   }
@@ -553,13 +549,9 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log({ event: "retrieval_error", message });
-    return jsonResponse(
-      {
-        error: "The AI assistant is temporarily unavailable. Please try again shortly.",
-        errorCode: "MODEL_UNAVAILABLE",
-      } satisfies ChatResponse,
+    return modelUnavailableResponse(
+      "The AI assistant is temporarily unavailable. Please try again shortly.",
       env,
-      503,
     );
   }
 
@@ -596,13 +588,9 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log({ event: "generation_error", message });
-    return jsonResponse(
-      {
-        error: "The AI assistant is temporarily unavailable. Please try again shortly.",
-        errorCode: "MODEL_UNAVAILABLE",
-      } satisfies ChatResponse,
+    return modelUnavailableResponse(
+      "The AI assistant is temporarily unavailable. Please try again shortly.",
       env,
-      503,
     );
   }
 
@@ -654,13 +642,9 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
       event: "search_error",
       message: err instanceof Error ? err.message : String(err),
     });
-    return jsonResponse(
-      {
-        error: "The search service is temporarily unavailable. Please try again shortly.",
-        errorCode: "MODEL_UNAVAILABLE",
-      } satisfies SearchResponse,
+    return modelUnavailableResponse(
+      "The search service is temporarily unavailable. Please try again shortly.",
       env,
-      503,
     );
   }
 
