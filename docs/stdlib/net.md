@@ -358,9 +358,9 @@ order, and may return a response directly (for example, to reject a request)
 or inspect/modify the response returned by the next layer.
 
 Routers also provide bounded, synchronous authentication middleware:
-router.basic_auth(username, password) requires an RFC 7617 Basic
-Authorization header, while router.bearer_auth(token) requires an exact RFC
-6750 Bearer token. Both return result<void, HttpError>, add one middleware
+`router.basic_auth(username, password)` requires an RFC 7617 Basic
+Authorization header, while `router.bearer_auth(token)` requires an exact RFC
+6750 Bearer token. Both return `result<void, HttpError>`, add one middleware
 layer at the point they are called, and continue to the next layer only when
 credentials match. Failed authentication returns status 401 with the matching
 WWW-Authenticate challenge and the generic unauthorized body. Credentials are
@@ -560,7 +560,7 @@ when to read and what frames to send.
 
 ## Current limitations
 
-See [hosted acceptance](./hosted-acceptance) for the CI jobs and exact tests
+See [hosted acceptance](../hosted-acceptance) for the CI jobs and exact tests
 behind these limits.
 
 - HTTPS client requests try HTTP/3 when the `http3` feature is enabled, then
@@ -578,7 +578,7 @@ behind these limits.
   Linux integration job. SQL Server uses an explicit certificate-verification
   opt-out for its disposable test service; production connections verify TLS
   by default. See [SQL provider checks](./sql.md#live-provider-checks) and the
-  [hosted acceptance guide](./hosted-acceptance).
+  [hosted acceptance guide](../hosted-acceptance).
 
 ## Quick HTTP example
 

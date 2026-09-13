@@ -57,7 +57,7 @@ connection attempt.
 ## Live provider checks
 
 The complete service matrix and platform split are documented in the [hosted
-acceptance guide](./hosted-acceptance).
+acceptance guide](../hosted-acceptance).
 
 Runtime CI starts PostgreSQL and MySQL service containers and runs the shared
 driver fixture through `mux-runtime/scripts/ci/run-live-sql.sh`. The script
