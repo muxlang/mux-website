@@ -104,66 +104,67 @@ function validateCanonicalMatrix(matrix, source) {
   }
 }
 
-async function loadCanonical() {
-  const source = process.argv[2] || process.env.MUX_SYNTAX_MATRIX;
-  const sourceLabel = process.argv[2]
-    ? `CLI argument ${JSON.stringify(process.argv[2])}`
-    : process.env.MUX_SYNTAX_MATRIX
-      ? `MUX_SYNTAX_MATRIX=${JSON.stringify(process.env.MUX_SYNTAX_MATRIX)}`
-      : `default URL ${CANONICAL_URL}`;
-  if (source && !/^https?:\/\//.test(source)) {
-    // A local override path is a maintainer convenience for offline testing.
-    // Validate the canonicalized path stays inside the repo so a stray or
-    // traversal path can never read arbitrary files off disk.
-    const resolved = resolve(REPO_ROOT, source);
-    if (resolved !== REPO_ROOT && !resolved.startsWith(REPO_ROOT + sep)) {
-      throw canonicalFailure(sourceLabel, `local path is outside the website checkout: ${source}`, [
-        "Pass a canonical JSON file under this website checkout, or remove the local override to use the published URL.",
-      ]);
-    }
-    let raw;
-    try {
-      raw = await readFile(resolved, "utf8");
-    } catch (error) {
-      throw canonicalFailure(sourceLabel, `could not read ${resolved}: ${errorText(error)}`, [
-        `Check that ${resolved} exists and is readable.`,
-        "Pass the canonical shared/syntax-matrix.json file, not a generated grammar or a directory.",
-      ]);
-    }
-    let matrix;
-    try {
-      matrix = JSON.parse(raw);
-    } catch (error) {
-      throw canonicalFailure(sourceLabel, `invalid JSON in ${resolved}: ${errorText(error)}`, [
-        "Replace the local file with an unmodified shared/syntax-matrix.json file.",
-      ]);
-    }
-    validateCanonicalMatrix(matrix, sourceLabel);
-    return { matrix, from: resolved };
+function selectedSource() {
+  const cliSource = process.argv[2];
+  if (cliSource) {
+    return { value: cliSource, label: `CLI argument ${JSON.stringify(cliSource)}` };
   }
-  const url = source || CANONICAL_URL;
-  const canFallbackToDefault = !source && url !== DEFAULT_CANONICAL_URL;
-  let res;
+  const envSource = process.env.MUX_SYNTAX_MATRIX;
+  if (envSource) {
+    return { value: envSource, label: `MUX_SYNTAX_MATRIX=${JSON.stringify(envSource)}` };
+  }
+  return { value: undefined, label: `default URL ${CANONICAL_URL}` };
+}
+
+async function loadLocalCanonical(source, sourceLabel) {
+  // A local override path is a maintainer convenience for offline testing.
+  // Validate the canonicalized path stays inside the repo so a stray or
+  // traversal path can never read arbitrary files off disk.
+  const resolved = resolve(REPO_ROOT, source);
+  if (resolved !== REPO_ROOT && !resolved.startsWith(REPO_ROOT + sep)) {
+    throw canonicalFailure(sourceLabel, `local path is outside the website checkout: ${source}`, [
+      "Pass a canonical JSON file under this website checkout, or remove the local override to use the published URL.",
+    ]);
+  }
+  let raw;
   try {
-    res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    raw = await readFile(resolved, "utf8");
   } catch (error) {
-    if (canFallbackToDefault) {
-      res = undefined;
-    } else {
+    throw canonicalFailure(sourceLabel, `could not read ${resolved}: ${errorText(error)}`, [
+      `Check that ${resolved} exists and is readable.`,
+      "Pass the canonical shared/syntax-matrix.json file, not a generated grammar or a directory.",
+    ]);
+  }
+  let matrix;
+  try {
+    matrix = JSON.parse(raw);
+  } catch (error) {
+    throw canonicalFailure(sourceLabel, `invalid JSON in ${resolved}: ${errorText(error)}`, [
+      "Replace the local file with an unmodified shared/syntax-matrix.json file.",
+    ]);
+  }
+  validateCanonicalMatrix(matrix, sourceLabel);
+  return { matrix, from: resolved };
+}
+
+async function fetchCanonicalResponse(url, sourceLabel, fallbackUrl) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (response.ok || !fallbackUrl) return response;
+    return await fetch(fallbackUrl, { signal: AbortSignal.timeout(15_000) });
+  } catch (error) {
+    if (!fallbackUrl) {
       throw canonicalFailure(sourceLabel, `HTTPS request failed: ${errorText(error)}`, [
         `Check outbound HTTPS access to ${url} and rerun the command.`,
         "For an offline check, pass a canonical JSON file under this website checkout with MUX_SYNTAX_MATRIX or the CLI argument.",
       ]);
     }
-  }
-  if (!res?.ok && canFallbackToDefault) {
-    const fallbackUrl = DEFAULT_CANONICAL_URL;
     try {
-      res = await fetch(fallbackUrl, { signal: AbortSignal.timeout(15_000) });
-    } catch (error) {
+      return await fetch(fallbackUrl, { signal: AbortSignal.timeout(15_000) });
+    } catch (fallbackError) {
       throw canonicalFailure(
         sourceLabel,
-        `HTTPS request failed for both ${url} and ${fallbackUrl}: ${errorText(error)}`,
+        `HTTPS request failed for both ${url} and ${fallbackUrl}: ${errorText(fallbackError)}`,
         [
           `Check outbound HTTPS access to ${url} and rerun the command.`,
           "For an offline check, pass a canonical JSON file under this website checkout with MUX_SYNTAX_MATRIX or the CLI argument.",
@@ -171,15 +172,23 @@ async function loadCanonical() {
       );
     }
   }
-  if (!res.ok) {
-    throw canonicalFailure(sourceLabel, `HTTPS returned ${res.status} ${res.statusText}`, [
-      `Check that ${url} is reachable and still points to the canonical syntax repository.`,
-      "For an offline check, pass a canonical JSON file under this website checkout with MUX_SYNTAX_MATRIX or the CLI argument.",
-    ]);
+}
+
+async function loadRemoteCanonical(url, sourceLabel, fallbackUrl) {
+  const response = await fetchCanonicalResponse(url, sourceLabel, fallbackUrl);
+  if (!response.ok) {
+    throw canonicalFailure(
+      sourceLabel,
+      `HTTPS returned ${response.status} ${response.statusText}`,
+      [
+        `Check that ${url} is reachable and still points to the canonical syntax repository.`,
+        "For an offline check, pass a canonical JSON file under this website checkout with MUX_SYNTAX_MATRIX or the CLI argument.",
+      ],
+    );
   }
   let matrix;
   try {
-    matrix = await res.json();
+    matrix = await response.json();
   } catch (error) {
     throw canonicalFailure(
       sourceLabel,
@@ -192,6 +201,16 @@ async function loadCanonical() {
   }
   validateCanonicalMatrix(matrix, sourceLabel);
   return { matrix, from: url };
+}
+
+async function loadCanonical() {
+  const { value: source, label: sourceLabel } = selectedSource();
+  if (source && !/^https?:\/\//.test(source)) {
+    return loadLocalCanonical(source, sourceLabel);
+  }
+  const url = source || CANONICAL_URL;
+  const fallbackUrl = !source && url !== DEFAULT_CANONICAL_URL ? DEFAULT_CANONICAL_URL : undefined;
+  return loadRemoteCanonical(url, sourceLabel, fallbackUrl);
 }
 
 // Canonical keyword set: union of every categorized keyword list. The matrix
