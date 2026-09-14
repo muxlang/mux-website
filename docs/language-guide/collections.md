@@ -27,17 +27,17 @@ auto matrix2 = [[1, 2], [3, 4]]    // inferred
 
 ### List Methods
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `.size()` | `int` | Number of elements in the list |
-| `.is_empty()` | `bool` | Returns `true` if list has no elements |
-| `.get(int index)` | `optional<T>` | Safe access; returns `some(value)` or `none` if out of bounds |
-| `[int index]` | `T` | Direct access; runtime error if out of bounds |
-| `.push(T item)` | `void` | Appends item to the front |
-| `.push_back(T item)` | `void` | Appends item to the end |
-| `.pop()` | `optional<T>` | Removes and returns first item, or `none` if empty |
-| `.pop_back()` | `optional<T>` | Removes and returns last item, or `none` if empty |
-| `.to_string()` | `string` | String representation of the list |
+| Method               | Returns       | Description                                                   |
+| -------------------- | ------------- | ------------------------------------------------------------- |
+| `.size()`            | `int`         | Number of elements in the list                                |
+| `.is_empty()`        | `bool`        | Returns `true` if list has no elements                        |
+| `.get(int index)`    | `optional<T>` | Safe access; returns `some(value)` or `none` if out of bounds |
+| `[int index]`        | `T`           | Direct access; runtime error if out of bounds                 |
+| `.push(T item)`      | `void`        | Appends item to the front                                     |
+| `.push_back(T item)` | `void`        | Appends item to the end                                       |
+| `.pop()`             | `optional<T>` | Removes and returns first item, or `none` if empty            |
+| `.pop_back()`        | `optional<T>` | Removes and returns last item, or `none` if empty             |
+| `.to_string()`       | `string`      | String representation of the list                             |
 
 ### List Operations
 
@@ -162,19 +162,19 @@ map<string, map<string, int>> data = {
 
 ### Map Methods
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `.size()` | `int` | Number of key-value pairs |
-| `.is_empty()` | `bool` | Returns `true` if map has no entries |
-| `.get(K key)` | `optional<V>` | Safe lookup; returns `some(value)` or `none` if key not found |
-| `[K key]` | `V` | Direct access; runtime error if key not found |
-| `.put(K key, V value)` | `void` | Inserts or updates a key-value pair |
-| `.contains(K key)` | `bool` | Returns `true` if key exists in map |
-| `.remove(K key)` | `optional<V>` | Removes key and returns value, or `none` if key not found |
-| `.to_string()` | `string` | String representation of the map |
-| `.get_keys()` | `list<K>` | List of keys from the map |
-| `.get_values()` | `list<V>` | List of values from the map |
-| `.get_pairs()` | `list<tuple<K, V>>` | List of key-value pairs |
+| Method                 | Returns             | Description                                                   |
+| ---------------------- | ------------------- | ------------------------------------------------------------- |
+| `.size()`              | `int`               | Number of key-value pairs                                     |
+| `.is_empty()`          | `bool`              | Returns `true` if map has no entries                          |
+| `.get(K key)`          | `optional<V>`       | Safe lookup; returns `some(value)` or `none` if key not found |
+| `[K key]`              | `V`                 | Direct access; runtime error if key not found                 |
+| `.put(K key, V value)` | `void`              | Inserts or updates a key-value pair                           |
+| `.contains(K key)`     | `bool`              | Returns `true` if key exists in map                           |
+| `.remove(K key)`       | `optional<V>`       | Removes key and returns value, or `none` if key not found     |
+| `.to_string()`         | `string`            | String representation of the map                              |
+| `.get_keys()`          | `list<K>`           | List of keys from the map                                     |
+| `.get_values()`        | `list<V>`           | List of values from the map                                   |
+| `.get_pairs()`         | `list<tuple<K, V>>` | List of key-value pairs                                       |
 
 ### Map Operations
 
@@ -243,15 +243,15 @@ set<int> empty = {}
 
 ### Set Methods
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `.size()` | `int` | Number of elements |
-| `.is_empty()` | `bool` | Returns `true` if set is empty |
-| `.add(T item)` | `void` | Adds an item to the set |
-| `.contains(T item)` | `bool` | Returns `true` if item exists in set |
-| `.remove(T item)` | `bool` | Removes item; returns `true` if it was there |
-| `.to_string()` | `string` | String representation of the set |
-| `.to_list()` | `list<T>` | Creates a list from the set |
+| Method              | Returns   | Description                                  |
+| ------------------- | --------- | -------------------------------------------- |
+| `.size()`           | `int`     | Number of elements                           |
+| `.is_empty()`       | `bool`    | Returns `true` if set is empty               |
+| `.add(T item)`      | `void`    | Adds an item to the set                      |
+| `.contains(T item)` | `bool`    | Returns `true` if item exists in set         |
+| `.remove(T item)`   | `bool`    | Removes item; returns `true` if it was there |
+| `.to_string()`      | `string`  | String representation of the set             |
+| `.to_list()`        | `list<T>` | Creates a list from the set                  |
 
 ### Set Operations
 
@@ -304,6 +304,7 @@ auto hasZ = 'z' in msg              // false
 ```
 
 **Type Requirements:**
+
 - Both operands must have compatible element types
 - No implicit type conversions allowed
 
@@ -347,7 +348,7 @@ auto combined = ints_as_floats + floats  // list<float>
 
 ## Generic Collections
 
-Collections work seamlessly with generics:
+Collections work with generics:
 
 ```mux title="generic_collections.mux"
 func first<T>(list<T> items) returns optional<T> {
@@ -387,7 +388,7 @@ set<string> empty_tags = {}
 
 1. **Use safe access methods** - `.get()` returns `optional<T>` to avoid runtime errors
 2. **Explicit types for empty collections** - Prevents ambiguity
-3. **Leverage type inference** - Use `auto` when types are obvious from literals
+3. **Use type inference** - Use `auto` when types are obvious from literals
 4. **Use the `in` operator** - Cleaner than calling `.contains()`
 5. **Prefer literals over constructors** - More readable
 6. **Use appropriate collection type**:

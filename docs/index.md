@@ -15,7 +15,7 @@ Mux is a statically-typed, reference-counted programming language that combines 
 ```mux title="hello_world.mux"
 func main() returns void {
     print("Hello, Mux!")
-    
+
     auto numbers = [1, 2, 3, 4, 5]
     for int num in numbers {
         print(num.to_string())
@@ -27,21 +27,22 @@ func main() returns void {
 ## Language Features
 
 - **Static type system** with type inference using `auto`
-- **Pattern matching** with guards for elegant control flow
+- **Pattern matching** with guards for clear control flow
 - **Generics** with compile-time monomorphization
 - **Error handling** with `result<T, E>` and `optional<T>`
 - **Memory safety** through reference counting
 - **No semicolons** - clean, readable syntax
 - **Collection literals** for lists, maps, and sets
-- **Interfaces** for polymorphism with static dispatch
+- **Interfaces** for static bounds and owned dynamic dispatch
 
 ## Project Status
 
 Mux is currently in active development. The language specification, compiler, and tooling are evolving. Expect breaking changes and incomplete features as I work towards a stable release.
 
 **Current Limitations:**
+
 - No LSP (Language Server Protocol) or code formatter support yet
-    - This will be added in future releases as the language, for my senior Project, likely around May 2027 for sure!
+  - This will be added in future releases as the language, for my senior Project, likely around May 2027 for sure!
 - Standard library is now available and published, with continued expansion planned
 - Breaking changes are expected
 

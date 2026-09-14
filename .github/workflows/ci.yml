@@ -44,6 +44,19 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: package-lock.json
+      - name: Select the canonical syntax matrix revision
+        env:
+          PR_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          candidate="${PR_BRANCH:-main}"
+          candidate_url="https://raw.githubusercontent.com/muxlang/mux-syntax-highlighting/${candidate}/shared/syntax-matrix.json"
+          if curl --proto '=https' --proto-redir '=https' --fail --silent --show-error --location "$candidate_url" >/dev/null; then
+            syntax_ref="$candidate"
+          else
+            syntax_ref="main"
+          fi
+          echo "MUX_SYNTAX_MATRIX_URL=https://raw.githubusercontent.com/muxlang/mux-syntax-highlighting/${syntax_ref}/shared/syntax-matrix.json" >> "$GITHUB_ENV"
       - run: npm ci --ignore-scripts
       - run: npm audit --audit-level=high
       - run: npm run format:check
@@ -52,7 +65,9 @@ jobs:
       - run: npm test
       # Verify the Monaco/Shiki keyword+type sets match the canonical
       # syntax-matrix.json in muxlang/mux-syntax-highlighting (fetched over
-      # HTTP by the script). Fails if the vendored copies drift.
+      # HTTPS by the script). Fails if the vendored copies drift. Runtime
+      # service and native-host acceptance belongs to mux-runtime; the exact
+      # split is documented in docs/stdlib/hosted-acceptance.md.
       - run: npm run check:syntax-parity
       - run: npm run build
 

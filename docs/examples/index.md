@@ -232,12 +232,12 @@ class Counter {
         c.value = start
         return c
     }
-    
+
     func increment() returns void {
         self.value = self.value + 1
         return
     }
-    
+
     func get_value() returns int {
         return self.value
     }
@@ -262,12 +262,12 @@ class Stack<T> {
         s.items = source
         return s
     }
-    
+
     func push(T item) returns void {
         self.items.push_back(item)
         return
     }
-    
+
     func pop() returns optional<T> {
         if self.items.is_empty() { return none }
         return self.items.pop_back()
@@ -288,7 +288,9 @@ match int_stack.pop() {
 
 ### Result Types
 
-Result types represent either a successful value (`ok`) or an error (`err`). Pattern matching is used to handle both cases.
+Result types represent either a successful value (`ok`) or an error (`err`).
+Use `use` when an error should propagate through a sequence, and pattern
+matching when both outcomes need distinct work.
 
 ```mux title="results.mux"
 func divide(int a, int b) returns result<int, string> {

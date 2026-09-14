@@ -460,16 +460,19 @@ func validate(int value) returns result<int, string> {
 
 ## Best Practices
 
-1. **Use `match` for result and optional** - More expressive than if-else chains
-2. **Prefer pattern matching with guards** - Cleaner than nested if statements
-3. **Use `_` for unused values** - Makes intent explicit
-4. **Early returns for error conditions** - Reduces nesting
-5. **Use `range()` for numeric loops** - Idiomatic Mux
-6. **Break and continue judiciously** - Can make code harder to follow if overused
+1. **Use `use` for sequential propagation** - It extracts the success value and
+   returns the enclosing function's `err`/`none` without nested matches
+2. **Use inspection methods for local handling** - Check `is_ok()`/`is_err()` or
+   `is_some()`/`is_none()` before calling `value()` or `error()`
+3. **Prefer pattern matching with guards** - Cleaner than nested if statements
+4. **Use `_` for unused values** - Makes intent explicit
+5. **Early returns for error conditions** - Reduces nesting
+6. **Use `range()` for numeric loops** - Idiomatic Mux
+7. **Break and continue judiciously** - Can make code harder to follow if overused
 
 ## See Also
 
-- [Error Handling](./error-handling.md) - Using result and optional with match
+- [Error Handling](./error-handling.md) - Using `use`, inspection, and match
 - [Enums](./enums.md) - Pattern matching with tagged unions
 - [Functions](./functions.md) - Return statements and early exits
 - [Variables](./variables.md) - Type inference with `auto`
