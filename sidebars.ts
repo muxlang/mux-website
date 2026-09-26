@@ -20,7 +20,7 @@ const docsSidebar: NonNullable<SidebarsConfig["docsSidebar"]> = [
     type: "category",
     label: "Getting Started",
     collapsed: true,
-    items: ["getting-started/why-mux", "getting-started/quick-start"],
+    items: ["getting-started/why-mux", "getting-started/quick-start", "getting-started/formatting"],
   },
   {
     type: "category",
