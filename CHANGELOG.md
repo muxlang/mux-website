@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Document the formatter, `mux-project.json` settings, and check mode.
 - Document that Mux binary expressions may continue after a trailing operator,
   while leading-operator continuations remain invalid.
 

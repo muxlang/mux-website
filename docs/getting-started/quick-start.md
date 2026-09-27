@@ -220,12 +220,10 @@ Options:
 
 ## Formatting Mux source
 
-Current compiler builds include `mux format`. From a project directory, run
+Mux 0.12.0 and later include `mux format`. From a project directory, run
 `mux format` to format `.mux` files recursively, or pass a file or directory
 to select what to format. Use `mux format --check` to check formatting without
-writing changes. This branch's formatter may not be included in the latest
-published release; see [the formatter guide](./formatting.md) for its behavior
-and options.
+writing changes. The formatter uses [defaults or project settings](./formatting.md).
 
 ## Current Limitations
 
