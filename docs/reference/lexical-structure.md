@@ -330,7 +330,7 @@ auto absent = none
 | Symbol | Meaning                     |
 | ------ | --------------------------- |
 | `&&`   | Logical AND (short-circuit) |
-| `      |                             | `   | Logical OR (short-circuit) |
+| `\|\|` | Logical OR (short-circuit) |
 | `!`    | Logical NOT                 |
 
 ### Other Operators
@@ -361,7 +361,7 @@ auto absent = none
 
 ## Line Continuation
 
-Mux supports line continuation after a binary operator, which must remain at the end of its line. A line cannot begin with a binary operator, and an assignment operator must stay on the same line as its right-hand side. Expressions can also continue inside explicit grouping:
+Inside open parentheses or brackets, expressions can continue across lines, and a line may begin with a binary operator. Outside explicit grouping, continue a binary expression by placing its operator at the end of the previous line. An assignment operator must stay on the same line as its right-hand side.
 
 ```mux
 // Valid: continuation with parentheses
@@ -369,7 +369,7 @@ auto sum = (1 + 2 +
            3 + 4)
 
 // Valid: a binary operator trails the continued line
-auto sum = 1 + 2 +
+auto continued_sum = 1 + 2 +
      3 + 4
 
 // Invalid: a line cannot begin with a binary operator
