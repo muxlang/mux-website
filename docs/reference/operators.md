@@ -18,6 +18,27 @@ Higher precedence operators are evaluated first.
 | 8 | `&&`, `\|\|` | Left-to-right |
 | 9 | `in` | Left-to-right |
 
+## Line breaks after binary operators
+
+A binary operator may end a line when its right operand continues on the next
+line. The operator stays at the end of the first line:
+
+```mux
+func total(int first_value, int second_value) returns int {
+    return first_value +
+        second_value
+}
+
+func allowed(bool has_name, bool has_permission) returns bool {
+    return has_name &&
+        has_permission
+}
+```
+
+A line may not begin with a binary operator, and an assignment operator such as
+`=` must stay on the same line as its right-hand side. Unary operators do not
+introduce a line continuation.
+
 ## Arithmetic Operators
 
 ### Binary Arithmetic

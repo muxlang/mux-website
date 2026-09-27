@@ -80,7 +80,8 @@ Explore the detailed language documentation:
 ## Lexical Structure
 
 - **Case-sensitive** identifiers: letters, digits, `_`, not starting with a digit
-- **Whitespace** (spaces, tabs, newlines) separates tokens
+- **Whitespace** separates tokens. Newlines usually end statements; expressions
+  can also span lines inside delimiters or after a binary operator.
 - **Comments**:
   - Single-line: `// comment`
   - Multi-line: `/* comment */`

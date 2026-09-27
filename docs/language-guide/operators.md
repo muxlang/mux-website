@@ -2,6 +2,18 @@
 
 Mux provides operators for arithmetic, comparison, and logical operations.
 
+Long expressions can continue after a binary operator:
+
+```mux
+func total(int first_value, int second_value) returns int {
+    return first_value +
+        second_value
+}
+```
+
+Keep the operator at the end of the line. Starting the next line with an
+operator is not valid Mux syntax.
+
 ## Arithmetic Operators
 
 Standard arithmetic operations with strict type requirements:
