@@ -157,7 +157,8 @@ mux run hello.mux
 ```
 
 You should see:
-``` title="output"
+
+```title="output"
 Hello, Mux!
 ```
 
@@ -170,7 +171,7 @@ Create a file called `numbers.mux`:
 ```mux title="numbers.mux"
 func main() returns void {
     auto numbers = [1, 2, 3, 4, 5]
-    
+
     for int num in numbers {
         auto squared = num * num
         print("Square of " + num.to_string() + " is " + squared.to_string())
@@ -180,6 +181,7 @@ func main() returns void {
 ```
 
 Run it:
+
 ```bash title="bash"
 mux run numbers.mux
 ```
@@ -199,7 +201,7 @@ Usage: mux [OPTIONS] <COMMAND>
 Commands:
   build    Compile a Mux file without running it
   run      Compile and run a Mux file
-  format   Format a Mux file
+  format   Format Mux source files (use --check to check without writing)
   doctor   Check system dependencies for the Mux compiler
   version  Print the Mux version
   help     Print this message or the help of the given subcommand(s)
@@ -216,12 +218,18 @@ Options:
 - [Why Mux?](./why-mux.md)
 - [GitHub Issues](https://github.com/muxlang/mux-compiler/issues)
 
+## Formatting Mux source
+
+Mux 0.12.0 and later include `mux format`. From a project directory, run
+`mux format` to format `.mux` files recursively, or pass a file or directory
+to select what to format. Use `mux format --check` to check formatting without
+writing changes. The formatter uses [defaults or project settings](./formatting.md).
+
 ## Current Limitations
 
 Mux is actively being developed. Here are some things to be aware of:
 
 - **No LSP (Language Server Protocol)** - Editor support is limited to basic syntax highlighting
-- **No Code Formatter** - There is currently no automated code formatting tool
 - **Standard Library Available** - Core stdlib modules are published; APIs may evolve as new modules are added
 - **Breaking Changes Expected** - The language is evolving, so expect syntax and semantic changes
 

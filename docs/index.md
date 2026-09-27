@@ -41,8 +41,9 @@ Mux is currently in active development. The language specification, compiler, an
 
 **Current Limitations:**
 
-- No LSP (Language Server Protocol) or code formatter support yet
-  - This will be added in future releases as the language, for my senior Project, likely around May 2027 for sure!
+- No LSP (Language Server Protocol) support yet
+- Mux 0.12.0 and later include a source formatter. See
+  [Formatting Mux source](./getting-started/formatting.md).
 - Standard library is now available and published, with continued expansion planned
 - Breaking changes are expected
 

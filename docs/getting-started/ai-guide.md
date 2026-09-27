@@ -191,7 +191,8 @@ for int i in range(0, 10) { ... }   // Python-style loop
 ```bash
 mux build file.mux        # Compile
 mux run file.mux          # Compile and run
-mux format file.mux       # Format (not yet implemented)
+mux format file.mux       # Format a file
+mux format --check        # Check formatting without writing changes
 mux try file.mux          # Quick experimentation
 mux doctor                # Check dependencies
 mux doctor --dev          # Check LLVM/clang for development

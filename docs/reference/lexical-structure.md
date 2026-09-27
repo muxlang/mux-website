@@ -163,11 +163,12 @@ for int _ in range(0, 10) {
 ```
 
 The underscore has special semantics:
+
 - Cannot be read (assigning to `_` discards the value)
 - Multiple uses of `_` in the same scope do not conflict, including several in
   one signature: `func f(int _, string _)` is fine
 
-None of this applies to a name that merely *starts* with an underscore. `_x` is
+None of this applies to a name that merely _starts_ with an underscore. `_x` is
 an ordinary identifier: it binds, it can be read, and a second `_x` in the same
 scope is a duplicate like any other.
 
@@ -187,56 +188,56 @@ The following words are reserved keywords and cannot be used as identifiers:
 
 ### Declaration Keywords
 
-| Keyword | Purpose |
-|---------|---------|
-| `func` | Function declaration |
-| `returns` | Return type specification for functions |
-| `const` | Constant declaration |
-| `auto` | Type inference declaration |
-| `class` | Class declaration |
-| `interface` | Interface declaration |
-| `enum` | Enum declaration |
-| `common` | Static/class method |
-| `where` | Runtime constraint clause on declarations |
+| Keyword     | Purpose                                   |
+| ----------- | ----------------------------------------- |
+| `func`      | Function declaration                      |
+| `returns`   | Return type specification for functions   |
+| `const`     | Constant declaration                      |
+| `auto`      | Type inference declaration                |
+| `class`     | Class declaration                         |
+| `interface` | Interface declaration                     |
+| `enum`      | Enum declaration                          |
+| `common`    | Static/class method                       |
+| `where`     | Runtime constraint clause on declarations |
 
 ### Control Flow Keywords
 
-| Keyword | Purpose |
-|---------|---------|
-| `match` | Pattern matching expression |
-| `if` | Conditional expression |
-| `else` | Else branch of conditional |
-| `for` | Iteration loop |
-| `while` | While loop |
-| `break` | Exit loop |
-| `continue` | Skip to next iteration |
-| `return` | Return from function |
+| Keyword    | Purpose                     |
+| ---------- | --------------------------- |
+| `match`    | Pattern matching expression |
+| `if`       | Conditional expression      |
+| `else`     | Else branch of conditional  |
+| `for`      | Iteration loop              |
+| `while`    | While loop                  |
+| `break`    | Exit loop                   |
+| `continue` | Skip to next iteration      |
+| `return`   | Return from function        |
 
 ### Module Keywords
 
-| Keyword | Purpose |
-|---------|---------|
+| Keyword  | Purpose       |
+| -------- | ------------- |
 | `import` | Module import |
-| `as` | Import alias |
+| `as`     | Import alias  |
 
 ### Operator Keywords
 
-| Keyword | Purpose |
-|---------|---------|
-| `is` | Type constraint / interface implementation |
-| `in` | Membership test |
-| `true` | Boolean true literal |
-| `false` | Boolean false literal |
-| `none` | optional none literal |
-| `some` | optional some literal |
-| `ok` | result ok literal |
-| `err` | result error literal |
+| Keyword | Purpose                                    |
+| ------- | ------------------------------------------ |
+| `is`    | Type constraint / interface implementation |
+| `in`    | Membership test                            |
+| `true`  | Boolean true literal                       |
+| `false` | Boolean false literal                      |
+| `none`  | optional none literal                      |
+| `some`  | optional some literal                      |
+| `ok`    | result ok literal                          |
+| `err`   | result error literal                       |
 
 ### Special Keywords
 
-| Keyword | Purpose |
-|---------|---------|
-| `self` | Instance reference (inside class methods only) |
+| Keyword | Purpose                                        |
+| ------- | ---------------------------------------------- |
+| `self`  | Instance reference (inside class methods only) |
 
 ## Literals
 
@@ -279,6 +280,7 @@ auto multiline = "line1\nline2"
 ```
 
 Escape sequences:
+
 - `\\` - Backslash
 - `\"` - Double quote
 - `\'` - Single quote
@@ -303,72 +305,76 @@ auto absent = none
 
 ### Arithmetic Operators
 
-| Symbol | Meaning |
-|--------|---------|
-| `+` | Addition |
-| `-` | Subtraction / Negation |
-| `*` | Multiplication |
-| `/` | Division |
-| `%` | Modulo |
-| `**` | Exponentiation |
+| Symbol | Meaning                |
+| ------ | ---------------------- |
+| `+`    | Addition               |
+| `-`    | Subtraction / Negation |
+| `*`    | Multiplication         |
+| `/`    | Division               |
+| `%`    | Modulo                 |
+| `**`   | Exponentiation         |
 
 ### Comparison Operators
 
-| Symbol | Meaning |
-|--------|---------|
-| `==` | Equality |
-| `!=` | Inequality |
-| `<` | Less than |
-| `<=` | Less than or equal |
-| `>` | Greater than |
-| `>=` | Greater than or equal |
+| Symbol | Meaning               |
+| ------ | --------------------- |
+| `==`   | Equality              |
+| `!=`   | Inequality            |
+| `<`    | Less than             |
+| `<=`   | Less than or equal    |
+| `>`    | Greater than          |
+| `>=`   | Greater than or equal |
 
 ### Logical Operators
 
-| Symbol | Meaning |
-|--------|---------|
-| `&&` | Logical AND (short-circuit) |
-| `||` | Logical OR (short-circuit) |
-| `!` | Logical NOT |
+| Symbol | Meaning                     |
+| ------ | --------------------------- |
+| `&&`   | Logical AND (short-circuit) |
+| `\|\|` | Logical OR (short-circuit)  |
+| `!`    | Logical NOT                 |
 
 ### Other Operators
 
-| Symbol | Meaning |
-|--------|---------|
-| `=` | Assignment |
-| `+=` | Compound assignment |
-| `-=` | Compound assignment |
-| `*=` | Compound assignment |
-| `/=` | Compound assignment |
-| `%=` | Compound assignment |
-| `++` | Postfix increment |
-| `--` | Postfix decrement |
-| `.` | Member access |
-| `&` | Reference creation |
-| `*` | Dereference |
+| Symbol | Meaning             |
+| ------ | ------------------- |
+| `=`    | Assignment          |
+| `+=`   | Compound assignment |
+| `-=`   | Compound assignment |
+| `*=`   | Compound assignment |
+| `/=`   | Compound assignment |
+| `%=`   | Compound assignment |
+| `++`   | Postfix increment   |
+| `--`   | Postfix decrement   |
+| `.`    | Member access       |
+| `&`    | Reference creation  |
+| `*`    | Dereference         |
 
 ### Punctuation
 
-| Symbol | Usage |
-|--------|-------|
+| Symbol  | Usage                                                |
+| ------- | ---------------------------------------------------- |
 | `(` `)` | tuple literals, Grouping, function calls, parameters |
-| `[` `]` | List literals, indexing |
-| `{` `}` | Block statements, map literals, set literals |
-| `<` `>` | Type parameters (generics) |
-| `,` | Separator |
+| `[` `]` | List literals, indexing                              |
+| `{` `}` | Block statements, map literals, set literals         |
+| `<` `>` | Type parameters (generics)                           |
+| `,`     | Separator                                            |
 
 ## Line Continuation
 
-Mux does not support implicit line continuation. Each statement must be on its own line. The only way to continue an expression across lines is with explicit grouping:
+Inside open parentheses or brackets, expressions can continue across lines, and a line may begin with a binary operator. Outside explicit grouping, continue a binary expression by placing its operator at the end of the previous line. An assignment operator must stay on the same line as its right-hand side.
 
 ```mux
 // Valid: continuation with parentheses
 auto sum = (1 + 2 +
            3 + 4)
 
-// Invalid without grouping:
+// Valid: a binary operator trails the continued line
+auto continued_sum = 1 + 2 +
+     3 + 4
+
+// Invalid: a line cannot begin with a binary operator
 // auto sum = 1 + 2
-//          + 3 + 4  // ERROR
+//     + 3 + 4  // ERROR
 ```
 
 ## See Also
