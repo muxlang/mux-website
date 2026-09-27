@@ -330,7 +330,7 @@ auto absent = none
 | Symbol | Meaning                     |
 | ------ | --------------------------- |
 | `&&`   | Logical AND (short-circuit) |
-| `\|\|` | Logical OR (short-circuit) |
+| `\|\|` | Logical OR (short-circuit)  |
 | `!`    | Logical NOT                 |
 
 ### Other Operators
