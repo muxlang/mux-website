@@ -21,7 +21,8 @@ Higher precedence operators are evaluated first.
 ## Line breaks after binary operators
 
 A binary operator may end a line when its right operand continues on the next
-line. The operator stays at the end of the first line:
+line. The operator stays at the end of the first line. These line-continuation
+examples require Mux 0.12.0 or newer:
 
 ```mux
 func total(int first_value, int second_value) returns int {
@@ -41,9 +42,11 @@ func main() returns void {
 }
 ```
 
-A line may not begin with a binary operator, and an assignment operator such as
-`=` must stay on the same line as its right-hand side. Unary operators do not
-introduce a line continuation.
+Outside explicit parentheses or brackets, a line may not begin with a binary
+operator. Inside explicit grouping, a continued expression may also start a
+line with a binary operator. An assignment operator such as `=` must stay on
+the same line as its right-hand side. Unary operators do not introduce a line
+continuation.
 
 ## Arithmetic Operators
 
