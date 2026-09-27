@@ -6,17 +6,17 @@ This document describes all operators in Mux, including their precedence, associ
 
 Higher precedence operators are evaluated first.
 
-| Precedence | Operators | Associativity |
-|------------|-----------|---------------|
+| Precedence  | Operators                       | Associativity |
+| ----------- | ------------------------------- | ------------- |
 | 1 (highest) | `.` (member access), `()`, `[]` | Left-to-right |
-| 2 | `**` | Right-to-left |
-| 3 | `!` | Right-to-left |
-| 4 | `*`, `/`, `%` | Left-to-right |
-| 5 | `+`, `-` (binary) | Left-to-right |
-| 6 | `<`, `<=`, `>`, `>=` | Left-to-right |
-| 7 | `==`, `!=` | Left-to-right |
-| 8 | `&&`, `\|\|` | Left-to-right |
-| 9 | `in` | Left-to-right |
+| 2           | `**`                            | Right-to-left |
+| 3           | `!`                             | Right-to-left |
+| 4           | `*`, `/`, `%`                   | Left-to-right |
+| 5           | `+`, `-` (binary)               | Left-to-right |
+| 6           | `<`, `<=`, `>`, `>=`            | Left-to-right |
+| 7           | `==`, `!=`                      | Left-to-right |
+| 8           | `&&`, `\|\|`                    | Left-to-right |
+| 9           | `in`                            | Left-to-right |
 
 ## Line breaks after binary operators
 
@@ -33,6 +33,12 @@ func allowed(bool has_name, bool has_permission) returns bool {
     return has_name &&
         has_permission
 }
+
+func main() returns void {
+    auto sum = total(1, 2)
+    auto is_allowed = allowed(true, false)
+    return
+}
 ```
 
 A line may not begin with a binary operator, and an assignment operator such as
@@ -43,14 +49,14 @@ introduce a line continuation.
 
 ### Binary Arithmetic
 
-| Operator | Description | Types | Example |
-|----------|-------------|-------|---------|
-| `+` | Addition | `int`, `float`, `string` | `5 + 3`, `"a" + "b"` |
-| `-` | Subtraction | `int`, `float` | `10 - 4` |
-| `*` | Multiplication | `int`, `float` | `6 * 7` |
-| `/` | Division | `int`, `float` | `15 / 3` |
-| `%` | Modulo | `int`, `float` | `10 % 3` (result: 1) |
-| `**` | Exponentiation | `int`, `float` | `2 ** 3` (result: 8) |
+| Operator | Description    | Types                    | Example              |
+| -------- | -------------- | ------------------------ | -------------------- |
+| `+`      | Addition       | `int`, `float`, `string` | `5 + 3`, `"a" + "b"` |
+| `-`      | Subtraction    | `int`, `float`           | `10 - 4`             |
+| `*`      | Multiplication | `int`, `float`           | `6 * 7`              |
+| `/`      | Division       | `int`, `float`           | `15 / 3`             |
+| `%`      | Modulo         | `int`, `float`           | `10 % 3` (result: 1) |
+| `**`     | Exponentiation | `int`, `float`           | `2 ** 3` (result: 8) |
 
 ### Arithmetic Rules
 
@@ -70,15 +76,16 @@ auto precedence = 2 * 3 ** 2 // 18 (higher than *)
 ```
 
 **Properties:**
+
 - Right-associative: `a ** b ** c` = `a ** (b ** c)`
 - Higher precedence than `*`, `/`, `%`
 
 ## Increment and Decrement
 
-| Operator | Description | Restrictions |
-|----------|-------------|--------------|
-| `++` | Postfix increment | `int` only, standalone statement |
-| `--` | Postfix decrement | `int` only, standalone statement |
+| Operator | Description       | Restrictions                     |
+| -------- | ----------------- | -------------------------------- |
+| `++`     | Postfix increment | `int` only, standalone statement |
+| `--`     | Postfix decrement | `int` only, standalone statement |
 
 ### Usage Rules
 
@@ -105,14 +112,14 @@ The postfix-only, standalone-only design prevents ambiguity and side-effect conf
 
 ## Comparison Operators
 
-| Operator | Description | Types |
-|----------|-------------|-------|
-| `==` | Equality | `int`, `float`, `bool`, `char`, `string`, `list`, `map`, `set`, `tuple`, `optional`, `result`, user enums, and classes declaring `Equatable`, `Comparable` or `Hashable` |
-| `!=` | Inequality | same as `==` |
-| `<` | Less than | `int`, `float`, `string`, and classes declaring `Comparable` |
-| `<=` | Less than or equal | `int`, `float`, `string`, and classes declaring `Comparable` |
-| `>` | Greater than | `int`, `float`, `string`, and classes declaring `Comparable` |
-| `>=` | Greater than or equal | `int`, `float`, `string`, and classes declaring `Comparable` |
+| Operator | Description           | Types                                                                                                                                                                    |
+| -------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `==`     | Equality              | `int`, `float`, `bool`, `char`, `string`, `list`, `map`, `set`, `tuple`, `optional`, `result`, user enums, and classes declaring `Equatable`, `Comparable` or `Hashable` |
+| `!=`     | Inequality            | same as `==`                                                                                                                                                             |
+| `<`      | Less than             | `int`, `float`, `string`, and classes declaring `Comparable`                                                                                                             |
+| `<=`     | Less than or equal    | `int`, `float`, `string`, and classes declaring `Comparable`                                                                                                             |
+| `>`      | Greater than          | `int`, `float`, `string`, and classes declaring `Comparable`                                                                                                             |
+| `>=`     | Greater than or equal | `int`, `float`, `string`, and classes declaring `Comparable`                                                                                                             |
 
 ### Comparison Rules
 
@@ -161,11 +168,11 @@ declaring `is Comparable`. There is no ordering for collections, enums,
 
 ## Logical Operators
 
-| Operator | Description | Behavior |
-|----------|-------------|----------|
-| `&&` | Logical AND | Short-circuit evaluation |
-| `\|\|` | Logical OR | Short-circuit evaluation |
-| `!` | Logical NOT | Unary negation |
+| Operator | Description | Behavior                 |
+| -------- | ----------- | ------------------------ |
+| `&&`     | Logical AND | Short-circuit evaluation |
+| `\|\|`   | Logical OR  | Short-circuit evaluation |
+| `!`      | Logical NOT | Unary negation           |
 
 ### Short-Circuit Evaluation
 
@@ -194,9 +201,9 @@ Phi nodes merge results from different branches.
 
 ## Membership Operator
 
-| Operator | Description | Types |
-|----------|-------------|-------|
-| `in` | Membership test | `T in list<T>`, `T in set<T>`, `string in string`, `char in string` |
+| Operator | Description     | Types                                                               |
+| -------- | --------------- | ------------------------------------------------------------------- |
+| `in`     | Membership test | `T in list<T>`, `T in set<T>`, `string in string`, `char in string` |
 
 ```mux
 // List containment
@@ -217,12 +224,12 @@ auto hasO = 'o' in msg              // true
 
 ### Concatenation with `+`
 
-| Types | Operation | result |
-|-------|-----------|--------|
-| `list<T> + list<T>` | Concatenation | Combined list |
-| `map<K,V> + map<K,V>` | Merge | Combined map |
-| `set<T> + set<T>` | Union | Set with all elements |
-| `string + string` | Concatenation | Combined string |
+| Types                 | Operation     | result                |
+| --------------------- | ------------- | --------------------- |
+| `list<T> + list<T>`   | Concatenation | Combined list         |
+| `map<K,V> + map<K,V>` | Merge         | Combined map          |
+| `set<T> + set<T>`     | Union         | Set with all elements |
+| `string + string`     | Concatenation | Combined string       |
 
 ```mux
 auto list1 = [1, 2]
@@ -240,13 +247,13 @@ auto unioned = set1 + set2       // {1, 2, 3, 4, 5}
 
 ## Compound Assignment Operators
 
-| Operator | Expansion | Types |
-|----------|-----------|-------|
-| `+=` | `a = a + b` | `int`, `float`, `string` |
-| `-=` | `a = a - b` | `int`, `float` |
-| `*=` | `a = a * b` | `int`, `float` |
-| `/=` | `a = a / b` | `int`, `float` |
-| `%=` | `a = a % b` | `int`, `float` |
+| Operator | Expansion   | Types                    |
+| -------- | ----------- | ------------------------ |
+| `+=`     | `a = a + b` | `int`, `float`, `string` |
+| `-=`     | `a = a - b` | `int`, `float`           |
+| `*=`     | `a = a * b` | `int`, `float`           |
+| `/=`     | `a = a / b` | `int`, `float`           |
+| `%=`     | `a = a % b` | `int`, `float`           |
 
 ```mux
 auto x = 5
@@ -256,10 +263,10 @@ x *= 2        // x = x * 2 = 16
 
 ## Reference Operators
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `&` | Create reference | `auto r = &x` |
-| `*` | Dereference | `*r = 42` |
+| Operator | Description      | Example       |
+| -------- | ---------------- | ------------- |
+| `&`      | Create reference | `auto r = &x` |
+| `*`      | Dereference      | `*r = 42`     |
 
 ```mux
 int x = 10

@@ -9,6 +9,11 @@ func total(int first_value, int second_value) returns int {
     return first_value +
         second_value
 }
+
+func main() returns void {
+    auto result = total(1, 2)
+    return
+}
 ```
 
 Keep the operator at the end of the line. Starting the next line with an
