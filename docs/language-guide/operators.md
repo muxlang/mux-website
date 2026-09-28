@@ -1,6 +1,25 @@
 # Operators
 
-Mux provides operators for arithmetic, comparison, and logical operations.
+Mux provides operators for arithmetic, comparison, and logical operations. The
+line-continuation examples below require Mux 0.12.0 or newer.
+
+Long expressions can continue after a binary operator:
+
+```mux
+func total(int first_value, int second_value) returns int {
+    return first_value +
+        second_value
+}
+
+func main() returns void {
+    auto result = total(1, 2)
+    return
+}
+```
+
+Outside explicit parentheses or brackets, keep the operator at the end of the
+line. Inside explicit grouping, a continued expression may also start a line
+with a binary operator.
 
 ## Arithmetic Operators
 
