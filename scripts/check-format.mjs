@@ -14,8 +14,9 @@ function gitFiles(args) {
       .map((file) => file.trim())
       .filter(Boolean);
   } catch (error) {
-    console.error("Unable to determine changed files for the format check.");
-    process.exit(error.status ?? 1);
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error(`Unable to determine changed files for the format check: ${reason}`);
+    process.exit(Number.isInteger(error?.status) && error.status > 0 ? error.status : 1);
   }
 }
 
