@@ -164,7 +164,7 @@ language-servers = ["mux"]
 
 [[grammar]]
 name = "mux"
-source = { git = "https://github.com/muxlang/tree-sitter-mux", rev = "d14c5d9e473f0bef87753eb1d1d9d8bd73e6d3a2" }
+source = { git = "https://github.com/muxlang/tree-sitter-mux", rev = "9d89fb021c15b70b967ef8574c7e28d640d2b705" }
 
 [language-server.mux]
 command = "mux"

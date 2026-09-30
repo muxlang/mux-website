@@ -41,7 +41,7 @@ Mux is currently in active development. The language specification, compiler, an
 
 **Current Limitations:**
 
-- `mux lsp` is under review and is not available in a released compiler yet
+- Compiler v0.13.0 includes `mux lsp`. See [editor setup](./setup.md) for configuration.
 - Mux 0.12.0 and later include a source formatter. See
   [Formatting Mux source](./getting-started/formatting.md).
 - Standard library is now available and published, with continued expansion planned
