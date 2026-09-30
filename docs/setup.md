@@ -67,8 +67,10 @@ mux doctor --dev
 ## Syntax highlighting
 
 Mux ships TextMate and Tree-sitter grammars. Use the section that matches your
-editor. The VSCode and compiler changes are under review. Neovim and Helix still
-need manual registration until their upstream changes ship.
+editor. Compiler v0.13.0 includes the Mux language server. The VSCode extension
+is not listed in Marketplace or Open VSX yet, so install a local VSIX using the
+steps below. Neovim and Helix need manual registration until their upstream
+changes ship.
 
 ### TextMate family (VSCode, Sublime Text, JetBrains)
 
@@ -131,7 +133,7 @@ vim.api.nvim_create_autocmd('User', {
     require('nvim-treesitter.parsers').mux = {
       install_info = {
         url = 'https://github.com/muxlang/tree-sitter-mux',
-        revision = 'd14c5d9e473f0bef87753eb1d1d9d8bd73e6d3a2',
+        revision = '9d89fb021c15b70b967ef8574c7e28d640d2b705',
         queries = 'queries',
       },
     }
@@ -142,6 +144,8 @@ vim.api.nvim_create_autocmd('User', {
 Then run `:TSInstall mux` and enable highlighting with your usual
 nvim-treesitter configuration. Remove the manual registration after the
 upstream integrations ship.
+
+For the Neovim language-server setup, see [LSP](#lsp) below.
 
 **Helix:**
 
@@ -160,7 +164,7 @@ language-servers = ["mux"]
 
 [[grammar]]
 name = "mux"
-source = { git = "https://github.com/muxlang/tree-sitter-mux", rev = "d14c5d9e473f0bef87753eb1d1d9d8bd73e6d3a2" }
+source = { git = "https://github.com/muxlang/tree-sitter-mux", rev = "9d89fb021c15b70b967ef8574c7e28d640d2b705" }
 
 [language-server.mux]
 command = "mux"
@@ -174,19 +178,17 @@ hx --grammar fetch
 hx --grammar build
 mkdir -p ~/.config/helix/runtime/queries/mux
 curl -fsSL \
-  https://raw.githubusercontent.com/muxlang/tree-sitter-mux/11a2d40da5680b61520dc5e0170a124add809617/queries/highlights.scm \
+  https://raw.githubusercontent.com/muxlang/tree-sitter-mux/9d89fb021c15b70b967ef8574c7e28d640d2b705/queries/highlights.scm \
   -o ~/.config/helix/runtime/queries/mux/highlights.scm
 ```
 
-The language-server entry works with a compiler build that includes `mux lsp`.
-The command is not in a released compiler yet.
+The language-server entry works with the released compiler's `mux lsp` command.
 
 ## LSP
 
-The compiler PR adds `mux lsp` over stdio. The command is not available in a
-released compiler yet. Once a release includes it, install the compiler using
-the standard Mux installation instructions so the server, formatter, and fix
-tool are available together.
+The compiler v0.13.0 release includes `mux lsp` over stdio. Install the compiler
+using the standard Mux installation instructions to get the server, formatter,
+and fix tool together. The VSCode extension starts the server automatically.
 
 **Neovim 0.11 or newer:** add the Mux filetype entry shown above, then enable
 the client:
@@ -195,6 +197,7 @@ the client:
 vim.lsp.config('mux', {
   cmd = { 'mux', 'lsp' },
   filetypes = { 'mux' },
+  root_markers = { 'mux-project.json', '.git' },
 })
 vim.lsp.enable('mux')
 ```
