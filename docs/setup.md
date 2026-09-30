@@ -173,7 +173,9 @@ Fetch and build the grammar, then install its highlight query:
 hx --grammar fetch
 hx --grammar build
 mkdir -p ~/.config/helix/runtime/queries/mux
-cp path/to/tree-sitter-mux/queries/highlights.scm ~/.config/helix/runtime/queries/mux/
+curl -fsSL \
+  https://raw.githubusercontent.com/muxlang/tree-sitter-mux/11a2d40da5680b61520dc5e0170a124add809617/queries/highlights.scm \
+  -o ~/.config/helix/runtime/queries/mux/highlights.scm
 ```
 
 The language-server entry works with a compiler build that includes `mux lsp`.
