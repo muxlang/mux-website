@@ -229,7 +229,7 @@ writing changes. The formatter uses [defaults or project settings](./formatting.
 
 Mux is actively being developed. Here are some things to be aware of:
 
-- **No LSP (Language Server Protocol)** - Editor support is limited to basic syntax highlighting
+- **Language Server Protocol** - `mux lsp` is under review and will provide live diagnostics, formatting, and editor navigation when released
 - **Standard Library Available** - Core stdlib modules are published; APIs may evolve as new modules are added
 - **Breaking Changes Expected** - The language is evolving, so expect syntax and semantic changes
 

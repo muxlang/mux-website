@@ -24,16 +24,19 @@ The installer runs `mux doctor` when it finishes and tells you if anything is
 missing. You can re-run that check at any time.
 
 **Linux and macOS:**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.sh | sh
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/install.ps1 | iex
 ```
 
 **Custom install directories:**
+
 ```bash
 MUX_INSTALL_DIR=/usr/local/bin MUX_LIB_DIR=/usr/local/lib sh install.sh
 ```
@@ -63,28 +66,34 @@ mux doctor --dev
 
 ## Syntax highlighting
 
-Mux ships TextMate and Tree-sitter grammars. Use the section that matches your editor.
+Mux ships TextMate and Tree-sitter grammars. Use the section that matches your
+editor. The VSCode and compiler changes are under review. Neovim and Helix still
+need manual registration until their upstream changes ship.
 
 ### TextMate family (VSCode, Sublime Text, JetBrains)
 
-**Generate grammar (required before packaging):**
-```bash
-cd mux-syntax-highlighting
-node scripts/generate-syntax.js
-```
-
 **VSCode:**
-1. Package the extension:
+
+1. Package and verify a local extension build:
    ```bash
-   ../scripts/release-syntax.sh
+   cd mux-syntax-highlighting
+   npm ci
+   npm run package:vscode
+   npm run verify:vscode-package
    ```
-2. Install the `.vsix`:
+2. Install the generated `.vsix`:
    ```bash
-   code --install-extension language-mux-<version>.vsix
+   code --install-extension dist/language-mux.vsix
    ```
 3. Reload VSCode.
 
+The extension starts `mux lsp` automatically when the compiler is on `PATH`.
+Set the machine-scoped `mux.serverPath` setting if the compiler executable is
+installed elsewhere. A local extension build requires Node.js and npm; it does
+not download or build the compiler.
+
 **Sublime Text:**
+
 1. Copy `mux-syntax-highlighting/textmate-mux/source.mux.json` into `Packages/User/Mux/`.
 2. Add to `Packages/User/Package.sublime-settings`:
    ```json
@@ -101,58 +110,109 @@ node scripts/generate-syntax.js
    ```
 
 **JetBrains (IntelliJ, WebStorm, etc.):**
+
 1. Install the TextMate Bundles plugin.
 2. Import `mux-syntax-highlighting/textmate-mux/source.mux.json`.
 3. Associate `.mux` files in Settings > Editor > File Types.
 
 ### Tree-sitter family (Neovim, Helix)
 
-**Generate grammar (required before packaging):**
-```bash
-cd mux-syntax-highlighting
-node scripts/generate-syntax.js
+**Neovim:**
+
+Neovim does not yet recognize `.mux` files, and nvim-treesitter does not yet
+include Mux in its parser list. Add the filetype and parser configuration:
+
+```lua
+vim.filetype.add({ extension = { mux = 'mux' } })
+
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'TSUpdate',
+  callback = function()
+    require('nvim-treesitter.parsers').mux = {
+      install_info = {
+        url = 'https://github.com/muxlang/tree-sitter-mux',
+        revision = 'd14c5d9e473f0bef87753eb1d1d9d8bd73e6d3a2',
+        queries = 'queries',
+      },
+    }
+  end,
+})
 ```
 
-**Neovim:**
-1. Install the parser and queries from `mux-syntax-highlighting/tree-sitter-mux/`.
-2. Add to `~/.config/nvim/init.lua`:
-   ```lua
-   local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
-   parser_config.mux = {
-     install_info = {
-       url = "https://github.com/muxlang/tree-sitter-mux",
-       files = {"src/parser.c"},
-       branch = "main"
-     },
-     filetype = "mux",
-   }
-   ```
-3. Run `:TSInstall mux` and enable highlighting.
+Then run `:TSInstall mux` and enable highlighting with your usual
+nvim-treesitter configuration. Remove the manual registration after the
+upstream integrations ship.
 
 **Helix:**
-1. Build the parser:
-   ```bash
-   mkdir -p ~/.config/helix/runtime/grammars
-   cd mux-syntax-highlighting/tree-sitter-mux
-   tree-sitter generate grammar.js
-   cp mux.so ~/.config/helix/runtime/grammars/
-   ```
-2. Add to `~/.config/helix/languages.toml`:
-   ```toml
-   [[language]]
-   name = "mux"
-   scope = "source.mux"
-   file-types = ["mux"]
-   roots = []
-   grammar = true
 
-   [language.highlight]
-   paths = ["queries/highlights.scm"]
-   ```
+Until Helix includes Mux, add the language and grammar entries to
+`~/.config/helix/languages.toml`:
+
+```toml
+[[language]]
+name = "mux"
+scope = "source.mux"
+file-types = ["mux"]
+comment-token = "//"
+block-comment-tokens = { start = "/*", end = "*/" }
+grammar = "mux"
+language-servers = ["mux"]
+
+[[grammar]]
+name = "mux"
+source = { git = "https://github.com/muxlang/tree-sitter-mux", rev = "d14c5d9e473f0bef87753eb1d1d9d8bd73e6d3a2" }
+
+[language-server.mux]
+command = "mux"
+args = ["lsp"]
+```
+
+Fetch and build the grammar, then install its highlight query:
+
+```bash
+hx --grammar fetch
+hx --grammar build
+mkdir -p ~/.config/helix/runtime/queries/mux
+curl -fsSL \
+  https://raw.githubusercontent.com/muxlang/tree-sitter-mux/11a2d40da5680b61520dc5e0170a124add809617/queries/highlights.scm \
+  -o ~/.config/helix/runtime/queries/mux/highlights.scm
+```
+
+The language-server entry works with a compiler build that includes `mux lsp`.
+The command is not in a released compiler yet.
 
 ## LSP
 
-In development. There is no supported Mux LSP release yet.
+The compiler PR adds `mux lsp` over stdio. The command is not available in a
+released compiler yet. Once a release includes it, install the compiler using
+the standard Mux installation instructions so the server, formatter, and fix
+tool are available together.
+
+**Neovim 0.11 or newer:** add the Mux filetype entry shown above, then enable
+the client:
+
+```lua
+vim.lsp.config('mux', {
+  cmd = { 'mux', 'lsp' },
+  filetypes = { 'mux' },
+})
+vim.lsp.enable('mux')
+```
+
+**Helix:** the Mux language configuration starts `mux lsp` automatically. Set
+the compiler's executable path in the Helix language-server configuration if
+`mux` is not on Helix's `PATH`.
+
+**Emacs with Eglot:**
+
+If your Mux major mode is named `mux-mode`, add:
+
+```elisp
+(add-to-list 'eglot-server-programs '(mux-mode . ("mux" "lsp")))
+```
+
+Set each editor's server command to the installed compiler path if `mux` is not
+on that editor's `PATH`.
 
 ## Playground local development
 
@@ -190,10 +250,13 @@ code.
 Profiling is done with external tools so it stays decoupled from the compiler and runtime.
 
 **Linux:**
+
 - `perf` + flamegraph
 
 **macOS:**
+
 - Instruments
 
 **Windows:**
+
 - Windows Performance Analyzer or Visual Studio Profiler
