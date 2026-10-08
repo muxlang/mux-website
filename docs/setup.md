@@ -205,11 +205,18 @@ document symbols, go-to-definition, formatting, and safe code actions. The
 editor decides when to request formatting. Format-on-save is controlled by your
 editor settings and is not enabled by the Mux Neovim plugin.
 
-For Neovim, the plugin accepts a custom server command and an option to disable
-automatic startup:
+In the plugin's `config` function, replace `require("mux").setup()` with one
+of these alternatives. Use the custom command when the compiler is not on your
+PATH:
 
 ```lua
 require("mux").setup({ lsp = { cmd = { "/path/to/mux", "lsp" } } })
+```
+
+To keep the plugin's filetype detection and highlighting but disable automatic
+LSP startup, use this instead:
+
+```lua
 require("mux").setup({ lsp = false })
 ```
 
