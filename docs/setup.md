@@ -66,28 +66,45 @@ mux doctor --dev
 
 ## Syntax highlighting
 
-Mux ships TextMate and Tree-sitter grammars. Use the section that matches your
-editor. Compiler v0.13.0 includes the Mux language server. The VSCode extension
-is not listed in Marketplace or Open VSX yet, so install a local VSIX using the
-steps below. Neovim and Helix need manual registration until their upstream
-changes ship.
+Mux has maintained editor integrations for VS Code and Neovim. Both provide
+syntax highlighting and use the language server included with compiler v0.13.0.
+Sublime Text, JetBrains, Helix, and Emacs have manual syntax setup; they are not
+part of the maintained editor support release.
 
 ### TextMate family (VSCode, Sublime Text, JetBrains)
 
 **VSCode:**
 
-1. Package and verify a local extension build:
-   ```bash
-   cd mux-syntax-highlighting
-   npm ci
-   npm run package:vscode
-   npm run verify:vscode-package
-   ```
-2. Install the generated `.vsix`:
-   ```bash
-   code --install-extension dist/language-mux.vsix
-   ```
-3. Reload VSCode.
+Install **Mux Language Support** (`mux-lang.language-mux`) from the Visual
+Studio Marketplace. In the Extensions view, search for "Mux Language Support"
+and choose the extension published by `mux-lang`. From a terminal, run:
+
+```bash
+code --install-extension mux-lang.language-mux
+```
+
+For VSCodium or another editor using Open VSX, install the same extension from
+Open VSX or use its command-line client:
+
+```bash
+codium --install-extension mux-lang.language-mux
+```
+
+If the extension is not available in your editor's registry, build and install
+the verified VSIX from a clone:
+
+```bash
+cd mux-syntax-highlighting
+npm ci
+npm run package:vscode
+npm run verify:vscode-package
+```
+
+```bash
+code --install-extension dist/language-mux.vsix
+```
+
+Reload VS Code after installation.
 
 The extension starts `mux lsp` automatically when the compiler is on `PATH`.
 Set the machine-scoped `mux.serverPath` setting if the compiler executable is
@@ -121,31 +138,24 @@ not download or build the compiler.
 
 **Neovim:**
 
-Neovim does not yet recognize `.mux` files, and nvim-treesitter does not yet
-include Mux in its parser list. Add the filetype and parser configuration:
+Install the Mux plugin with lazy.nvim. Neovim 0.11 or newer, a C compiler, and
+Mux 0.13.0 or newer on `PATH` are required:
 
 ```lua
-vim.filetype.add({ extension = { mux = 'mux' } })
-
-vim.api.nvim_create_autocmd('User', {
-  pattern = 'TSUpdate',
-  callback = function()
-    require('nvim-treesitter.parsers').mux = {
-      install_info = {
-        url = 'https://github.com/muxlang/tree-sitter-mux',
-        revision = '9d89fb021c15b70b967ef8574c7e28d640d2b705',
-        queries = 'queries',
-      },
-    }
+{
+  "muxlang/tree-sitter-mux",
+  tag = "v0.7.0",
+  lazy = false,
+  build = "nvim --headless --clean -l scripts/build-nvim-parser.lua",
+  config = function()
+    require("mux").setup()
   end,
-})
+}
 ```
 
-Then run `:TSInstall mux` and enable highlighting with your usual
-nvim-treesitter configuration. Remove the manual registration after the
-upstream integrations ship.
-
-For the Neovim language-server setup, see [LSP](#lsp) below.
+The plugin detects `.mux` files, builds the parser, enables highlighting, and
+starts `mux lsp`. It does not require nvim-treesitter. To use a nonstandard
+compiler path or turn off LSP startup, see the Neovim options in [LSP](#lsp).
 
 **Helix:**
 
@@ -186,36 +196,25 @@ The language-server entry works with the released compiler's `mux lsp` command.
 
 ## LSP
 
-The compiler v0.13.0 release includes `mux lsp` over stdio. Install the compiler
-using the standard Mux installation instructions to get the server, formatter,
-and fix tool together. The VSCode extension starts the server automatically.
+Compiler v0.13.0 and later include `mux lsp` over stdio. Install the compiler
+using the standard Mux installation instructions. The VS Code extension and
+Neovim plugin start the server automatically when they open a Mux file.
 
-**Neovim 0.11 or newer:** add the Mux filetype entry shown above, then enable
-the client:
+The server provides live diagnostics, completion, hover, signature help,
+document symbols, go-to-definition, formatting, and safe code actions. The
+editor decides when to request formatting. Format-on-save is controlled by your
+editor settings and is not enabled by the Mux Neovim plugin.
+
+For Neovim, the plugin accepts a custom server command and an option to disable
+automatic startup:
 
 ```lua
-vim.lsp.config('mux', {
-  cmd = { 'mux', 'lsp' },
-  filetypes = { 'mux' },
-  root_markers = { 'mux-project.json', '.git' },
-})
-vim.lsp.enable('mux')
+require("mux").setup({ lsp = { cmd = { "/path/to/mux", "lsp" } } })
+require("mux").setup({ lsp = false })
 ```
 
-**Helix:** the Mux language configuration starts `mux lsp` automatically. Set
-the compiler's executable path in the Helix language-server configuration if
-`mux` is not on Helix's `PATH`.
-
-**Emacs with Eglot:**
-
-If your Mux major mode is named `mux-mode`, add:
-
-```elisp
-(add-to-list 'eglot-server-programs '(mux-mode . ("mux" "lsp")))
-```
-
-Set each editor's server command to the installed compiler path if `mux` is not
-on that editor's `PATH`.
+Other LSP-compatible editors can launch `mux lsp`, but their Mux setup is
+manual and is not part of the maintained support release.
 
 ## Playground local development
 
