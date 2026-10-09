@@ -127,9 +127,9 @@ const config: Config = {
     ],
   ],
 
-  themes: [
+  plugins: [
     [
-      '@easyops-cn/docusaurus-search-local',
+      '@muxlang/docusaurus-search-local',
       {
         hashed: true,
         language: ['en'],
@@ -138,8 +138,6 @@ const config: Config = {
       },
     ],
   ],
-
-  plugins: [],
 
   themeConfig: {
     image: 'img/mux-social-card.png',
