@@ -44,6 +44,7 @@ describe("SearchModal", () => {
   it("loads the local index, searches, and closes with Escape", async () => {
     render(<SearchModal onClose={mocks.close} />);
     expect(await screen.findByRole("dialog", { name: "Search documentation" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox")).toHaveFocus();
     await waitFor(() => expect(mocks.fetchIndexes).toHaveBeenCalledWith("/", "hash"));
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "mux" } });
     expect(await screen.findByText("No docs found")).toBeInTheDocument();

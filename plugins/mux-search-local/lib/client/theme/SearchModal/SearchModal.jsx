@@ -51,6 +51,7 @@ const SearchModal = ({ onClose }) => {
   useEffect(() => {
     const modal = searchModal.current;
     modal?.showModal();
+    searchInput.current?.focus();
     return () => modal?.close();
   }, []);
   const [searchSource, setSearchSource] = useState();
