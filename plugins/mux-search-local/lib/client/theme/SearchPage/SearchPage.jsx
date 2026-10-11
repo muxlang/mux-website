@@ -126,10 +126,9 @@ export default function SearchPage() {
             ))}
 
           <section>
-            {searchResults &&
-              searchResults.map((item) => (
-                <SearchResultItem key={item.document.i} searchResult={item} />
-              ))}
+            {searchResults?.map((item) => (
+              <SearchResultItem key={item.document.i} searchResult={item} />
+            ))}
           </section>
         </div>
       </ErrorBoundary>

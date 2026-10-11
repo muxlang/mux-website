@@ -1,6 +1,6 @@
 import * as React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 const mocks = vi.hoisted(() => ({
   fetchIndexes: vi.fn(),
@@ -45,14 +45,14 @@ describe("SearchPage", () => {
   it("shows query and empty-result states, and updates the URL as input changes", async () => {
     render(<SearchPage />);
     expect(screen.getByRole("heading", { name: 'Results for "mux"' })).toBeInTheDocument();
-    await waitFor(() => expect(mocks.fetchIndexes).toHaveBeenCalledWith("/", "hash"));
+    await vi.waitFor(() => expect(mocks.fetchIndexes).toHaveBeenCalledWith("/", "hash"));
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "" } });
     expect(mocks.updateSearchPath).toHaveBeenCalledWith("");
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "nope" } });
-    await waitFor(() =>
-      expect(
-        screen.getByText("⚠️ The search index is only available when you run docusaurus build!"),
-      ).toBeInTheDocument(),
-    );
+    expect(
+      await screen.findByText(
+        "⚠️ The search index is only available when you run docusaurus build!",
+      ),
+    ).toBeInTheDocument();
   });
 });

@@ -20,8 +20,22 @@ html[data-theme="dark"] {
   height: 100vh;
   top: 0;
   left: 0;
-  background: rgba(94, 100, 112, 0.7);
+  background: transparent;
   z-index: 100000;
+}
+
+.searchModal::backdrop {
+  background: transparent;
+}
+
+.searchModalBackdrop {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(94, 100, 112, 0.7);
 }
 
 .searchModalContainer {
@@ -30,6 +44,7 @@ html[data-theme="dark"] {
     rgb(85, 90, 100) 0px 3px 8px 0px;
   background: var(--ifm-background-surface-color);
   position: relative;
+  z-index: 1;
 
   flex-direction: column;
   margin: 60px auto auto;

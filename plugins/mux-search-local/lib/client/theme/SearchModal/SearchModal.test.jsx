@@ -28,6 +28,12 @@ import SearchModal from "./SearchModal";
 
 describe("SearchModal", () => {
   beforeEach(() => {
+    HTMLDialogElement.prototype.showModal = function () {
+      this.setAttribute("open", "");
+    };
+    HTMLDialogElement.prototype.close = function () {
+      this.removeAttribute("open");
+    };
     mocks.close.mockReset();
     mocks.warn.mockReset();
     mocks.fetchIndexes.mockResolvedValue({ wrappedIndexes: [] });
@@ -41,15 +47,14 @@ describe("SearchModal", () => {
     await waitFor(() => expect(mocks.fetchIndexes).toHaveBeenCalledWith("/", "hash"));
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "mux" } });
     expect(await screen.findByText("No docs found")).toBeInTheDocument();
-    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
     expect(mocks.close).toHaveBeenCalledOnce();
   });
 
   it("closes when the backdrop itself is clicked and reports index errors", async () => {
     mocks.fetchIndexes.mockRejectedValueOnce(new Error("invalid index"));
     const { container } = render(<SearchModal onClose={mocks.close} />);
-    const backdrop = screen.getByRole("dialog", { name: "Search documentation" });
-    fireEvent.click(backdrop, { target: backdrop });
+    fireEvent.click(screen.getByRole("button", { name: "Close search" }));
     expect(mocks.close).toHaveBeenCalledOnce();
     await waitFor(() =>
       expect(mocks.warn).toHaveBeenCalledWith(

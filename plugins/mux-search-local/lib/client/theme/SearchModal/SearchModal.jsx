@@ -48,6 +48,11 @@ const SearchModal = ({ onClose }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const searchModal = useRef(null);
   const searchInput = useRef(null);
+  useEffect(() => {
+    const modal = searchModal.current;
+    modal?.showModal();
+    return () => modal?.close();
+  }, []);
   const [searchSource, setSearchSource] = useState();
   const [searchResults, setSearchResults] = useState([]);
   const [selected, setSelected] = useState(undefined);
@@ -157,21 +162,19 @@ const SearchModal = ({ onClose }) => {
   }, [searchQuery, externalSearchSources]);
   return (
     <dialog
-      open
       aria-modal="true"
       aria-label="Search documentation"
       tabIndex={-1}
       className={styles.searchModal}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") onClose();
-      }}
-      onClick={(ev) => {
-        if (ev.target === searchModal.current) {
-          onClose();
-        }
-      }}
+      onCancel={onClose}
       ref={searchModal}
     >
+      <button
+        type="button"
+        className={styles.searchModalBackdrop}
+        aria-label="Close search"
+        onClick={onClose}
+      />
       <div className={styles.searchModalContainer}>
         <div className={styles.searchInputContainer}>
           <label>
