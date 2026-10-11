@@ -229,7 +229,7 @@ writing changes. The formatter uses [defaults or project settings](./formatting.
 
 Mux is actively being developed. Here are some things to be aware of:
 
-- **Language Server Protocol** - `mux lsp` is available in compiler v0.13.0. See [editor setup](../setup.md) for Neovim, Helix, and VSCode configuration.
+- **Language Server Protocol** - `mux lsp` is available in compiler v0.13.0. See [editor setup](../setup.md) for the maintained Neovim and VS Code integrations.
 - **Standard Library Available** - Core stdlib modules are published; APIs may evolve as new modules are added
 - **Breaking Changes Expected** - The language is evolving, so expect syntax and semantic changes
 

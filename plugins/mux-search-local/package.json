@@ -1,0 +1,29 @@
+{
+  "name": "@muxlang/docusaurus-search-local",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mux-maintained offline search theme for Docusaurus",
+  "license": "MIT",
+  "main": "lib/server/index.js",
+  "dependencies": {
+    "@braintree/sanitize-url": "^6.0.0",
+    "cheerio": "^1.0.0",
+    "clsx": "^1.1.1",
+    "debug": "^4.3.4",
+    "fs-extra": "^10.1.0",
+    "klaw-sync": "^6.0.0",
+    "lunr": "^2.3.9",
+    "mark.js": "^8.11.1",
+    "validate-peer-dependencies": "^2.2.0"
+  },
+  "peerDependencies": {
+    "@docusaurus/core": ">=3.0.0 || >=4.0.0-canary-0",
+    "@docusaurus/utils": ">=3.0.0 || >=4.0.0-canary-0",
+    "@docusaurus/utils-validation": ">=3.0.0 || >=4.0.0-canary-0",
+    "react": ">=18.2.0",
+    "react-dom": ">=18.2.0"
+  },
+  "engines": {
+    "node": ">=24.21.0"
+  }
+}

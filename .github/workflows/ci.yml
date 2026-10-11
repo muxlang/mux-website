@@ -41,7 +41,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22"
+          node-version: "24.21"
           cache: npm
           cache-dependency-path: package-lock.json
       - name: Select the canonical syntax matrix revision
@@ -58,11 +58,14 @@ jobs:
           fi
           echo "MUX_SYNTAX_MATRIX_URL=https://raw.githubusercontent.com/muxlang/mux-syntax-highlighting/${syntax_ref}/shared/syntax-matrix.json" >> "$GITHUB_ENV"
       - run: npm ci --ignore-scripts
-      - run: npm audit --audit-level=high
+      # GHSA-vfj7-8cjw-p6xm has no patched release for the current Docusaurus
+      # dependency tree. Allow only that high-severity advisory in the site
+      # package. Audits for the Worker, indexer, and retrieval tool stay strict.
+      - run: node scripts/ci/npm-audit-gate.mjs
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - run: npm run test:coverage
       # Verify the Monaco/Shiki keyword+type sets match the canonical
       # syntax-matrix.json in muxlang/mux-syntax-highlighting (fetched over
       # HTTPS by the script). Fails if the vendored copies drift. Runtime
@@ -81,7 +84,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22"
+          node-version: "24.21"
           cache: npm
           cache-dependency-path: workers/mux-ai/package-lock.json
       - run: npm ci --ignore-scripts
@@ -103,7 +106,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22"
+          node-version: "24.21"
           cache: npm
           cache-dependency-path: tools/docs-indexer/package-lock.json
       - run: npm ci --ignore-scripts
@@ -125,7 +128,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22"
+          node-version: "24.21"
           cache: npm
           cache-dependency-path: tools/retrieval-test/package-lock.json
       - run: npm ci --ignore-scripts
@@ -144,8 +147,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # Disable shallow clone for better analysis relevancy
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.21"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      # Coverage is generated in this job because Website Checks can stop at
+      # the dependency audit before reaching its test step.
+      - run: npm ci --ignore-scripts
+      - run: npm run test:coverage
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
+        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       # The free SonarCloud plan locks every project to the built-in "Sonar way"
