@@ -11,18 +11,18 @@
  * @returns A smart term list.
  */
 export function smartTerms(tokens) {
-    const terms = [];
-    function cutMixedWords(subTokens, carry) {
-        if (subTokens.length === 0) {
-            terms.push(carry);
-            return;
-        }
-        const token = subTokens[0];
-        const nextCarry = carry.concat({
-            value: token,
-        });
-        cutMixedWords(subTokens.slice(1), nextCarry);
+  const terms = [];
+  function cutMixedWords(subTokens, carry) {
+    if (subTokens.length === 0) {
+      terms.push(carry);
+      return;
     }
-    cutMixedWords(tokens, []);
-    return terms;
+    const token = subTokens[0];
+    const nextCarry = carry.concat({
+      value: token,
+    });
+    cutMixedWords(subTokens.slice(1), nextCarry);
+  }
+  cutMixedWords(tokens, []);
+  return terms;
 }

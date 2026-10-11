@@ -1,7 +1,6 @@
 {
   "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    "baseUrl": ".",
     "resolveJsonModule": true
   },
   "exclude": [".docusaurus", "build", "workers", "tools"]

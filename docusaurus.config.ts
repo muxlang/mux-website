@@ -1,14 +1,14 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
-import type * as Preset from '@docusaurus/preset-classic';
-import {load as loadYaml} from 'js-yaml';
-import fs from 'node:fs';
-import path from 'node:path';
+import { themes as prismThemes } from "prism-react-renderer";
+import type { Config } from "@docusaurus/types";
+import type * as Preset from "@docusaurus/preset-classic";
+import { load as loadYaml } from "js-yaml";
+import fs from "node:fs";
+import path from "node:path";
 
 // The website versions independently of the compiler; its version lives in this
 // repo's own package.json (the old monorepo root VERSION file is gone).
-const pkgPath = path.resolve(__dirname, 'package.json');
-const siteVersion = (JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as {version: string}).version;
+const pkgPath = path.resolve(__dirname, "package.json");
+const siteVersion = (JSON.parse(fs.readFileSync(pkgPath, "utf8")) as { version: string }).version;
 
 function parseFrontMatter(fileContent: string): {
   frontMatter: Record<string, unknown>;
@@ -33,9 +33,7 @@ function parseFrontMatter(fileContent: string): {
     // A caught error here means the page silently loses its title, date, tags,
     // etc, so it must not fail silently: log loudly so a malformed front
     // matter block (e.g. an unquoted ":" in a title) gets caught in review.
-    console.warn(
-      `[parseFrontMatter] Failed to parse front matter, ignoring it:\n${String(err)}`,
-    );
+    console.warn(`[parseFrontMatter] Failed to parse front matter, ignoring it:\n${String(err)}`);
     return {
       frontMatter: {},
       content: fileContent.slice(frontMatterMatch[0].length).trim(),
@@ -44,7 +42,7 @@ function parseFrontMatter(fileContent: string): {
 
   if (
     !parsedFrontMatter ||
-    typeof parsedFrontMatter !== 'object' ||
+    typeof parsedFrontMatter !== "object" ||
     Array.isArray(parsedFrontMatter)
   ) {
     return {
@@ -65,63 +63,62 @@ function navDocLink(to: string, label: string) {
   return {
     to,
     label,
-    position: 'left' as const,
-    activeBaseRegex: `${to.replace(/\/$/, '')}/?$`,
+    position: "left" as const,
+    activeBaseRegex: `${to.replace(/\/$/, "")}/?$`,
   };
 }
 
 const config: Config = {
-  title: 'Mux',
-  tagline: 'A Programming Language For The People',
-  favicon: 'img/mux-logo.png',
+  title: "Mux",
+  tagline: "A Programming Language For The People",
+  favicon: "img/mux-logo.png",
 
   future: {
     v4: true,
   },
 
   markdown: {
-    parseFrontMatter: async ({fileContent}) => parseFrontMatter(fileContent),
+    parseFrontMatter: async ({ fileContent }) => parseFrontMatter(fileContent),
   },
 
-  url: 'https://mux-lang.dev/',
-  baseUrl: '/',
+  url: "https://mux-lang.dev/",
+  baseUrl: "/",
   trailingSlash: true,
 
-  organizationName: 'muxlang',
-  projectName: 'mux-website',
+  organizationName: "muxlang",
+  projectName: "mux-website",
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: "throw",
 
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: "en",
+    locales: ["en"],
   },
 
   presets: [
     [
-      'classic',
+      "classic",
       {
         docs: {
-          sidebarPath: './sidebars.ts',
-          editUrl:
-            'https://github.com/derekcorniello/mux-lang/tree/main/mux-website/',
+          sidebarPath: "./sidebars.ts",
+          editUrl: "https://github.com/derekcorniello/mux-lang/tree/main/mux-website/",
         },
         blog: {
-          path: 'blog',
-          routeBasePath: 'blog',
-          blogTitle: 'Blog',
-          blogDescription: 'Updates, announcements, and deep dives on Mux',
+          path: "blog",
+          routeBasePath: "blog",
+          blogTitle: "Blog",
+          blogDescription: "Updates, announcements, and deep dives on Mux",
           blogSidebarCount: 10,
-          authorsMapPath: 'authors.yml',
+          authorsMapPath: "authors.yml",
           showReadingTime: true,
           postsPerPage: 5,
           feedOptions: {
-            type: 'all',
+            type: "all",
             copyright: `Copyright © ${new Date().getFullYear()} Derek Corniello`,
           },
         },
         theme: {
-          customCss: './src/css/custom.css',
+          customCss: "./src/css/custom.css",
         },
       } satisfies Preset.Options,
     ],
@@ -129,10 +126,9 @@ const config: Config = {
 
   plugins: [
     [
-      '@muxlang/docusaurus-search-local',
+      "@muxlang/docusaurus-search-local",
       {
         hashed: true,
-        language: ['en'],
         indexBlog: false,
         highlightSearchTermsOnTargetPage: true,
       },
@@ -140,9 +136,9 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/mux-social-card.png',
+    image: "img/mux-social-card.png",
     colorMode: {
-      defaultMode: 'light',
+      defaultMode: "light",
       disableSwitch: false,
     },
     docs: {
@@ -151,27 +147,27 @@ const config: Config = {
       },
     },
     navbar: {
-      title: 'Mux',
+      title: "Mux",
       logo: {
-        alt: 'Mux Logo',
-        src: 'img/mux-logo.png',
+        alt: "Mux Logo",
+        src: "img/mux-logo.png",
       },
       items: [
-        navDocLink('/docs/', 'Documentation'),
-        navDocLink('/docs/getting-started/quick-start', 'Quick Start'),
-        navDocLink('/docs/examples', 'Examples'),
-        navDocLink('/docs/tour', 'Tour'),
-        navDocLink('/playground', 'Playground'),
-        navDocLink('/blog', 'Blog'),
-        navDocLink('/changelog', 'Changelog'),
+        navDocLink("/docs/", "Documentation"),
+        navDocLink("/docs/getting-started/quick-start", "Quick Start"),
+        navDocLink("/docs/examples", "Examples"),
+        navDocLink("/docs/tour", "Tour"),
+        navDocLink("/playground", "Playground"),
+        navDocLink("/blog", "Blog"),
+        navDocLink("/changelog", "Changelog"),
         {
-          type: 'search',
-          position: 'right',
+          type: "search",
+          position: "right",
         },
       ],
     },
     footer: {
-      style: 'dark',
+      style: "dark",
       links: [],
       copyright: `<p>Copyright © ${new Date().getFullYear()} Derek Corniello. Licensed under MIT.</p>
         <p>Website version: ${siteVersion}</p><br>
@@ -187,8 +183,8 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
   customFields: {
     version: siteVersion,
-    apiUrl: process.env.MUX_API_URL ?? 'https://mux-ai.corniedj.workers.dev',
-    aiApiUrl: process.env.MUX_AI_API_URL ?? 'https://mux-ai.corniedj.workers.dev',
+    apiUrl: process.env.MUX_API_URL ?? "https://mux-ai.corniedj.workers.dev",
+    aiApiUrl: process.env.MUX_AI_API_URL ?? "https://mux-ai.corniedj.workers.dev",
   },
 };
 

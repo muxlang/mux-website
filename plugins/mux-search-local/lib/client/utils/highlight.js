@@ -9,25 +9,23 @@ import { escapeHtml } from "./escapeHtml";
  * @returns A html string with marked tokens.
  */
 export function highlight(content, tokens, forceMatched) {
-    const html = [];
-    for (const token of tokens) {
-        const index = content.toLowerCase().indexOf(token);
-        if (index >= 0) {
-            if (index > 0) {
-                html.push(highlight(content.substr(0, index), tokens));
-            }
-            html.push(`<mark>${escapeHtml(content.substr(index, token.length))}</mark>`);
-            const end = index + token.length;
-            if (end < content.length) {
-                html.push(highlight(content.substr(end), tokens));
-            }
-            break;
-        }
+  const html = [];
+  for (const token of tokens) {
+    const index = content.toLowerCase().indexOf(token);
+    if (index >= 0) {
+      if (index > 0) {
+        html.push(highlight(content.substr(0, index), tokens));
+      }
+      html.push(`<mark>${escapeHtml(content.substr(index, token.length))}</mark>`);
+      const end = index + token.length;
+      if (end < content.length) {
+        html.push(highlight(content.substr(end), tokens));
+      }
+      break;
     }
-    if (html.length === 0) {
-        return forceMatched
-            ? `<mark>${escapeHtml(content)}</mark>`
-            : escapeHtml(content);
-    }
-    return html.join("");
+  }
+  if (html.length === 0) {
+    return forceMatched ? `<mark>${escapeHtml(content)}</mark>` : escapeHtml(content);
+  }
+  return html.join("");
 }

@@ -20,7 +20,8 @@ html[data-theme="dark"] {
 }
 
 .searchModalContainer {
-  box-shadow: rgba(255, 255, 255, 0.5) 1px 1px 0px 0px inset,
+  box-shadow:
+    rgba(255, 255, 255, 0.5) 1px 1px 0px 0px inset,
     rgb(85, 90, 100) 0px 3px 8px 0px;
   background: var(--ifm-background-surface-color);
   position: relative;

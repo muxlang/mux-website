@@ -6,6 +6,6 @@
  * @returns Tokens.
  */
 export function tokenize(text) {
-    const regExpMatchWords = /[^-\s]+/g;
-    return text.toLowerCase().match(regExpMatchWords) || [];
+  const regExpMatchWords = /[^-\s]+/g;
+  return text.toLowerCase().match(regExpMatchWords) || [];
 }
