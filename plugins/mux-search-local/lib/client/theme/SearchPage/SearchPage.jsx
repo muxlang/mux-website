@@ -37,6 +37,12 @@ export default function SearchPage() {
         : translations.search_the_documentation,
     [searchQuery, translations.search_results_for, translations.search_the_documentation],
   );
+  const noResultsMessage =
+    process.env.NODE_ENV === "production" ? (
+      <p>{translations.no_documents_were_found}</p>
+    ) : (
+      <p>⚠️ The search index is only available when you run docusaurus build!</p>
+    );
   useEffect(() => {
     updateSearchPath(searchQuery);
     if (searchSource) {
@@ -57,17 +63,21 @@ export default function SearchPage() {
   }, []);
   useEffect(() => {
     async function doFetchIndexes() {
-      const { wrappedIndexes } = await fetchIndexes(baseUrl, indexHash);
-      setSearchSource(() =>
-        SearchSourceFactory({
-          wrappedIndexes,
-          removeDefaultStopWordFilter,
-          resultsLimit: 100,
-          onResults: SearchAnalyticsFactory(),
-        }),
-      );
+      try {
+        const { wrappedIndexes } = await fetchIndexes(baseUrl, indexHash);
+        setSearchSource(() =>
+          SearchSourceFactory({
+            wrappedIndexes,
+            removeDefaultStopWordFilter,
+            resultsLimit: 100,
+            onResults: SearchAnalyticsFactory(),
+          }),
+        );
+      } catch (error) {
+        console.warn(`Unable to initialize search index from ${baseUrl}`, error);
+      }
     }
-    doFetchIndexes();
+    void doFetchIndexes();
   }, [baseUrl, indexHash, removeDefaultStopWordFilter]);
   return (
     <Layout>
@@ -91,7 +101,6 @@ export default function SearchPage() {
             onChange={handleSearchInputChange}
             value={searchQuery}
             autoComplete="off"
-            autoFocus
           />
 
           {!searchSource && searchQuery && (
@@ -112,10 +121,8 @@ export default function SearchPage() {
                   },
                 )}
               </p>
-            ) : process.env.NODE_ENV === "production" ? (
-              <p>{translations.no_documents_were_found}</p>
             ) : (
-              <p>⚠️ The search index is only available when you run docusaurus build!</p>
+              noResultsMessage
             ))}
 
           <section>
@@ -149,7 +156,7 @@ function SearchResultItem({ searchResult: { document, type, page, tokens, metada
           }}
         ></Link>
       </h2>
-      {pathItems.length > 0 && (
+      {pathItems?.length > 0 && (
         <p className={styles.searchResultItemPath}>{pathItems.join(" › ")}</p>
       )}
       {isContent && (

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPluginConfig = getPluginConfig;
 const tslib_1 = require("tslib");
-const path_1 = tslib_1.__importDefault(require("path"));
+const path_1 = tslib_1.__importDefault(require("node:path"));
 function getArrayOption(value) {
   return Array.isArray(value) ? value : [value];
 }

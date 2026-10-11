@@ -3,5 +3,5 @@
   "compilerOptions": {
     "resolveJsonModule": true
   },
-  "exclude": [".docusaurus", "build", "workers", "tools"]
+  "exclude": [".docusaurus", "build", "coverage", "workers", "tools"]
 }

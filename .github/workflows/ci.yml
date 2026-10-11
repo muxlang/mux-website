@@ -62,7 +62,7 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - run: npm run test:coverage
       # Verify the Monaco/Shiki keyword+type sets match the canonical
       # syntax-matrix.json in muxlang/mux-syntax-highlighting (fetched over
       # HTTPS by the script). Fails if the vendored copies drift. Runtime
@@ -144,6 +144,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # Disable shallow clone for better analysis relevancy
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.21"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      # Coverage is generated in this job because Website Checks can stop at
+      # the dependency audit before reaching its test step.
+      - run: npm ci --ignore-scripts
+      - run: npm run test:coverage
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         env:

@@ -11,12 +11,11 @@ function buildIndex(allDocuments) {
       this.field("t");
       this.metadataWhitelist = ["position"];
       documents.forEach((doc) => {
-        this.add(
-          Object.assign(Object.assign({}, doc), {
-            // The ref must be a string.
-            i: doc.i.toString(),
-          }),
-        );
+        this.add({
+          ...doc,
+          // The ref must be a string.
+          i: doc.i.toString(),
+        });
       });
     }),
   }));

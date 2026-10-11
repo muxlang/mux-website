@@ -7,9 +7,9 @@ export function _resetCache() {
 }
 export function SearchAnalyticsFactory() {
   if (!cached) {
-    if (typeof _paq !== "undefined" && _paq && _paq?.push) {
+    if (globalThis._paq?.push) {
       cached = function searchAnalytics(query, results) {
-        _paq.push([
+        globalThis._paq.push([
           "trackSiteSearch",
           query, // Search keyword searched for
           false, // Search category selected in your search engine. If you do not need this, set to false
@@ -17,16 +17,16 @@ export function SearchAnalyticsFactory() {
         ]);
       };
     }
-    if (typeof gtag !== "undefined" && typeof gtag === "function") {
+    if (typeof globalThis.gtag === "function") {
       cached = function searchAnalytics(query) {
-        gtag("event", "search", {
+        globalThis.gtag("event", "search", {
           search_term: query,
         });
       };
     }
-    if (typeof appInsights !== "undefined") {
+    if (globalThis.appInsights) {
       cached = function searchAnalytics(query) {
-        appInsights.trackEvent({
+        globalThis.appInsights.trackEvent({
           name: "search",
           properties: {
             search_term: query,

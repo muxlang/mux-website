@@ -6,8 +6,9 @@ import { smartTerms } from "./smartTerms";
  *
  * @returns A smart query list.
  */
-export function smartQueries(tokens, queryOptions = { removeDefaultStopWordFilter: false }) {
+export function smartQueries(tokens, queryOptions = {}) {
   const { removeDefaultStopWordFilter } = queryOptions;
+  if (tokens.length === 0) return [];
   const terms = smartTerms(tokens);
   if (terms.length === 0) {
     // There are no matched terms.
@@ -27,43 +28,29 @@ export function smartQueries(tokens, queryOptions = { removeDefaultStopWordFilte
   for (const term of terms) {
     term[term.length - 1].maybeTyping = true;
   }
-  // Try to append terms without stop words,
-  // since they are removed in the index.
-  const stopWordPipelines = [];
-  if (!removeDefaultStopWordFilter) {
-    stopWordPipelines.unshift(lunr.stopWordFilter);
-  }
-  let refinedTerms;
-  if (stopWordPipelines.length > 0) {
-    const pipe = (term) =>
-      stopWordPipelines.reduce((term, p) => term.filter((item) => p(item.value)), term);
-    refinedTerms = [];
-    const newTerms = [];
-    for (const term of terms) {
-      const filteredTerm = pipe(term);
-      refinedTerms.push(filteredTerm);
-      // Add extra terms only if some stop words are removed,
-      // and some non-stop-words exist too.
-      if (filteredTerm.length < term.length && filteredTerm.length > 0) {
-        newTerms.push(filteredTerm);
-      }
-    }
-    terms.push(...newTerms);
-  } else {
-    refinedTerms = terms.slice();
-  }
-  // Also try to add extra terms which miss one of the searched tokens,
-  // when the term contains 3 or more tokens,
-  // to improve the search precision.
-  const extraTerms = [];
-  for (const term of refinedTerms) {
-    if (term.length > 2) {
-      for (let i = term.length - 1; i >= 0; i -= 1) {
-        extraTerms.push(term.slice(0, i).concat(term.slice(i + 1)));
-      }
-    }
-  }
+  const refinedTerms = getTermsWithoutStopWords(terms, removeDefaultStopWordFilter);
+  const extraTerms = getTermsMissingOneToken(refinedTerms);
   return getQueriesMaybeTyping(terms).concat(getQueriesMaybeTyping(extraTerms));
+}
+function getTermsWithoutStopWords(terms, removeDefaultStopWordFilter) {
+  if (removeDefaultStopWordFilter) return terms.slice();
+
+  const refinedTerms = [];
+  const additionalTerms = [];
+  for (const term of terms) {
+    const filteredTerm = term.filter((item) => lunr.stopWordFilter(item.value));
+    refinedTerms.push(filteredTerm);
+    if (filteredTerm.length > 0 && filteredTerm.length < term.length) {
+      additionalTerms.push(filteredTerm);
+    }
+  }
+  terms.push(...additionalTerms);
+  return refinedTerms;
+}
+function getTermsMissingOneToken(terms) {
+  return terms
+    .filter((term) => term.length > 2)
+    .flatMap((term) => term.map((_, index) => term.slice(0, index).concat(term.slice(index + 1))));
 }
 function getQueriesMaybeTyping(terms) {
   return termsToQueries(terms).concat(
@@ -86,9 +73,11 @@ function termsToQueries(terms, maybeTyping) {
       presence: lunr.Query.presence.REQUIRED,
       // The last token of a term maybe incomplete while user is typing.
       // So append more queries with trailing wildcard added.
-      wildcard: (maybeTyping ? item.trailing || item.maybeTyping : item.trailing)
-        ? lunr.Query.wildcard.TRAILING
-        : lunr.Query.wildcard.NONE,
+      wildcard: getWildcard(item, maybeTyping),
     })),
   }));
+}
+function getWildcard(item, maybeTyping) {
+  const shouldUseTrailingWildcard = maybeTyping ? item.trailing || item.maybeTyping : item.trailing;
+  return shouldUseTrailingWildcard ? lunr.Query.wildcard.TRAILING : lunr.Query.wildcard.NONE;
 }

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processDocInfos = processDocInfos;
 const tslib_1 = require("tslib");
-const path_1 = tslib_1.__importDefault(require("path"));
+const path_1 = tslib_1.__importDefault(require("node:path"));
 function processDocInfos(
   { routesPaths, outDir, baseUrl, siteConfig },
   { indexDocs, indexBlog, indexPages, docsRouteBasePath, blogRouteBasePath, ignoreFiles },
@@ -52,7 +52,6 @@ function processDocInfos(
       if (indexPages) {
         return { route, url, type: "page" };
       }
-      return;
     })
     .filter(Boolean)
     .map(({ route, url, type }) => ({

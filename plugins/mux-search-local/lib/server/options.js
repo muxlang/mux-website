@@ -84,10 +84,10 @@ exports.OptionsSchema = utils_validation_1.Joi.object({
       exports.DEFAULT_OPTIONS.translations.search_the_documentation,
     ),
     count_documents_found_plural: utils_validation_1.Joi.string().default((parent) => {
-      var _a;
-      return (_a = parent.count_documents_found) !== null && _a !== void 0
-        ? _a
-        : exports.DEFAULT_OPTIONS.translations.count_documents_found_plural;
+      return (
+        parent.count_documents_found ??
+        exports.DEFAULT_OPTIONS.translations.count_documents_found_plural
+      );
     }),
     count_documents_found: utils_validation_1.Joi.string().default(
       exports.DEFAULT_OPTIONS.translations.count_documents_found,

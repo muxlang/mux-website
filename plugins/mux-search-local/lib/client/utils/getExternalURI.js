@@ -1,7 +1,7 @@
 import { sanitizeUrl } from "@braintree/sanitize-url";
 const END_SLASH_PATTERN = /\/$/;
 const START_SLASH_PATTERN = /^\//;
-const PROTOCOL_PATTERN = /^http[s]?:\/\//;
+const PROTOCOL_PATTERN = /^https?:\/\//;
 function isBaseOverlapping(baseParts, routeParts) {
   const base = baseParts.join("");
   const route = routeParts.join("");

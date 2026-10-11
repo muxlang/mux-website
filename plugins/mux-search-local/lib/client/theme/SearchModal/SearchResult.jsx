@@ -69,7 +69,7 @@ const SearchResult = (props) => {
     history.push(url);
     onClick();
   };
-  // TODO: figure out if this is necessary at all. OnClick happens for on the element and shouldnt ever propogate down here.
+  // Navigate when the highlighted result is confirmed by the keyboard handler.
   if (isSelected && isHovered) {
     // reset the selected as we are going to navigate
     setSelected(undefined);
@@ -77,8 +77,12 @@ const SearchResult = (props) => {
   }
   const { u } = document;
   const url = sanitizeUrl(u);
+  let HitIcon = IconContent;
+  if (isTitle) HitIcon = IconTitle;
+  else if (isHeading) HitIcon = IconHeading;
   return (
-    <div
+    <button
+      type="button"
       className={clsx(styles.searchResult, isHovered ? styles.cursor : "")}
       onMouseEnter={() => setHovered(searchResult)}
       onMouseLeave={() => setHovered(undefined)}
@@ -92,7 +96,7 @@ const SearchResult = (props) => {
         ""
       )}
       <span className={styles.hitIcon}>
-        {isTitle ? <IconTitle /> : isHeading ? <IconHeading /> : <IconContent />}
+        <HitIcon />
       </span>
       <span className={styles.hitWrapper}>
         <span
@@ -136,7 +140,7 @@ const SearchResult = (props) => {
       ) : (
         <IconExternalLink height={15} width={15} />
       )}
-    </div>
+    </button>
   );
 };
 export default SearchResult;

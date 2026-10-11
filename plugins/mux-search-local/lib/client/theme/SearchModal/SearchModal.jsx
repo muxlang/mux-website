@@ -6,6 +6,7 @@ import Link from "@docusaurus/Link";
 import { fetchIndexes } from "../../utils/fetchIndexes";
 import { SearchSourceFactory } from "../../utils/SearchSourceFactory";
 import { SearchAnalyticsFactory } from "../../utils/SearchAnalyticsFactory";
+import { loadExternalSearchSources } from "../../utils/loadExternalSearchSources";
 import LoadingRing from "../LoadingRing/LoadingRing";
 import { IconSearch } from "./icons";
 import SearchResultList from "./SearchResultList";
@@ -30,7 +31,7 @@ const useKeyPress = function (targetKey, ref) {
       ref.current?.removeEventListener("keydown", downHandler);
       ref.current?.removeEventListener("keyup", upHandler);
     };
-  });
+  }, [ref, targetKey]);
   return keyPressed;
 };
 const SearchModal = ({ onClose }) => {
@@ -100,42 +101,39 @@ const SearchModal = ({ onClose }) => {
   }, [searchQuery, searchSource]);
   useEffect(() => {
     async function doFetchIndexes() {
-      const { wrappedIndexes } = await fetchIndexes(baseUrl, indexHash);
-      setSearchSource(() =>
-        SearchSourceFactory({
-          wrappedIndexes,
-          removeDefaultStopWordFilter,
-          resultsLimit: searchResultLimits,
-          onResults: SearchAnalyticsFactory(),
-        }),
-      );
+      try {
+        const { wrappedIndexes } = await fetchIndexes(baseUrl, indexHash);
+        setSearchSource(() =>
+          SearchSourceFactory({
+            wrappedIndexes,
+            removeDefaultStopWordFilter,
+            resultsLimit: searchResultLimits,
+            onResults: SearchAnalyticsFactory(),
+          }),
+        );
+      } catch (error) {
+        console.warn(`Unable to initialize search index from ${baseUrl}`, error);
+      }
     }
-    doFetchIndexes();
+    void doFetchIndexes();
   }, [baseUrl]);
   useEffect(() => {
     async function fetchExternalSources() {
-      const _externalSearchSources = [];
-      externalSourceConfigs.forEach(async (externalSourceConfig) => {
-        try {
-          const { wrappedIndexes } = await fetchIndexes(externalSourceConfig.uri);
-          _externalSearchSources.push({
-            ...externalSourceConfig,
-            search: SearchSourceFactory({
-              wrappedIndexes,
-              removeDefaultStopWordFilter,
-              resultsLimit: searchResultLimits,
-              onResults: SearchAnalyticsFactory(),
-            }),
-          });
-        } catch {
-          console.warn(
-            `Unable to fetch search index for ${externalSourceConfig.heading} from: ${externalSourceConfig.uri}`,
-          );
-        }
+      const loadedSources = await loadExternalSearchSources(externalSourceConfigs, {
+        fetchIndexes,
+        createSearchSource: (wrappedIndexes) =>
+          SearchSourceFactory({
+            wrappedIndexes,
+            removeDefaultStopWordFilter,
+            resultsLimit: searchResultLimits,
+            onResults: SearchAnalyticsFactory(),
+          }),
       });
-      setExternalSearchSources(_externalSearchSources);
+      setExternalSearchSources(loadedSources);
     }
-    fetchExternalSources();
+    void fetchExternalSources().catch((error) => {
+      console.warn("Unable to initialize external search indexes", error);
+    });
   }, [externalSourceConfigs, removeDefaultStopWordFilter, searchResultLimits]);
   useEffect(() => {
     if (searchQuery === "") {
@@ -158,8 +156,15 @@ const SearchModal = ({ onClose }) => {
     setExternalSearchResults(_externalSearchResults);
   }, [searchQuery, externalSearchSources]);
   return (
-    <div
+    <dialog
+      open
+      aria-modal="true"
+      aria-label="Search documentation"
+      tabIndex={-1}
       className={styles.searchModal}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onClose();
+      }}
       onClick={(ev) => {
         if (ev.target === searchModal.current) {
           onClose();
@@ -184,7 +189,6 @@ const SearchModal = ({ onClose }) => {
             ref={searchInput}
             value={searchQuery}
             autoComplete="off"
-            autoFocus
           />
         </div>
         {!searchSource && searchQuery && (
@@ -217,10 +221,10 @@ const SearchModal = ({ onClose }) => {
             </SearchResultsSection>
           )}
 
-          {externalSearchResults.map((esr, idx) => {
+          {externalSearchResults.map((esr) => {
             const t = (
               <SearchResultsSection
-                key={idx}
+                key={esr.uri}
                 heading={esr.heading}
                 headingLink={esr.uri}
                 sectionQuery={searchQuery}
@@ -250,7 +254,7 @@ const SearchModal = ({ onClose }) => {
           )}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };
 export default SearchModal;

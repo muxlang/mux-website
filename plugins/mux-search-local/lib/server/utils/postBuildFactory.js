@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.postBuildFactory = postBuildFactory;
 const tslib_1 = require("tslib");
-const fs_1 = tslib_1.__importDefault(require("fs"));
-const path_1 = tslib_1.__importDefault(require("path"));
-const util_1 = tslib_1.__importDefault(require("util"));
+const fs_1 = tslib_1.__importDefault(require("node:fs"));
+const path_1 = tslib_1.__importDefault(require("node:path"));
+const util_1 = tslib_1.__importDefault(require("node:util"));
 const buildIndex_1 = require("./buildIndex");
 const debug_1 = require("./debug");
 const processDocInfos_1 = require("./processDocInfos");

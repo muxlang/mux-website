@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getIndexHash = getIndexHash;
 const tslib_1 = require("tslib");
-const crypto_1 = tslib_1.__importDefault(require("crypto"));
-const fs_1 = tslib_1.__importDefault(require("fs"));
-const path_1 = tslib_1.__importDefault(require("path"));
+const crypto_1 = tslib_1.__importDefault(require("node:crypto"));
+const fs_1 = tslib_1.__importDefault(require("node:fs"));
+const path_1 = tslib_1.__importDefault(require("node:path"));
 const klaw_sync_1 = tslib_1.__importDefault(require("klaw-sync"));
 const debug_1 = require("./debug");
 function getIndexHash(config) {

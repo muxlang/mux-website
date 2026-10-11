@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateOptions = void 0;
 exports.default = DocusaurusSearchLocalPlugin;
 const tslib_1 = require("tslib");
-const path_1 = tslib_1.__importDefault(require("path"));
+const path_1 = tslib_1.__importDefault(require("node:path"));
 const utils_1 = require("@docusaurus/utils");
 const validate_peer_dependencies_1 = tslib_1.__importDefault(require("validate-peer-dependencies"));
 const getPluginConfig_1 = require("./utils/getPluginConfig");
@@ -35,7 +35,7 @@ function DocusaurusSearchLocalPlugin(context, options) {
     },
   };
 }
-var options_1 = require("./options");
+const options_1 = require("./options");
 Object.defineProperty(exports, "validateOptions", {
   enumerable: true,
   get: function () {
