@@ -55,4 +55,68 @@ describe("SearchPage", () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it("renders title, heading, and content results with their destination paths", async () => {
+    const stemmedMetadata = { title: { t: { position: [[0, 3]] } } };
+    mocks.searchFactory.mockImplementation(
+      () => (_query, callback) =>
+        callback([
+          {
+            document: {
+              i: "title",
+              u: "/guide",
+              h: "#intro",
+              b: ["Guide"],
+              t: "Mux Guide",
+              metadata: stemmedMetadata,
+            },
+            type: 0,
+            tokens: ["Mux"],
+            metadata: stemmedMetadata,
+          },
+          {
+            document: {
+              i: "heading",
+              u: "/guide",
+              h: "#install",
+              b: ["Guide"],
+              t: "Mux Guide",
+              metadata: stemmedMetadata,
+            },
+            type: 1,
+            page: { b: ["Docs"], t: "Install" },
+            tokens: ["Mux"],
+            metadata: stemmedMetadata,
+          },
+          {
+            document: {
+              i: "content",
+              u: "/guide",
+              h: "#usage",
+              b: ["Guide"],
+              t: "Mux Guide",
+              s: "Mux content",
+              metadata: stemmedMetadata,
+            },
+            type: 2,
+            page: { b: ["Docs"], t: "Usage" },
+            tokens: ["Mux"],
+            metadata: stemmedMetadata,
+          },
+        ]),
+    );
+
+    const { container } = render(<SearchPage />);
+
+    expect(await screen.findByText("3 results")).toBeInTheDocument();
+    expect(screen.getAllByText("Guide")).toHaveLength(2);
+    expect(screen.getByText("Docs › Install")).toBeInTheDocument();
+    expect(screen.getByText("Docs › Usage")).toBeInTheDocument();
+    expect(container.querySelector('a[href="/guide#usage"]')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, element) => element.tagName === "P" && element.textContent === "Mux Guide",
+      ),
+    ).toBeInTheDocument();
+  });
 });
