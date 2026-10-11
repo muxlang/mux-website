@@ -58,7 +58,12 @@ jobs:
           fi
           echo "MUX_SYNTAX_MATRIX_URL=https://raw.githubusercontent.com/muxlang/mux-syntax-highlighting/${syntax_ref}/shared/syntax-matrix.json" >> "$GITHUB_ENV"
       - run: npm ci --ignore-scripts
-      - run: npm audit --audit-level=high
+      - name: Test the root website audit exception
+        run: node --test scripts/ci/npm-audit-gate.test.mjs
+      # GHSA-vfj7-8cjw-p6xm has no patched release for the current Docusaurus
+      # dependency tree. Allow only that high-severity advisory in the site
+      # package. Audits for the Worker, indexer, and retrieval tool stay strict.
+      - run: node scripts/ci/npm-audit-gate.mjs
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
