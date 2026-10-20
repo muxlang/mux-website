@@ -329,6 +329,7 @@ Mux is in active development. The language specification, compiler, and tooling 
 
 ### Getting Started
 - Quick Start Guide: /docs/getting-started/quick-start
+- Language Server: /docs/getting-started/lsp
 - Why Mux?: /docs/getting-started/why-mux
 
 ### Language Guide
