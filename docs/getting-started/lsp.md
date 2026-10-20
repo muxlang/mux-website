@@ -25,7 +25,7 @@ be available after that release; editor clients may expose different subsets.
 
 ## VS Code
 
-The maintained `muxlang.language-mux` extension starts `mux lsp` automatically.
+The maintained `mux-lang.language-mux` extension starts `mux lsp` automatically.
 Its v0.13.0 registry release is still pending; until then, use the
 [source installation steps](https://github.com/muxlang/mux-syntax-highlighting/blob/main/INSTALL.md#vscode).
 If the compiler is not on `PATH`, set `mux.serverPath` to the full path of the
@@ -62,6 +62,8 @@ args = ["lsp"]
 
 [[language]]
 name = "mux"
+scope = "source.mux"
+file-types = ["mux"]
 language-servers = ["mux-lsp"]
 roots = ["mux-project.json", ".git"]
 ```

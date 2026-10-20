@@ -14,6 +14,7 @@ const SIDEBAR_SECTIONS: Record<string, string> = {
 
   "getting-started/why-mux": "Getting Started",
   "getting-started/quick-start": "Getting Started",
+  "getting-started/lsp": "Getting Started",
 
   tour: "Tour of Mux",
   "tour/hello-world": "Tour of Mux",

@@ -196,6 +196,8 @@ The language-server entry works with the released compiler's `mux lsp` command.
 
 ## LSP
 
+See the [Language Server guide](./getting-started/lsp.md) for a feature overview and setup instructions for VS Code, Neovim, Helix, and other LSP clients.
+
 Compiler v0.13.0 and later include `mux lsp` over stdio. Install the compiler
 using the standard Mux installation instructions. The VS Code extension and
 Neovim plugin start the server automatically when they open a Mux file.
