@@ -57,6 +57,7 @@ describe('PlaygroundOutput', () => {
     expect(screen.getByText('finished early')).toBeInTheDocument();
 
     rerender(<PlaygroundOutput value="short request" loading error={null} />);
+    expect(screen.getByText('Running...')).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(1000));
     rerender(<PlaygroundOutput value="completed quickly" loading={false} error={null} />);
     act(() => vi.advanceTimersByTime(3000));
