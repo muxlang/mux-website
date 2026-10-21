@@ -35,12 +35,8 @@ describe('PlaygroundOutput', () => {
     expect(screen.getByText('Running...')).toBeInTheDocument();
     expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
 
-    act(() => vi.advanceTimersByTime(2999));
+    act(() => vi.advanceTimersByTime(2000));
     expect(screen.getByText('Running...')).toBeInTheDocument();
-    act(() => vi.advanceTimersByTime(1));
-    expect(screen.getByText(/Starting the server, this can take up to a minute/)).toBeInTheDocument();
-    expect(screen.queryByText('ignored')).not.toBeInTheDocument();
-
     rerender(<PlaygroundOutput value="result" loading={false} error={null} />);
     expect(screen.getByText('result')).toBeInTheDocument();
     expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
@@ -49,10 +45,23 @@ describe('PlaygroundOutput', () => {
     expect(screen.getByText('Running...')).toBeInTheDocument();
     expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
 
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByText('Running...')).toBeInTheDocument();
+    expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(2000));
+    expect(screen.getByText(/Starting the server, this can take up to a minute/)).toBeInTheDocument();
+    expect(screen.queryByText('next request')).not.toBeInTheDocument();
+
     rerender(<PlaygroundOutput value="finished early" loading={false} error={null} />);
+    expect(screen.getByText('finished early')).toBeInTheDocument();
+
+    rerender(<PlaygroundOutput value="short request" loading error={null} />);
+    act(() => vi.advanceTimersByTime(1000));
+    rerender(<PlaygroundOutput value="completed quickly" loading={false} error={null} />);
     act(() => vi.advanceTimersByTime(3000));
 
-    expect(screen.getByText('finished early')).toBeInTheDocument();
+    expect(screen.getByText('completed quickly')).toBeInTheDocument();
     expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
   });
 });
