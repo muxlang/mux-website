@@ -1,7 +1,7 @@
 import * as React from "react";
 export function IconTitle() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20">
       <path
         d="M17 6v12c0 .52-.2 1-1 1H4c-.7 0-1-.33-1-1V2c0-.55.42-1 1-1h8l5 5zM14 8h-3.13c-.51 0-.87-.34-.87-.87V4"
         stroke="currentColor"
@@ -14,7 +14,7 @@ export function IconTitle() {
 }
 export function IconHeading() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20">
       <path
         d="M13 13h4-4V8H7v5h6v4-4H7V8H3h4V3v5h6V3v5h4-4v5zm-6 0v4-4H3h4z"
         stroke="currentColor"
@@ -28,7 +28,7 @@ export function IconHeading() {
 }
 export function IconContent() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20">
       <path
         d="M17 5H3h14zm0 5H3h14zm0 5H3h14z"
         stroke="currentColor"
@@ -41,7 +41,7 @@ export function IconContent() {
 }
 export function IconAction() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20">
       <g
         stroke="currentColor"
         fill="none"
@@ -58,6 +58,7 @@ export function IconAction() {
 export function IconNoResults() {
   return (
     <svg
+      aria-hidden="true"
       width="40"
       height="40"
       viewBox="0 0 20 20"
@@ -73,7 +74,7 @@ export function IconNoResults() {
 }
 export function IconTreeInter() {
   return (
-    <svg viewBox="0 0 24 54">
+    <svg aria-hidden="true" viewBox="0 0 24 54">
       <g
         stroke="currentColor"
         fill="none"
@@ -88,7 +89,7 @@ export function IconTreeInter() {
 }
 export function IconTreeLast() {
   return (
-    <svg viewBox="0 0 24 54">
+    <svg aria-hidden="true" viewBox="0 0 24 54">
       <g
         stroke="currentColor"
         fill="none"
@@ -103,7 +104,7 @@ export function IconTreeLast() {
 }
 export function IconSearch({ className }) {
   return (
-    <svg width="20" height="20" className={className} viewBox="0 0 20 20">
+    <svg aria-hidden="true" width="20" height="20" className={className} viewBox="0 0 20 20">
       <path
         d="M14.386 14.386l4.0877 4.0877-4.0877-4.0877c-2.9418 2.9419-7.7115 2.9419-10.6533 0-2.9419-2.9418-2.9419-7.7115 0-10.6533 2.9418-2.9419 7.7115-2.9419 10.6533 0 2.9419 2.9418 2.9419 7.7115 0 10.6533z"
         stroke="currentColor"
