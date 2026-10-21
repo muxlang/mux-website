@@ -26,8 +26,14 @@ changing language behavior or a cross-repository generated artifact.
 Run `npm run lint`, `npm run typecheck`, and `npm run build`. For related work,
 also run the Worker, docs-indexer, retrieval-tool, and docs-snippet checks named
 in the repository workflows under [`.github/workflows/`](.github/workflows/).
+The pre-commit hook runs lint, typecheck, and syntax parity. CI runs the website
+tests once in their own job, uploads the LCOV report, and passes that report to
+SonarQube. The required Website Checks status combines the quality and test
+jobs, which can run in parallel.
 
 ## Documentation
 
 See [`README.md`](README.md) and the component READMEs under `workers/` and
-`tools/`.
+`tools/`. See the
+[cross-repo testing policy](https://github.com/muxlang/mux-context/blob/main/docs/testing-policy.md)
+for shared guidance on local hooks and CI coverage.

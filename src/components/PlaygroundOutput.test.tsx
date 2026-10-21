@@ -28,9 +28,9 @@ describe('PlaygroundOutput', () => {
     expect(screen.getByText('(no output)')).toBeInTheDocument();
   });
 
-  it('shows the cold-start explanation only after the loading threshold', () => {
+  it('shows and resets the cold-start explanation across loading requests', () => {
     vi.useFakeTimers();
-    render(<PlaygroundOutput value="ignored" loading error={null} />);
+    const { rerender } = render(<PlaygroundOutput value="ignored" loading error={null} />);
 
     expect(screen.getByText('Running...')).toBeInTheDocument();
     expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
@@ -40,16 +40,19 @@ describe('PlaygroundOutput', () => {
     act(() => vi.advanceTimersByTime(1));
     expect(screen.getByText(/Starting the server, this can take up to a minute/)).toBeInTheDocument();
     expect(screen.queryByText('ignored')).not.toBeInTheDocument();
-  });
-
-  it('cancels the cold-start transition when loading finishes', () => {
-    vi.useFakeTimers();
-    const { rerender } = render(<PlaygroundOutput value="result" loading error={null} />);
 
     rerender(<PlaygroundOutput value="result" loading={false} error={null} />);
+    expect(screen.getByText('result')).toBeInTheDocument();
+    expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
+
+    rerender(<PlaygroundOutput value="next request" loading error={null} />);
+    expect(screen.getByText('Running...')).toBeInTheDocument();
+    expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
+
+    rerender(<PlaygroundOutput value="finished early" loading={false} error={null} />);
     act(() => vi.advanceTimersByTime(3000));
 
-    expect(screen.getByText('result')).toBeInTheDocument();
+    expect(screen.getByText('finished early')).toBeInTheDocument();
     expect(screen.queryByText(/Starting the server/)).not.toBeInTheDocument();
   });
 });
