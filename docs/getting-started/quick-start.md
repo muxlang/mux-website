@@ -169,7 +169,18 @@ func main() returns void {
 }
 ```
 
-### 2. Run the Program
+### 2. Check the Program
+
+With a release that includes `mux check`, validate the source before building:
+
+```bash title="bash"
+mux check hello.mux
+```
+
+Success prints nothing. This checks syntax, imports, and types without creating
+an executable. Use `mux check hello.mux --deny-warnings` to reject warnings too.
+
+### 3. Run the Program
 
 ```bash title="bash"
 mux run hello.mux
@@ -219,6 +230,7 @@ Usage: mux [OPTIONS] <COMMAND>
 
 Commands:
   build    Compile a Mux file without running it
+  check    Check a Mux file without generating an executable
   run      Compile and run a Mux file
   format   Format Mux source files (use --check to check without writing)
   doctor   Check system dependencies for the Mux compiler
