@@ -10,10 +10,10 @@
     "cheerio": "^1.0.0",
     "clsx": "^1.1.1",
     "debug": "^4.3.4",
-    "fs-extra": "^10.1.0",
     "klaw-sync": "^6.0.0",
     "lunr": "^2.3.9",
     "mark.js": "^8.11.1",
+    "tslib": "^2.8.1",
     "validate-peer-dependencies": "^2.2.0"
   },
   "peerDependencies": {
