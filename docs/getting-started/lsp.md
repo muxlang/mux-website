@@ -17,11 +17,12 @@ Install a compiler release that includes the language server and make sure
 syntax grammar support for highlighting; the grammar and language server are
 separate tools.
 
-Compiler v0.13.0 provides diagnostics, formatting, safe compiler fixes,
-document symbols, go to definition, hover, completion, and signature help. The
-next compiler release is being prepared with workspace references, rename,
-semantic tokens, inferred type hints, and folding ranges. Those additions will
-be available after that release; editor clients may expose different subsets.
+Compiler v0.13.0 introduced diagnostics, formatting, safe compiler fixes,
+document symbols, go to definition, hover, completion, and signature help.
+Compiler v0.14.0 adds workspace references and rename for resolved identifiers
+and user-defined members, semantic tokens, inferred local type hints, and
+folding ranges for declarations and control-flow blocks. References scan
+workspace files when requested. Editor clients may expose different subsets.
 
 ## VS Code
 
