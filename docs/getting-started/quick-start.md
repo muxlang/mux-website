@@ -34,7 +34,7 @@ iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/in
 
 #### Custom Installation Directory (Optional)
 
-By default, the installer places the binary in `~/.local/bin` and libraries in `~/.local/lib`. You can customize this with environment variables if needed:
+On Linux and macOS, the installer places the binary in `~/.local/bin` and libraries in `~/.local/lib`. Windows uses `~/.mux/bin` and `~/.mux/lib`. You can customize these directories with environment variables:
 
 ```bash title="bash"
 # Custom installation directory (bash)
@@ -68,6 +68,25 @@ mux doctor --dev  # Validate LLVM 22 and clang for development
 
 - `mux doctor` - For end users to verify runtime dependencies
 - `mux doctor --dev` - For contributors to verify LLVM 22 and clang
+
+### Updating Mux
+
+After installing a release that includes `mux update`, use:
+
+```bash
+mux update --check     # Check the latest stable release
+mux update             # Download and install it
+```
+
+The update replaces the compiler and bundled libraries together. It preserves
+custom installation directories recorded by the installer. On Linux, macOS,
+and Windows, the command prints its final result before returning to the shell.
+An already current or newer installation stays unchanged.
+
+If your installation predates this command, run the installer once to get it.
+Source builds can use `mux update --check`; rebuild from source to update them.
+Close other Mux commands and editors running `mux lsp` before installing an
+update. The updater reports permission errors without elevating privileges.
 
 ### Option 2: crates.io (frozen)
 
@@ -150,7 +169,18 @@ func main() returns void {
 }
 ```
 
-### 2. Run the Program
+### 2. Check the Program
+
+With a release that includes `mux check`, validate the source before building:
+
+```bash title="bash"
+mux check hello.mux
+```
+
+Success prints nothing. This checks syntax, imports, and types without creating
+an executable. Use `mux check hello.mux --deny-warnings` to reject warnings too.
+
+### 3. Run the Program
 
 ```bash title="bash"
 mux run hello.mux
@@ -200,6 +230,7 @@ Usage: mux [OPTIONS] <COMMAND>
 
 Commands:
   build    Compile a Mux file without running it
+  check    Check a Mux file without generating an executable
   run      Compile and run a Mux file
   format   Format Mux source files (use --check to check without writing)
   doctor   Check system dependencies for the Mux compiler

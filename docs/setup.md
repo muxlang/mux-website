@@ -41,6 +41,40 @@ iwr -useb https://raw.githubusercontent.com/muxlang/mux-compiler/main/scripts/in
 MUX_INSTALL_DIR=/usr/local/bin MUX_LIB_DIR=/usr/local/lib sh install.sh
 ```
 
+### Updating Mux
+
+After installing a release that includes `mux update`, use:
+
+```bash
+mux update --check     # Check the latest stable release
+mux update             # Download and install it
+```
+
+The update replaces the compiler and bundled libraries together. It preserves
+custom installation directories recorded by the installer. On Linux, macOS,
+and Windows, the command prints its final result before returning to the shell.
+An already current or newer installation stays unchanged.
+
+If your installation predates this command, run the installer once to get it.
+Source builds can use `mux update --check`; rebuild from source to update them.
+Close other Mux commands and editors running `mux lsp` before installing an
+update. The updater reports permission errors without elevating privileges.
+
+### Checking source
+
+`mux check` checks a source file and its imports without generating an
+executable. It reports the same parser and semantic diagnostics as `mux build`:
+
+```bash
+mux check main.mux
+mux check main.mux --deny-warnings
+```
+
+Successful checking is quiet. Warnings do not fail the command unless
+`--deny-warnings` is set. The command needs no runtime archive or linker, but
+the compiler still needs its LLVM support libraries to start. Code generation
+and linking are checked by `mux build`.
+
 ### Compiler and tooling (source builds)
 
 For compiler development or source builds, you need LLVM 22 and clang. The bootstrap script installs the toolchain automatically.
