@@ -328,6 +328,20 @@ async function main() {
   compare("monaco:types", canonTypes, monacoArray(monacoSrc, "typeKeywords"), errors);
   compare("shiki:keywords", canonKeywords, shikiKeywords(shikiGrammar), errors);
   compare("shiki:types", canonTypes, shikiTypes(shikiGrammar), errors);
+  const commentPatterns = shikiGrammar.repository?.comments?.patterns ?? [];
+  const docLine = commentPatterns.find((pattern) => pattern.name === "comment.line.documentation");
+  const docBlock = commentPatterns.find(
+    (pattern) => pattern.name === "comment.block.documentation",
+  );
+  if (docLine?.match !== matrix.comments.doc_line.pattern) {
+    errors.push("shiki: MuxDoc line comment pattern differs from the canonical matrix");
+  }
+  if (
+    docBlock?.begin !== matrix.comments.doc_block.begin ||
+    docBlock?.end !== matrix.comments.doc_block.end
+  ) {
+    errors.push("shiki: MuxDoc block comment delimiters differ from the canonical matrix");
+  }
 
   if (errors.length) {
     throw new Error(

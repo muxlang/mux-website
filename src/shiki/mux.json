@@ -35,6 +35,8 @@
   "repository": {
     "comments": {
       "patterns": [
+        { "name": "comment.line.documentation", "match": "///[^\\n]*" },
+        { "name": "comment.block.documentation", "begin": "/\\*\\*", "end": "\\*/" },
         {
           "name": "comment.line.double-slash",
           "match": "//[^\n]*"
