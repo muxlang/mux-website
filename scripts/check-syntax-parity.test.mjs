@@ -50,4 +50,36 @@ describe("canonical syntax source errors", () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
+
+  it("reports a missing MuxDoc field in a partial canonical matrix", () => {
+    const directory = mkdtempSync(join(repoRoot, "scripts/.syntax-parity-test-"));
+    try {
+      const sourcePath = join(directory, "partial.json");
+      writeFileSync(
+        sourcePath,
+        JSON.stringify({
+          keywords: { control: [] },
+          types: { builtin: [] },
+          comments: { doc_line: { pattern: "///[^\\n]*" } },
+        }),
+      );
+      const output = run(relative(repoRoot, sourcePath));
+      expect(output).toContain("comments.doc_block is not an object");
+      expect(output).toContain("Add the comments.doc_block definition");
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a local canonical matrix without comment definitions", () => {
+    const directory = mkdtempSync(join(repoRoot, "scripts/.syntax-parity-test-"));
+    try {
+      const sourcePath = join(directory, "no-comments.json");
+      writeFileSync(sourcePath, JSON.stringify({ keywords: {}, types: { builtin: [] } }));
+      const output = run(relative(repoRoot, sourcePath));
+      expect(output).toContain("the JSON object has no comments map");
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });

@@ -65,7 +65,7 @@ function canonicalFailure(source, reason, actions) {
   );
 }
 
-function validateCanonicalMatrix(matrix, source) {
+function validateCanonicalMatrix(matrix, source, allowLegacyComments = false) {
   if (matrix === null || typeof matrix !== "object" || Array.isArray(matrix)) {
     throw canonicalFailure(source, "the JSON root is not an object", [
       "Check that the source is shared/syntax-matrix.json from mux-syntax-highlighting.",
@@ -102,17 +102,25 @@ function validateCanonicalMatrix(matrix, source) {
       "Check out the canonical syntax repository at the revision used by this check.",
     ]);
   }
-  if (
-    matrix.comments === undefined ||
-    matrix.comments.doc_line === undefined ||
-    matrix.comments.doc_block === undefined
-  ) {
+  // The published main branch may predate MuxDoc while the syntax PR is open.
+  if (allowLegacyComments && matrix.comments === undefined) {
     return;
   }
-  if (matrix.comments === null || typeof matrix.comments !== "object" || Array.isArray(matrix.comments)) {
+  if (
+    matrix.comments === null ||
+    typeof matrix.comments !== "object" ||
+    Array.isArray(matrix.comments)
+  ) {
     throw canonicalFailure(source, "the JSON object has no comments map", [
       "Use the canonical shared/syntax-matrix.json file instead of a generated grammar.",
     ]);
+  }
+  if (
+    allowLegacyComments &&
+    matrix.comments.doc_line === undefined &&
+    matrix.comments.doc_block === undefined
+  ) {
+    return;
   }
   for (const field of ["doc_line", "doc_block"]) {
     const value = matrix.comments[field];
@@ -230,7 +238,7 @@ async function loadRemoteCanonical(url, sourceLabel, fallbackUrl) {
       ],
     );
   }
-  validateCanonicalMatrix(matrix, sourceLabel);
+  validateCanonicalMatrix(matrix, sourceLabel, true);
   return { matrix, from: url };
 }
 
@@ -361,7 +369,9 @@ async function main() {
   compare("shiki:types", canonTypes, shikiTypes(shikiGrammar), errors);
   if (matrix.comments?.doc_line && matrix.comments?.doc_block) {
     const commentPatterns = shikiGrammar.repository?.comments?.patterns ?? [];
-    const docLine = commentPatterns.find((pattern) => pattern.name === "comment.line.documentation");
+    const docLine = commentPatterns.find(
+      (pattern) => pattern.name === "comment.line.documentation",
+    );
     const docBlock = commentPatterns.find(
       (pattern) => pattern.name === "comment.block.documentation",
     );
