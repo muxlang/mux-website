@@ -65,7 +65,34 @@ function canonicalFailure(source, reason, actions) {
   );
 }
 
-function validateCanonicalMatrix(matrix, source, allowLegacyComments = false) {
+function validateCommentDefinitions(comments, source) {
+  if (comments === null || typeof comments !== "object" || Array.isArray(comments)) {
+    throw canonicalFailure(source, "the JSON object has no comments map", [
+      "Use the canonical shared/syntax-matrix.json file instead of a generated grammar.",
+    ]);
+  }
+  for (const field of ["doc_line", "doc_block"]) {
+    const value = comments[field];
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+      throw canonicalFailure(source, `comments.${field} is not an object`, [
+        `Add the comments.${field} definition to the canonical syntax matrix.`,
+      ]);
+    }
+  }
+  for (const [field, value] of [
+    ["comments.doc_line.pattern", comments.doc_line.pattern],
+    ["comments.doc_block.begin", comments.doc_block.begin],
+    ["comments.doc_block.end", comments.doc_block.end],
+  ]) {
+    if (typeof value !== "string" || value.length === 0) {
+      throw canonicalFailure(source, `${field} is missing or not a string`, [
+        `Add a non-empty ${field} value to the canonical syntax matrix.`,
+      ]);
+    }
+  }
+}
+
+function validateCanonicalMatrix(matrix, source) {
   if (matrix === null || typeof matrix !== "object" || Array.isArray(matrix)) {
     throw canonicalFailure(source, "the JSON root is not an object", [
       "Check that the source is shared/syntax-matrix.json from mux-syntax-highlighting.",
@@ -102,45 +129,7 @@ function validateCanonicalMatrix(matrix, source, allowLegacyComments = false) {
       "Check out the canonical syntax repository at the revision used by this check.",
     ]);
   }
-  // The published main branch may predate MuxDoc while the syntax PR is open.
-  if (allowLegacyComments && matrix.comments === undefined) {
-    return;
-  }
-  if (
-    matrix.comments === null ||
-    typeof matrix.comments !== "object" ||
-    Array.isArray(matrix.comments)
-  ) {
-    throw canonicalFailure(source, "the JSON object has no comments map", [
-      "Use the canonical shared/syntax-matrix.json file instead of a generated grammar.",
-    ]);
-  }
-  if (
-    allowLegacyComments &&
-    matrix.comments.doc_line === undefined &&
-    matrix.comments.doc_block === undefined
-  ) {
-    return;
-  }
-  for (const field of ["doc_line", "doc_block"]) {
-    const value = matrix.comments[field];
-    if (value === null || typeof value !== "object" || Array.isArray(value)) {
-      throw canonicalFailure(source, `comments.${field} is not an object`, [
-        `Add the comments.${field} definition to the canonical syntax matrix.`,
-      ]);
-    }
-  }
-  for (const [field, value] of [
-    ["comments.doc_line.pattern", matrix.comments.doc_line.pattern],
-    ["comments.doc_block.begin", matrix.comments.doc_block.begin],
-    ["comments.doc_block.end", matrix.comments.doc_block.end],
-  ]) {
-    if (typeof value !== "string" || value.length === 0) {
-      throw canonicalFailure(source, `${field} is missing or not a string`, [
-        `Add a non-empty ${field} value to the canonical syntax matrix.`,
-      ]);
-    }
-  }
+  validateCommentDefinitions(matrix.comments, source);
 }
 
 function selectedSource() {
@@ -238,7 +227,7 @@ async function loadRemoteCanonical(url, sourceLabel, fallbackUrl) {
       ],
     );
   }
-  validateCanonicalMatrix(matrix, sourceLabel, true);
+  validateCanonicalMatrix(matrix, sourceLabel);
   return { matrix, from: url };
 }
 
