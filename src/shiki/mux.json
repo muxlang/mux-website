@@ -35,6 +35,13 @@
   "repository": {
     "comments": {
       "patterns": [
+        { "name": "comment.line.documentation", "match": "///[^\\n]*" },
+        {
+          "name": "comment.block.documentation",
+          "begin": "/\\*\\*(?!/)",
+          "end": "\\*/",
+          "patterns": [{ "include": "#nested-block-comment" }]
+        },
         {
           "name": "comment.line.double-slash",
           "match": "//[^\n]*"
@@ -43,12 +50,17 @@
           "name": "comment.block",
           "begin": "/\\*",
           "end": "\\*/",
-          "patterns": [
-            {
-              "name": "comment.block",
-              "match": "/\\*.*?\\*/"
-            }
-          ]
+          "patterns": [{ "include": "#nested-block-comment" }]
+        }
+      ]
+    },
+    "nested-block-comment": {
+      "patterns": [
+        {
+          "name": "comment.block",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "patterns": [{ "include": "#nested-block-comment" }]
         }
       ]
     },

@@ -62,11 +62,16 @@ The registry is owned by `mux-compiler`. Codes are never reused.
 | W0303 | Warning | Dead assignment                        | `x = 1` then `x = 2`                | Remove the overwritten assignment      |
 | W0305 | Warning | Provably constant condition            | `if 1 == 1`                         | Remove it or use runtime data          |
 | W0306 | Warning | Safe redundant construct               | `value && true` or equivalent       | Apply the suggested simplification     |
+| W0500 | Warning | Invalid MuxDoc section                 | `/// missing: text`                 | Match sections to the declaration      |
+| W0501 | Warning | Unattached MuxDoc comment              | doc comment before a blank line     | Move it next to a declaration          |
+| W0502 | Warning | Unresolved MuxDoc reference            | `/// see: missing`                  | Name a symbol or use a full URL        |
+| W0503 | Warning | Ambiguous MuxDoc reference             | `/// see: open`                     | Qualify the symbol name                |
 
-Warning rules are added only when the analyzer can prove the result. Mux does
+Semantic warning rules are added only when the analyzer can prove the result. Mux does
 not use warnings for style preferences, guesses about performance, or ignored
 return values. A bare `_` is the intentional unused-binding escape hatch.
-`_name` is an ordinary identifier.
+`_name` is an ordinary identifier. MuxDoc warnings report incorrect
+documentation when a comment is present; declarations do not need documentation.
 
 `W0300`, `W0301`, and `W0303` are emitted only after successful semantic
 analysis. `W0304` is reserved: an actual read before assignment is the error

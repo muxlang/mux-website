@@ -179,7 +179,9 @@ export const language: Monaco.languages.IMonarchLanguage = {
     ],
     whitespace: [
       [/[ \t\r\n]+/, "white"],
+      [/\/\*\*(?!\/)/, "comment.doc", "@comment"],
       [/\/\*/, "comment", "@comment"],
+      [/\/\/\/.*/, "comment.doc"],
       [/\/\/.*/, "comment"],
     ],
     comment: [

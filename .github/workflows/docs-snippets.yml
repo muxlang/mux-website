@@ -71,9 +71,9 @@ jobs:
           # Literal https:// URL plus --max-redirect=0 means the download cannot
           # be downgraded to http via a redirect.
           wget --max-redirect=0 -O /tmp/llvm.key https://apt.llvm.org/llvm-snapshot.gpg.key
-          sudo install -Dm644 /tmp/llvm.key /usr/share/keyrings/llvm-snapshot.gpg.key
+          sudo install -Dm644 /tmp/llvm.key /usr/share/keyrings/llvm-snapshot.asc
           codename="$(lsb_release -cs)"
-          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] https://apt.llvm.org/${codename}/ llvm-toolchain-${codename}-${LLVM_VERSION} main" \
+          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.asc] https://apt.llvm.org/${codename}/ llvm-toolchain-${codename}-${LLVM_VERSION} main" \
             | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends "clang-${LLVM_VERSION}" "llvm-${LLVM_VERSION}" "llvm-${LLVM_VERSION}-dev" "libpolly-${LLVM_VERSION}-dev"

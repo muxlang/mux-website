@@ -65,6 +65,33 @@ function canonicalFailure(source, reason, actions) {
   );
 }
 
+function validateCommentDefinitions(comments, source) {
+  if (comments === null || typeof comments !== "object" || Array.isArray(comments)) {
+    throw canonicalFailure(source, "the JSON object has no comments map", [
+      "Use the canonical shared/syntax-matrix.json file instead of a generated grammar.",
+    ]);
+  }
+  for (const field of ["doc_line", "doc_block"]) {
+    const value = comments[field];
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+      throw canonicalFailure(source, `comments.${field} is not an object`, [
+        `Add the comments.${field} definition to the canonical syntax matrix.`,
+      ]);
+    }
+  }
+  for (const [field, value] of [
+    ["comments.doc_line.pattern", comments.doc_line.pattern],
+    ["comments.doc_block.begin", comments.doc_block.begin],
+    ["comments.doc_block.end", comments.doc_block.end],
+  ]) {
+    if (typeof value !== "string" || value.length === 0) {
+      throw canonicalFailure(source, `${field} is missing or not a string`, [
+        `Add a non-empty ${field} value to the canonical syntax matrix.`,
+      ]);
+    }
+  }
+}
+
 function validateCanonicalMatrix(matrix, source) {
   if (matrix === null || typeof matrix !== "object" || Array.isArray(matrix)) {
     throw canonicalFailure(source, "the JSON root is not an object", [
@@ -102,6 +129,7 @@ function validateCanonicalMatrix(matrix, source) {
       "Check out the canonical syntax repository at the revision used by this check.",
     ]);
   }
+  validateCommentDefinitions(matrix.comments, source);
 }
 
 function selectedSource() {
@@ -328,6 +356,24 @@ async function main() {
   compare("monaco:types", canonTypes, monacoArray(monacoSrc, "typeKeywords"), errors);
   compare("shiki:keywords", canonKeywords, shikiKeywords(shikiGrammar), errors);
   compare("shiki:types", canonTypes, shikiTypes(shikiGrammar), errors);
+  if (matrix.comments?.doc_line && matrix.comments?.doc_block) {
+    const commentPatterns = shikiGrammar.repository?.comments?.patterns ?? [];
+    const docLine = commentPatterns.find(
+      (pattern) => pattern.name === "comment.line.documentation",
+    );
+    const docBlock = commentPatterns.find(
+      (pattern) => pattern.name === "comment.block.documentation",
+    );
+    if (docLine?.match !== matrix.comments.doc_line.pattern) {
+      errors.push("shiki: MuxDoc line comment pattern differs from the canonical matrix");
+    }
+    if (
+      docBlock?.begin !== matrix.comments.doc_block.begin ||
+      docBlock?.end !== matrix.comments.doc_block.end
+    ) {
+      errors.push("shiki: MuxDoc block comment delimiters differ from the canonical matrix");
+    }
+  }
 
   if (errors.length) {
     throw new Error(

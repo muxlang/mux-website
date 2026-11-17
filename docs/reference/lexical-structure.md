@@ -93,7 +93,56 @@ Multi-line comments start with `/*` and end with `*/`. They can span multiple li
 auto x = 42  /* Can also be inline */
 ```
 
-Multi-line comments do not nest. The first `*/` terminates the comment.
+Multi-line comments can nest. Each `/*` needs a matching `*/`.
+
+### MuxDoc comments
+
+Use `///` lines or a `/** ... */` block immediately before a named declaration
+to document it. An ordinary `//` or `/* ... */` comment does not become
+documentation. A blank line separates a MuxDoc comment from the declaration.
+
+MuxDoc starts with optional Markdown prose. Sections use a name followed by
+a colon. A function can document any of its parameters by name and may use
+`returns:` when it returns a value. `example:` can appear more than once.
+`see:` accepts a Mux symbol or a full URL, and `since:` accepts nonempty
+release text. Missing documentation and omitted sections are allowed. Invalid
+sections produce warnings in `mux check` and editor diagnostics.
+
+```mux
+/**
+ * Return the larger of two integers.
+ *
+ * a: First integer to compare
+ * b: Second integer to compare
+ * returns: The larger value
+ * example:
+ *   auto largest = max(10, 20)
+ *   print(largest)
+ * see: min
+ * since: 1.0.0
+ */
+func max(int a, int b) returns int {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func min(int a, int b) returns int {
+    if a < b {
+        return a
+    }
+    return b
+}
+```
+
+MuxDoc examples appear in Mux code blocks in editor help and generated API
+pages. The compiler does not run them as tests.
+
+Run `mux doc entry.mux --output docs/api` to generate Markdown API pages for
+the entry module and its resolved local imports. The pages include signatures
+for declarations without MuxDoc comments. The command can replace its own
+generated directory and refuses to overwrite unrelated files.
 
 ## Identifiers
 
